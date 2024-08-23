@@ -7,67 +7,108 @@
              xmlns:viewmodels="clr-namespace:Editors.Audio.AudioEditor.ViewModels" 
              d:DataContext="{d:DesignInstance Type=viewmodels:AudioEditorViewModel}"
              mc:Ignorable="d" 
-             d:DesignWidth="800" d:DesignHeight="450" >
+             d:DesignWidth="800" d:DesignHeight="450">
 
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
+            <!-- Row for the Menu and Border -->
             <RowDefinition Height="*"/>
+            <!-- Main content area -->
         </Grid.RowDefinitions>
 
-        <!-- Menu -->
-        <Menu Grid.Row="0">
-            <MenuItem Header="_File" HorizontalAlignment="Left">
-                <MenuItem Header="_New">
-                    <MenuItem Header="VO Project" Command="{Binding NewVOProjectCommand}" />
-                    <MenuItem Header="States Project" Command="{Binding NewStatesProjectCommand}" />
+        <!-- File Menu spanning the entire width -->
+        <Grid Grid.Row="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Menu Grid.Row="0" Margin="0, 5, 5, 0">
+                <MenuItem Header="_File" HorizontalAlignment="Left">
+                    <MenuItem Header="_New">
+                        <MenuItem Header="VO Project" Command="{Binding NewVOProjectCommand}" />
+                        <MenuItem Header="States Project" Command="{Binding NewStatesProjectCommand}" />
+                    </MenuItem>
+                    <MenuItem Header="_Open">
+                        <MenuItem Header="VO Project" Command="{Binding LoadVOProjectCommand}" />
+                        <MenuItem Header="States Project" Command="{Binding LoadStatesProjectCommand}" />
+                    </MenuItem>
+                    <MenuItem Header="Save" Command="{Binding SaveAudioProjectCommand}" />
                 </MenuItem>
-                <MenuItem Header="_Open">
-                    <MenuItem Header="VO Project" Command="{Binding LoadVOProjectCommand}" />
-                    <MenuItem Header="States Project" Command="{Binding LoadStatesProjectCommand}" />
-                </MenuItem>
-                <MenuItem Header="Save" Command="{Binding SaveAudioProjectCommand}" />
-                <MenuItem Header="Audio Project Settings" Command="{Binding OpenAudioProjectSettings}" IsEnabled="False"/>
-            </MenuItem>
-        </Menu>
+            </Menu>
 
-        <!-- Audio Project Event Selection -->
-        <Grid Grid.Row="1" Margin="2.5 5 5 0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
+            <!-- Divider -->
+            <Border Grid.Row="1" Height="5" Background="#3C3C3C" Margin="0, 10, 0, 0"/>
 
-            <Label Grid.Column="0" Content="Audio Project Events:" VerticalAlignment="Center"/>
-
-            <ComboBox Grid.Column="1"
-                      x:Name="AudioProjectEventSelection"
-                      IsEditable="True"
-                      IsTextSearchEnabled="True"
-                      Text="{Binding SelectedAudioProjectEvent, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-                      ItemsSource="{Binding AudioProjectEvents}"
-                      SelectedItem="{Binding SelectedAudioProjectEvent, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-                      VerticalAlignment="Center"
-                      Margin="5,0"/>
         </Grid>
 
-        <!-- Buttons and CheckBox -->
-        <Grid Grid.Row="2" Margin="2.5 5 5 0">
+        <!-- The rest of the content -->
+        <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="70" />
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" MinWidth="250"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            
-            <Button Grid.Column="0" Content="Add Row" Command="{Binding AddDataGridRowCommand}" Margin="5, 0, 0, 0" VerticalAlignment="Center"/>
-            <Button Grid.Column="0" Content="Add Row" Command="{Binding AddDataGridRowCommand}" Margin="5, 0, 0, 0" VerticalAlignment="Center"/>
-            <CheckBox Grid.Column="1" Content="Show Custom States Only" Margin="5, 0, 0, 0" VerticalAlignment="Center" IsChecked="{Binding ShowCustomStatesOnly, Mode=TwoWay}" />
-        </Grid>
 
-        <!-- Dynamic DataGrid -->
-        <DataGrid Grid.Row="4" x:Name="AudioEditorDataGrid" Margin="0, 10, 0, 5" AutoGenerateColumns="False" >
-        </DataGrid>
+            <!-- Left Side of GridSplitter -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Audio Project ListBox Section with Label -->
+                <StackPanel Grid.Row="1" Margin="0">
+                    <Label Content="Audio Project"/>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ListBox x:Name="AudioProjectEventListBox"
+                                 ItemsSource="{Binding AudioProjectEvents}"
+                                 SelectedItem="{Binding SelectedAudioProjectEvent, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                 Margin="0, 5, 0, 0"/>
+                    </ScrollViewer>
+                </StackPanel>
+            </Grid>
+
+            <!-- GridSplitter between Left Side and Right Side -->
+            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="#3C3C3C" />
+
+            <!-- Right Side of GridSplitter -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Controls Section with minimum height constraint -->
+                <Grid Grid.Row="0" MinHeight="75" Margin="2, 0, 0, 0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="1" Margin="0, 5, 0, 0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Button Grid.Column="0" Content="Add Row" Command="{Binding AddDataGridRowCommand}" Margin="5, 0, 0, 0" VerticalAlignment="Center"/>
+                        <CheckBox Grid.Column="1" Content="Show Custom States Only" Margin="5, 0, 0, 0" VerticalAlignment="Center" IsChecked="{Binding ShowCustomStatesOnly, Mode=TwoWay}" />
+                    </Grid>
+                </Grid>
+
+                <!-- DataGridBuilder -->
+                <DataGrid Grid.Row="2" x:Name="DataGridBuilder" Margin="0, 10, 0, 0" AutoGenerateColumns="False" />
+
+                <!-- GridSplitter between Controls and DataGrid -->
+                <GridSplitter Grid.Row="3" Height="5" HorizontalAlignment="Stretch" VerticalAlignment="Center" Background="#3C3C3C" />
+
+                <!-- DataGrid -->
+                <DataGrid Grid.Row="4" x:Name="AudioEditorDataGrid" Margin="0, 10, 0, 0" AutoGenerateColumns="False" />
+            </Grid>
+        </Grid>
     </Grid>
 </UserControl>

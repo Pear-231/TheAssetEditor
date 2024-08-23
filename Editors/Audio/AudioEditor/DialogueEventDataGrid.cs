@@ -61,7 +61,7 @@ namespace Editors.Audio.AudioEditor
 
                 var vanillaStates = audioRepository.StateGroupsWithStates[stateGroup];
 
-                if (stateGroupsWithCustomStates.Count() > 0)
+                if (stateGroupsWithCustomStates != null && stateGroupsWithCustomStates.Count() > 0)
                 {
                     if (stateGroup == "VO_Actor" || stateGroup == "VO_Culture" || stateGroup == "VO_Battle_Selection" || stateGroup == "VO_Battle_Special_Ability" || stateGroup == "VO_Faction_Leader")
                         customStates = stateGroupsWithCustomStates[stateGroup];
