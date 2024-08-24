@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -17,20 +18,19 @@ namespace Editors.Audio.AudioEditor
         {
         }
 
-        public static void ConfigureDataGrid(AudioEditorViewModel viewModel)
+        public static void ConfigureDataGrid(AudioEditorViewModel viewModel, string dataGridName, ObservableCollection<Dictionary<string, object>> dataGridBuilderData)
         {
-            var dataGridData = viewModel.DataGridData;
             var selectedAudioProjectEvent = viewModel.SelectedAudioProjectEvent;
 
-            var dataGrid = GetDataGrid();
+            var dataGrid = GetDataGrid(dataGridName);
 
             // DataGrid settings:
             dataGrid.CanUserAddRows = false; // Setting this bastard to false ensures that data won't go missing from the last row when a new row is added. Wtf WPF.
-            dataGrid.ItemsSource = dataGridData;
+            dataGrid.ItemsSource = dataGridBuilderData;
 
             // Clear existing data:
             dataGrid.Columns.Clear();
-            dataGridData.Clear();
+            dataGridBuilderData.Clear();
 
             var stateGroups = StatesProjectData.ModdedStateGroups;
 

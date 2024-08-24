@@ -53,9 +53,9 @@ namespace Editors.Audio.AudioEditor
             public string State { get; set; }
         }
 
-        public static void ConvertDataGridDataToVOProject(ObservableCollection<Dictionary<string, object>> dataGridData, string audioProjectEvent)
+        public static void ConvertDataGridBuilderDataToVOProject(ObservableCollection<Dictionary<string, object>> dataGridBuilderData, string audioProjectEvent)
         {
-            if (dataGridData.Count() == 0 || audioProjectEvent == null || audioProjectEvent == "")
+            if (dataGridBuilderData.Count() == 0 || audioProjectEvent == null || audioProjectEvent == "")
                 return;
 
             var voProject = AudioProjectInstance.VOProject;
@@ -63,7 +63,7 @@ namespace Editors.Audio.AudioEditor
             var decisionTree = dialogueEvent.DecisionTree;
             decisionTree.Clear();
 
-            foreach (var dataGridItem in dataGridData)
+            foreach (var dataGridItem in dataGridBuilderData)
             {
                 // Validation to ensure that the State Groups are in the correct order.
                 var orderedStateGroupsAndStates = ValidateStateGroupsOrder(dataGridItem, audioProjectEvent);
@@ -95,7 +95,7 @@ namespace Editors.Audio.AudioEditor
             }
         }
 
-        public static void ConvertVOProjectToDataGridData(ObservableCollection<Dictionary<string, object>> dataGridData, VOProject voProject, string selectedAudioProjectEvent)
+        public static void ConvertVOProjectToDataGridBuilderData(ObservableCollection<Dictionary<string, object>> dataGridBuilderData, VOProject voProject, string selectedAudioProjectEvent)
         {
             var dialogueEvent = voProject.DialogueEvents.FirstOrDefault(dialogueEvent => dialogueEvent.Name == selectedAudioProjectEvent); // Find the corresponding DialogueEvent in AudioProject
 
@@ -130,7 +130,7 @@ namespace Editors.Audio.AudioEditor
                     }
                 }
 
-                dataGridData.Add(dataGridRow);
+                dataGridBuilderData.Add(dataGridRow);
             }
         }
     }

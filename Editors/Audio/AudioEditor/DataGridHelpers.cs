@@ -45,10 +45,10 @@ namespace Editors.Audio.AudioEditor
             return null;
         }
 
-        public static DataGrid GetDataGrid()
+        public static DataGrid GetDataGrid(string dataGridName)
         {
             var mainWindow = Application.Current.MainWindow;
-            return FindVisualChild<DataGrid>(mainWindow, "AudioEditorDataGrid");
+            return FindVisualChild<DataGrid>(mainWindow, dataGridName);
         }
 
         public class ConvertToolTipCollectionToString : IValueConverter

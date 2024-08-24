@@ -26,15 +26,15 @@ namespace Editors.Audio.AudioEditor
 
         public static readonly List<string> ModdedStateGroups = ["VO_Actor", "VO_Culture", "VO_Faction_Leader", "VO_Battle_Selection", "VO_Battle_Special_Ability"];
 
-        public static void ConvertDataGridDataToStatesProject(ObservableCollection<Dictionary<string, object>> dataGridData)
+        public static void ConvertDataGridBuilderDataToStatesProject(ObservableCollection<Dictionary<string, object>> dataGridBuilderData)
         {
-            if (dataGridData.Count() == 0)
+            if (dataGridBuilderData.Count() == 0)
                 return;
 
             var statesProject = AudioProjectInstance.StatesProject;
             statesProject.StatesProjectItems = new List<StatesProjectItems>();
 
-            foreach (var dataGridItem in dataGridData)
+            foreach (var dataGridItem in dataGridBuilderData)
             {
                 var statesProjectItem = new StatesProjectItems
                 {
@@ -59,7 +59,7 @@ namespace Editors.Audio.AudioEditor
             }
         }
 
-        public static void ConvertStatesProjectToDataGridData(ObservableCollection<Dictionary<string, object>> dataGridData, StatesProject statesProject)
+        public static void ConvertStatesProjectToDataGridBuilderData(ObservableCollection<Dictionary<string, object>> dataGridBuilderData, StatesProject statesProject)
         {
             foreach (var statesProjectItem in statesProject.StatesProjectItems)
             {
@@ -73,7 +73,7 @@ namespace Editors.Audio.AudioEditor
                     dataGridRow[stateGroup] = state;
                 }
 
-                dataGridData.Add(dataGridRow);
+                dataGridBuilderData.Add(dataGridRow);
             }
         }
     }

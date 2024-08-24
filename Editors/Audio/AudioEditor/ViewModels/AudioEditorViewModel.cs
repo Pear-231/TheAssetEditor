@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.IO;
@@ -44,8 +45,9 @@ namespace Editors.Audio.AudioEditor.ViewModels
         [ObservableProperty] private string _selectedAudioProjectEvent;
         [ObservableProperty] private bool _showCustomStatesOnly;
 
-        // The DataGrid data.
+        // AudioEditor data.
         [ObservableProperty] private ObservableCollection<string> _audioProjectEvents = [];
+        [ObservableProperty] private ObservableCollection<Dictionary<string, object>> _dataGridBuilderData = [];
         [ObservableProperty] private ObservableCollection<Dictionary<string, object>> _dataGridData = [];
 
         public AudioEditorViewModel(IAudioRepository audioRepository, PackFileService packFileService, IWindowFactory windowFactory, SoundPlayer soundPlayer)
@@ -55,10 +57,10 @@ namespace Editors.Audio.AudioEditor.ViewModels
             _windowFactory = windowFactory;
             _soundPlayer = soundPlayer;
 
-            DataGridData.CollectionChanged += OndataGridDataChanged;
+            DataGridBuilderData.CollectionChanged += OnDataGridBuilderDataChanged;
         }
 
-        private void OndataGridDataChanged(object dataGridData, NotifyCollectionChangedEventArgs e)
+        private void OnDataGridBuilderDataChanged(object dataGridBuilderData, NotifyCollectionChangedEventArgs e)
         {
             // May use later...
         }
@@ -74,14 +76,16 @@ namespace Editors.Audio.AudioEditor.ViewModels
             // Load the Event upon selection.
             if (AudioProjectInstance.Type == ProjectType.voaproj)
             {
-                ConvertDataGridDataToVOProject(DataGridData, AudioProjectInstance.PreviousSelectedAudioProjectEvent); // Save the DataGridData from the Event that was just being worked (PreviousSelectedAudioProjectEvent) on to the Audio Project.
+                ConvertDataGridBuilderDataToVOProject(DataGridBuilderData, AudioProjectInstance.PreviousSelectedAudioProjectEvent); // Save the DataGridBuilderData from the Event that was just being worked (PreviousSelectedAudioProjectEvent) on to the Audio Project.
 
                 LoadDialogueEvent(_audioRepository, ShowCustomStatesOnly);
+
+                AddRowToDataGridBuilder();
             }
 
             else if (AudioProjectInstance.Type == ProjectType.statesaproj)
             {
-                ConvertDataGridDataToStatesProject(DataGridData);
+                ConvertDataGridBuilderDataToStatesProject(DataGridBuilderData);
                 
                 LoadModdedStates(_audioRepository);
             }
@@ -95,7 +99,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
 
         [RelayCommand] public void NewVOProject()
         {
-            var window = _windowFactory.Create<NewVOAudioProjectViewModel, NewVOAudioProjectView>("New VO Project", 560, 530);
+            var window = _windowFactory.Create<NewVOAudioProjectViewModel, NewVOAudioProjectView>("New VO Audio Project", 560, 530);
             window.AlwaysOnTop = false;
             window.ResizeMode = ResizeMode.NoResize;
             window.ShowWindow();
@@ -103,7 +107,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
 
         [RelayCommand] public void NewStatesProject()
         {
-            var window = _windowFactory.Create<NewCustomStatesViewModel, NewCustomStatesView>("New States Project", 560, 160);
+            var window = _windowFactory.Create<NewCustomStatesViewModel, NewCustomStatesView>("New States Audio Project", 560, 160);
             window.AlwaysOnTop = false;
             window.ResizeMode = ResizeMode.NoResize;
             window.ShowWindow();
@@ -132,7 +136,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 AudioProjectInstance.VOProject = voProject;
 
                 var fileName = AudioProjectInstance.FileName;
-                _logger.Here().Information($"Loaded VO Project file: {fileName}");
+                _logger.Here().Information($"Loaded VO Audio Project file: {fileName}");
 
                 // Create the list of Events used in the Events ComboBox.
                 CreateEventsListFromVOProject();
@@ -162,7 +166,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 AudioProjectInstance.StatesProject = statesProject;
 
                 var fileName = AudioProjectInstance.FileName;
-                _logger.Here().Information($"Loaded States Project file: {fileName}");
+                _logger.Here().Information($"Loaded States Audio Project file: {fileName}");
 
                 // Create the list of Events used in the Events ComboBox.
                 CreateEventsListFromStatesProject();
@@ -173,20 +177,20 @@ namespace Editors.Audio.AudioEditor.ViewModels
         {
             if (AudioProjectInstance.Type == ProjectType.voaproj)
             {
-                ConvertDataGridDataToVOProject(DataGridData, SelectedAudioProjectEvent);
+                ConvertDataGridBuilderDataToVOProject(DataGridBuilderData, SelectedAudioProjectEvent);
 
                 AddToPackFile(_packFileService, AudioProjectInstance.VOProject, AudioProjectInstance.FileName, AudioProjectInstance.Directory, AudioProjectInstance.Type);
             }
 
             else if (AudioProjectInstance.Type == ProjectType.statesaproj)
             {
-                ConvertDataGridDataToStatesProject(DataGridData);
+                ConvertDataGridBuilderDataToStatesProject(DataGridBuilderData);
 
                 AddToPackFile(_packFileService, AudioProjectInstance.StatesProject, AudioProjectInstance.FileName, AudioProjectInstance.Directory, AudioProjectInstance.Type);
             }
         }
 
-        [RelayCommand] public void AddDataGridRow()
+        public void AddRowToDataGridBuilder()
         {
             if (string.IsNullOrEmpty(SelectedAudioProjectEvent))
                 return;
@@ -207,7 +211,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 newRow["AudioFiles"] = new List<string> { };
                 newRow["AudioFilesDisplay"] = string.Empty;
 
-                DataGridData.Add(newRow);
+                DataGridBuilderData.Add(newRow);
             }
 
             else if (AudioProjectInstance.Type == ProjectType.statesaproj)
@@ -220,13 +224,57 @@ namespace Editors.Audio.AudioEditor.ViewModels
                     newRow[stateGroupKey] = "";
                 }
 
-                DataGridData.Add(newRow);
+                DataGridBuilderData.Add(newRow);
             }
         }
 
+        [RelayCommand] public void AddRowToDataGrid()
+        {
+            var newRow = new Dictionary<string, object>();
+
+            foreach (var kvp in DataGridBuilderData[0])
+            {
+                var column = kvp.Key;
+                var cellValue = kvp.Value;
+
+                if (column == "AudioFiles" && cellValue is List<string> stringList)
+                {
+                    var newList = new List<string>(stringList);
+                    newRow[column] = newList;
+                }
+
+                else
+                    newRow[column] = cellValue.ToString();
+            }
+
+            DataGridData.Add(newRow);
+            DataGridBuilderData.Clear();
+            AddRowToDataGridBuilder();
+        }
+
+
+
+
+
+
+
+        /*
+            factory.SetValue(ContentControl.ContentProperty, "Play Audio");
+            factory.SetValue(FrameworkElement.ToolTipProperty, "Play an audio file at random to simulate the Dialogue Event being triggered in game.");
+        */
+
+
+
+
+
+
+
+
+
+
         public void RemoveStatePath(Dictionary<string, object> rowToRemove)
         {
-            DataGridData.Remove(rowToRemove);
+            DataGridBuilderData.Remove(rowToRemove);
         }
 
         public static void AddAudioFiles(Dictionary<string, object> dataGridRow, TextBox textBox)
@@ -247,9 +295,9 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 textBox.Text = fileNamesString;
                 textBox.ToolTip = filePathsString;
 
-                var audioFiles = (List<string>)dataGridRow["AudioFiles"];
-                audioFiles.AddRange(filePaths);
+                var audioFiles = new List<string>(filePaths);
 
+                dataGridRow["AudioFiles"] = audioFiles;
                 dataGridRow["AudioFilesDisplay"] = fileNamesString;
             }
         }
@@ -259,20 +307,24 @@ namespace Editors.Audio.AudioEditor.ViewModels
             if (string.IsNullOrEmpty(SelectedAudioProjectEvent))
                 return;
 
-            // Configure the DataGrid before adding the data to it so that once you add the data it populates.
-            ConfigureDataGrid(this, audioRepository, showCustomStatesOnly);
+            // Configure the DataGrids before adding the data to it so that once you add the data it populates.
+            ConfigureDataGridBuilder(this, audioRepository, showCustomStatesOnly, "AudioEditorDataGridBuilder", DataGridBuilderData);
+            ConfigureDataGrid(this, audioRepository, showCustomStatesOnly, "AudioEditorDataGrid", DataGridData);
 
             var voProject = AudioProjectInstance.VOProject;
             var dialogueEvent = voProject.DialogueEvents.FirstOrDefault(dialogueEvent => dialogueEvent.Name == SelectedAudioProjectEvent);
             var decisionTree = dialogueEvent.DecisionTree;
 
-            DataGridData.Clear();
+            DataGridBuilderData.Clear();
 
+            /*
             if (decisionTree.Count > 0)
-                ConvertVOProjectToDataGridData(DataGridData, voProject, SelectedAudioProjectEvent);
+                ConvertVOProjectToDataGridBuilderData(DataGridBuilderData, voProject, SelectedAudioProjectEvent);
 
             else
-                InitialiseDialogueEventDataGridData(decisionTree);
+            
+                InitialiseDialogueEventDataGridBuilderData(decisionTree);
+            */
 
             _logger.Here().Information($"Loaded Event: {SelectedAudioProjectEvent}");
         }
@@ -283,25 +335,25 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 return;
 
             // Configure the DataGrid before adding the data to it so that once you add the data it populates.
-            ConfigureDataGrid(this);
+            ConfigureDataGrid(this, "AudioEditorDataGrid", DataGridBuilderData);
 
             var statesProject = AudioProjectInstance.StatesProject;
             var audioProjectItems = statesProject.StatesProjectItems;
 
-            DataGridData.Clear();
+            DataGridBuilderData.Clear();
 
             if (audioProjectItems.Count > 0)
-                ConvertStatesProjectToDataGridData(DataGridData, statesProject);
+                ConvertStatesProjectToDataGridBuilderData(DataGridBuilderData, statesProject);
 
             else
-                InitialiseModdedStatesDataGridData();
+                InitialiseModdedStatesDataGridBuilderData();
 
             _logger.Here().Information($"Loaded Event: {SelectedAudioProjectEvent}");
         }
 
-        private void InitialiseDialogueEventDataGridData(List<DecisionNode> decisionTree)
+        private void InitialiseDialogueEventDataGridBuilderData(List<DecisionNode> decisionTree)
         {
-            // Process Decision Tree and populate the objects in dataGridData. Make sure to add the kvp for the column header i.e. the stateGroupWithQualifier (with extra underscores) to prevent a binding error. 
+            // Process Decision Tree and populate the objects in dataGridBuilderData. Make sure to add the kvp for the column header i.e. the stateGroupWithQualifier (with extra underscores) to prevent a binding error. 
             foreach (var statePath in decisionTree)
             {
                 var filePaths = statePath.AudioFiles;
@@ -323,11 +375,11 @@ namespace Editors.Audio.AudioEditor.ViewModels
                     }
                 }
 
-                DataGridData.Add(dataGridRow);
+                DataGridBuilderData.Add(dataGridRow);
             }
         }
 
-        private void InitialiseModdedStatesDataGridData()
+        private void InitialiseModdedStatesDataGridBuilderData()
         {
             var dataGridRow = new Dictionary<string, object>{};
 
@@ -336,7 +388,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
             foreach (var stateGroup in stateGroups)
                 dataGridRow[AddExtraUnderscoresToString(stateGroup)] = string.Empty;
 
-            DataGridData.Add(dataGridRow);
+            DataGridBuilderData.Add(dataGridRow);
         }
 
         public void CreateEventsListFromVOProject()
@@ -359,7 +411,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
             SelectedAudioProjectEvent = null;
             ShowCustomStatesOnly = false;
             AudioProjectEvents.Clear();
-            DataGridData.Clear();
+            DataGridBuilderData.Clear();
         }
 
         public void Close()
