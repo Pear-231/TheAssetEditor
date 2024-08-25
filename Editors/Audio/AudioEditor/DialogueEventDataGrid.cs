@@ -114,13 +114,6 @@ namespace Editors.Audio.AudioEditor
                 UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
             };
 
-            // ComboBox settings.
-            factory.SetBinding(System.Windows.Controls.Primitives.Selector.SelectedItemProperty, binding);
-            factory.SetValue(ItemsControl.IsTextSearchEnabledProperty, true);
-            factory.SetValue(ComboBox.IsEditableProperty, true);
-            factory.SetValue(ItemsControl.ItemsSourceProperty, states);
-
-            // Loaded event for initializing items and setting up TextChanged event.
             factory.AddHandler(FrameworkElement.LoadedEvent, new RoutedEventHandler((sender, args) =>
             {
                 if (sender is ComboBox comboBox)
@@ -169,16 +162,23 @@ namespace Editors.Audio.AudioEditor
                 }
             }));
 
+            // Bind the SelectedItem property
+            factory.SetBinding(System.Windows.Controls.Primitives.Selector.SelectedItemProperty, binding);
+            factory.SetValue(ItemsControl.IsTextSearchEnabledProperty, true);
+            factory.SetValue(ComboBox.IsEditableProperty, true);
+            factory.SetValue(ItemsControl.ItemsSourceProperty, states);
+
             template.VisualTree = factory;
 
             return template;
         }
 
+
+
         public static DataTemplate CreateSoundsTextBoxTemplate()
         {
             var template = new DataTemplate();
             var factory = new FrameworkElementFactory(typeof(TextBox));
-            factory.SetValue(FrameworkElement.NameProperty, "AudioFilesDisplay");
 
             var binding = new Binding("[AudioFilesDisplay]")
             {
@@ -192,9 +192,9 @@ namespace Editors.Audio.AudioEditor
                 Converter = new ConvertToolTipCollectionToString()
             };
 
+            factory.SetValue(FrameworkElement.NameProperty, "AudioFilesDisplay");
             factory.SetBinding(TextBox.TextProperty, binding);
             factory.SetBinding(FrameworkElement.ToolTipProperty, tooltipBinding);
-
             factory.SetValue(System.Windows.Controls.Primitives.TextBoxBase.IsReadOnlyProperty, true);
 
             template.VisualTree = factory;
@@ -206,8 +206,6 @@ namespace Editors.Audio.AudioEditor
         {
             var template = new DataTemplate();
             var factory = new FrameworkElementFactory(typeof(Button));
-            factory.SetValue(ContentControl.ContentProperty, "...");
-            factory.SetValue(FrameworkElement.ToolTipProperty, "Browse wav files");
 
             // Handle button click event
             factory.AddHandler(System.Windows.Controls.Primitives.ButtonBase.ClickEvent, new RoutedEventHandler((sender, e) =>
@@ -231,6 +229,9 @@ namespace Editors.Audio.AudioEditor
                     }
                 }
             }));
+
+            factory.SetValue(ContentControl.ContentProperty, "...");
+            factory.SetValue(FrameworkElement.ToolTipProperty, "Browse wav files");
 
             template.VisualTree = factory;
 
@@ -310,34 +311,6 @@ namespace Editors.Audio.AudioEditor
             soundsTextColumn.CellTemplate = soundsCellTemplate;
 
             dataGrid.Columns.Add(soundsTextColumn);
-
-            // Access and configure the ScrollViewer of the DataGrid
-            var scrollViewer = GetScrollViewer(dataGrid);
-            if (scrollViewer != null)
-            {
-                scrollViewer.CanContentScroll = true;
-            }
         }
-
-        private static ScrollViewer GetScrollViewer(DependencyObject depObj)
-        {
-            if (depObj == null) return null;
-
-            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(depObj); i++)
-            {
-                var child = VisualTreeHelper.GetChild(depObj, i);
-                if (child is ScrollViewer scrollViewer)
-                {
-                    return scrollViewer;
-                }
-                var result = GetScrollViewer(child);
-                if (result != null)
-                {
-                    return result;
-                }
-            }
-            return null;
-        }
-
     }
 }
