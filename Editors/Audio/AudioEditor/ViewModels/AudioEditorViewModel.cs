@@ -77,21 +77,19 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 return;
 
             AudioProjectInstance.SelectedAudioProjectEvent = newValue;
-            var areStateGroupsEqual = false;
-
-            if (!string.IsNullOrEmpty(oldValue))
-            {
-                AudioProjectInstance.PreviousSelectedAudioProjectEvent = oldValue;
-
-                var newEventStateGroups = _audioRepository.DialogueEventsWithStateGroups[newValue];
-                var oldEventStateGroups = _audioRepository.DialogueEventsWithStateGroups[oldValue];
-                areStateGroupsEqual = newEventStateGroups.SequenceEqual(oldEventStateGroups);
-            }
 
             if (AudioProjectInstance.Type == ProjectType.voaproj)
             {
+                var areStateGroupsEqual = false;
+
                 if (!string.IsNullOrEmpty(oldValue))
                 {
+                    AudioProjectInstance.PreviousSelectedAudioProjectEvent = oldValue;
+
+                    var newEventStateGroups = _audioRepository.DialogueEventsWithStateGroups[newValue];
+                    var oldEventStateGroups = _audioRepository.DialogueEventsWithStateGroups[oldValue];
+                    areStateGroupsEqual = newEventStateGroups.SequenceEqual(oldEventStateGroups);
+
                     // Save the old Event data to the Audio Project.
                     ConvertDataGridToVOAudioProject(DataGridData, AudioProjectInstance.PreviousSelectedAudioProjectEvent);
                 }
@@ -102,9 +100,10 @@ namespace Editors.Audio.AudioEditor.ViewModels
 
             else if (AudioProjectInstance.Type == ProjectType.statesaproj)
             {
-                ConvertDataGridToStatesAudioProject(DataGridBuilderData);
+                // Save the Event data to the Audio Project.
+                ConvertDataGridToStatesAudioProject(DataGridData);
                 
-                LoadModdedStates(_audioRepository);
+                LoadModdedStates();
             }
         }
 
@@ -128,6 +127,23 @@ namespace Editors.Audio.AudioEditor.ViewModels
             window.AlwaysOnTop = false;
             window.ResizeMode = ResizeMode.NoResize;
             window.ShowWindow();
+        }
+
+        [RelayCommand] public void SaveAudioProject()
+        {
+            if (AudioProjectInstance.Type == ProjectType.voaproj)
+            {
+                ConvertDataGridToVOAudioProject(DataGridData, SelectedAudioProjectEvent);
+
+                AddToPackFile(_packFileService, AudioProjectInstance.VOAudioProject, AudioProjectInstance.FileName, AudioProjectInstance.Directory, AudioProjectInstance.Type);
+            }
+
+            else if (AudioProjectInstance.Type == ProjectType.statesaproj)
+            {
+                ConvertDataGridToStatesAudioProject(DataGridData);
+
+                AddToPackFile(_packFileService, AudioProjectInstance.StatesAudioProject, AudioProjectInstance.FileName, AudioProjectInstance.Directory, AudioProjectInstance.Type);
+            }
         }
 
         [RelayCommand] public void LoadVOProject()
@@ -196,21 +212,115 @@ namespace Editors.Audio.AudioEditor.ViewModels
             }
         }
 
-        [RelayCommand] public void SaveAudioProject()
+        public void LoadDialogueEvent(IAudioRepository audioRepository, bool showCustomStatesOnly, bool areStateGroupsEqual = false)
         {
-            if (AudioProjectInstance.Type == ProjectType.voaproj)
-            {
-                ConvertDataGridToVOAudioProject(DataGridData, SelectedAudioProjectEvent);
+            if (string.IsNullOrEmpty(SelectedAudioProjectEvent))
+                return;
 
-                AddToPackFile(_packFileService, AudioProjectInstance.VOAudioProject, AudioProjectInstance.FileName, AudioProjectInstance.Directory, AudioProjectInstance.Type);
+            // Configure the DataGrids.
+            if (showCustomStatesOnly == true || !areStateGroupsEqual)
+            {
+                ConfigureDataGridBuilder(this, audioRepository, showCustomStatesOnly, "AudioEditorDataGridBuilder", DataGridBuilderData);
+                ConfigureDataGrid(this, audioRepository, "AudioEditorDataGrid", DataGridData);
             }
 
-            else if (AudioProjectInstance.Type == ProjectType.statesaproj)
-            {
-                ConvertDataGridToStatesAudioProject(DataGridData);
+            // Clear the previous DataGrid Data.
+            ClearDataGridBuilderData(DataGridBuilderData);
+            ClearDataGridData(DataGridData);
 
-                AddToPackFile(_packFileService, AudioProjectInstance.StatesAudioProject, AudioProjectInstance.FileName, AudioProjectInstance.Directory, AudioProjectInstance.Type);
+            // Populate the DataGrid with the data from the Audio Project.
+            var vOAudioProject = AudioProjectInstance.VOAudioProject;
+            var audioProjectItems = vOAudioProject.DialogueEvents;
+            var dialogueEvent = audioProjectItems.FirstOrDefault(dialogueEvent => dialogueEvent.Name == SelectedAudioProjectEvent);
+            var decisionTree = dialogueEvent.DecisionTree;
+
+            if (audioProjectItems.Count > 0)
+                ConvertVOAudioProjectToDataGrid(DataGridData, vOAudioProject, SelectedAudioProjectEvent);
+
+            else
+                InitialiseDialogueEventDataGrid(decisionTree);
+
+            AddRowToDataGridBuilder();
+
+            _logger.Here().Information($"Loaded Event: {SelectedAudioProjectEvent}");
+        }
+
+        public void LoadModdedStates()
+        {
+            if (string.IsNullOrEmpty(SelectedAudioProjectEvent))
+                return;
+
+            // Configure the DataGrids.
+            ConfigureDataGrid(this, "AudioEditorDataGrid", DataGridBuilderData);
+            ClearDataGridBuilderData(DataGridBuilderData);
+
+            // Populate the DataGrid with the data from the Audio Project.
+            var statesAudioProject = AudioProjectInstance.StatesAudioProject;
+            var statesAudioProjectItems = statesAudioProject.StatesProjectItems;
+
+            if (statesAudioProjectItems.Count > 0)
+                ConvertStatesAudioProjectToDataGrid(DataGridBuilderData, statesAudioProject);
+
+            else
+                InitialiseModdedStatesDataGrid();
+
+            _logger.Here().Information($"Loaded Event: {SelectedAudioProjectEvent}");
+        }
+
+        private void InitialiseDialogueEventDataGrid(List<DecisionNode> decisionTree)
+        {
+            // Process Decision Tree and populate the objects in the dataGrid.
+            foreach (var statePath in decisionTree)
+            {
+                var filePaths = statePath.AudioFiles;
+                var fileNames = filePaths.Select(Path.GetFileName);
+                var fileNamesString = string.Join(", ", fileNames);
+
+                var dataGridRow = new Dictionary<string, object>
+                {
+                    ["AudioFiles"] = new List<string>(statePath.AudioFiles), // Create a new instance of the list to avoid referencing the original collection.
+                    ["AudioFilesDisplay"] = fileNamesString
+                };
+
+                if (DialogueEventsWithStateGroupsWithQualifiers.TryGetValue(SelectedAudioProjectEvent, out var stateGroupsWithQualifiers))
+                {
+                    // Make sure to add the kvp for the column header i.e. the stateGroupWithQualifier (with extra underscores) to prevent a binding error. 
+                    foreach (var kvp in stateGroupsWithQualifiers)
+                    {
+                        var stateGroupWithQualifier = kvp.Key;
+                        dataGridRow[AddExtraUnderscoresToString(stateGroupWithQualifier)] = string.Empty;
+                    }
+                }
+
+                DataGridData.Add(dataGridRow);
             }
+        }
+
+        private void InitialiseModdedStatesDataGrid()
+        {
+            var dataGridRow = new Dictionary<string, object>{};
+
+            var stateGroups = ModdedStateGroups;
+
+            foreach (var stateGroup in stateGroups)
+                dataGridRow[AddExtraUnderscoresToString(stateGroup)] = string.Empty;
+
+            DataGridData.Add(dataGridRow);
+        }
+
+        public void CreateEventsListFromVOProject()
+        {
+            ClearAudioProjectEvents(AudioProjectEvents);
+
+            foreach (var dialogueEventItem in AudioProjectInstance.VOAudioProject.DialogueEvents)
+                AudioProjectEvents.Add(dialogueEventItem.Name);
+        }
+
+        public void CreateEventsListFromStatesProject()
+        {
+            ClearAudioProjectEvents(AudioProjectEvents);
+
+            AudioProjectEvents.Add("modded_states");
         }
 
         public void AddRowToDataGridBuilder()
@@ -326,117 +436,6 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 dataGridRow["AudioFiles"] = audioFiles;
                 dataGridRow["AudioFilesDisplay"] = fileNamesString;
             }
-        }
-
-        public void LoadDialogueEvent(IAudioRepository audioRepository, bool showCustomStatesOnly, bool areStateGroupsEqual = false)
-        {
-            if (string.IsNullOrEmpty(SelectedAudioProjectEvent))
-                return;
-
-            // Configure the DataGrids.
-            if (showCustomStatesOnly == true || !areStateGroupsEqual)
-            {
-                ConfigureDataGridBuilder(this, audioRepository, showCustomStatesOnly, "AudioEditorDataGridBuilder", DataGridBuilderData);
-                ConfigureDataGrid(this, audioRepository, "AudioEditorDataGrid", DataGridData);
-            }
-
-            // Clear the previous DataGrid Data.
-            ClearDataGridBuilderData(DataGridBuilderData);
-            ClearDataGridData(DataGridData);
-
-            // Populate the DataGrid with the data from the Audio Project.
-            var vOAudioProject = AudioProjectInstance.VOAudioProject;
-            var audioProjectItems = vOAudioProject.DialogueEvents;
-            var dialogueEvent = audioProjectItems.FirstOrDefault(dialogueEvent => dialogueEvent.Name == SelectedAudioProjectEvent);
-            var decisionTree = dialogueEvent.DecisionTree;
-
-            if (audioProjectItems.Count > 0)
-                ConvertVOAudioProjectToDataGrid(DataGridData, vOAudioProject, SelectedAudioProjectEvent);
-
-            else
-                InitialiseDialogueEventDataGrid(decisionTree);
-
-            AddRowToDataGridBuilder();
-
-            _logger.Here().Information($"Loaded Event: {SelectedAudioProjectEvent}");
-        }
-
-        public void LoadModdedStates(IAudioRepository audioRepository)
-        {
-            if (string.IsNullOrEmpty(SelectedAudioProjectEvent))
-                return;
-
-            // Configure the DataGrid before adding the data to it so that once you add the data it populates.
-            ConfigureDataGrid(this, "AudioEditorDataGrid", DataGridBuilderData);
-
-            ClearDataGridBuilderData(DataGridBuilderData);
-
-            var statesAudioProject = AudioProjectInstance.StatesAudioProject;
-            var statesAudioProjectItems = statesAudioProject.StatesProjectItems;
-
-            if (statesAudioProjectItems.Count > 0)
-                ConvertStatesAudioProjectToDataGrid(DataGridBuilderData, statesAudioProject);
-
-            else
-                InitialiseModdedStatesDataGrid();
-
-            _logger.Here().Information($"Loaded Event: {SelectedAudioProjectEvent}");
-        }
-
-        private void InitialiseDialogueEventDataGrid(List<DecisionNode> decisionTree)
-        {
-            // Process Decision Tree and populate the objects in the dataGrid.
-            foreach (var statePath in decisionTree)
-            {
-                var filePaths = statePath.AudioFiles;
-                var fileNames = filePaths.Select(Path.GetFileName);
-                var fileNamesString = string.Join(", ", fileNames);
-
-                var dataGridRow = new Dictionary<string, object>
-                {
-                    ["AudioFiles"] = new List<string>(statePath.AudioFiles), // Create a new instance of the list to avoid referencing the original collection.
-                    ["AudioFilesDisplay"] = fileNamesString
-                };
-
-                if (DialogueEventsWithStateGroupsWithQualifiers.TryGetValue(SelectedAudioProjectEvent, out var stateGroupsWithQualifiers))
-                {
-                    // Make sure to add the kvp for the column header i.e. the stateGroupWithQualifier (with extra underscores) to prevent a binding error. 
-                    foreach (var kvp in stateGroupsWithQualifiers)
-                    {
-                        var stateGroupWithQualifier = kvp.Key;
-                        dataGridRow[AddExtraUnderscoresToString(stateGroupWithQualifier)] = string.Empty;
-                    }
-                }
-
-                DataGridData.Add(dataGridRow);
-            }
-        }
-
-        private void InitialiseModdedStatesDataGrid()
-        {
-            var dataGridRow = new Dictionary<string, object>{};
-
-            var stateGroups = ModdedStateGroups;
-
-            foreach (var stateGroup in stateGroups)
-                dataGridRow[AddExtraUnderscoresToString(stateGroup)] = string.Empty;
-
-            DataGridData.Add(dataGridRow);
-        }
-
-        public void CreateEventsListFromVOProject()
-        {
-            ClearAudioProjectEvents(AudioProjectEvents);
-
-            foreach (var dialogueEventItem in AudioProjectInstance.VOAudioProject.DialogueEvents)
-                AudioProjectEvents.Add(dialogueEventItem.Name);
-        }
-
-        public void CreateEventsListFromStatesProject()
-        {
-            ClearAudioProjectEvents(AudioProjectEvents);
-
-            AudioProjectEvents.Add("modded_states");
         }
 
         public void ResetAudioEditorViewModelData()

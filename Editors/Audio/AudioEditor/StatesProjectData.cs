@@ -28,9 +28,6 @@ namespace Editors.Audio.AudioEditor
 
         public static void ConvertDataGridToStatesAudioProject(ObservableCollection<Dictionary<string, object>> dataGridData)
         {
-            if (dataGridData.Count() == 0)
-                return;
-
             var statesProject = AudioProjectInstance.StatesAudioProject;
             statesProject.StatesProjectItems = new List<StatesProjectItems>();
 
