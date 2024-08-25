@@ -9,33 +9,6 @@
              mc:Ignorable="d" 
              d:DesignWidth="800" d:DesignHeight="450">
 
-    <UserControl.Resources>
-        <!-- Define a custom style for DataGridCell to suppress hover highlight and remove cell borders -->
-        <Style x:Key="NoHoverCellStyle" TargetType="DataGridCell">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Foreground" Value="#F0F0F0"/>
-            <!-- Ensure text color is consistent -->
-            <Setter Property="FocusVisualStyle">
-                <Setter.Value>
-                    <Style TargetType="FrameworkElement">
-                        <Setter Property="Visibility" Value="Collapsed"/>
-                    </Style>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <!-- Keep the row highlight when selected -->
-                <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="#5C5C5C"/>
-                    <Setter Property="BorderBrush" Value="Transparent"/>
-                    <!-- Ensure no border is shown -->
-                    <Setter Property="BorderThickness" Value="0"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-    </UserControl.Resources>
-
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -111,7 +84,7 @@
                 <!-- DataGridBuilder -->
                 <StackPanel Grid.Row="0" Margin="0, 0, 0, 0">
                     <Label Content="Audio Project Builder" Margin="0, 0, 0, 0" FontSize="14"/>
-                    <DataGrid x:Name="AudioEditorDataGridBuilder" AutoGenerateColumns="False" CellStyle="{StaticResource NoHoverCellStyle}" />
+                    <DataGrid x:Name="AudioEditorDataGridBuilder" AutoGenerateColumns="False"/>
                 </StackPanel>
 
                 <!-- Controls Section -->
@@ -128,7 +101,7 @@
                 <!-- DataGrid -->
                 <StackPanel Grid.Row="3" Margin="0, 0, 0, 0">
                     <Label Content="Audio Project" Margin="0, 0, 0, 0" FontSize="14"/>
-                    <DataGrid x:Name="AudioEditorDataGrid" Margin="0, 0, 0, 0" AutoGenerateColumns="False" CellStyle="{StaticResource NoHoverCellStyle}"/>
+                    <DataGrid x:Name="AudioEditorDataGrid" Margin="0, 0, 0, 0" AutoGenerateColumns="False"/>
                 </StackPanel>
             </Grid>
         </Grid>
