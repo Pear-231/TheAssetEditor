@@ -18,14 +18,14 @@
         </Grid.RowDefinitions>
 
         <!-- File Menu spanning the entire width -->
-        <Grid Grid.Row="0">
+        <Grid Grid.Row="0" >
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <Menu Grid.Row="0" Margin="0, 5, 5, 0">
-                <MenuItem Header="_File" HorizontalAlignment="Left">
+            <Menu Grid.Row="0" Margin="0, 5, 5, 0" >
+                <MenuItem Header="_File" HorizontalAlignment="Left" >
                     <MenuItem Header="_New">
                         <MenuItem Header="VO Audio Project" Command="{Binding NewVOProjectCommand}" />
                         <MenuItem Header="States Audio Project" Command="{Binding NewStatesProjectCommand}" />
@@ -39,7 +39,7 @@
             </Menu>
 
             <!-- Divider -->
-            <Border Grid.Row="1" Height="5" Background="#3C3C3C" Margin="0, 10, 0, 0"/>
+            <Border Grid.Row="1" Height="5" Background="#FF313131" Margin="0, 5, 0, 0"/>
 
         </Grid>
 
@@ -64,13 +64,13 @@
                         <ListBox x:Name="AudioProjectEventListBox"
                                  ItemsSource="{Binding AudioProjectEvents}"
                                  SelectedItem="{Binding SelectedAudioProjectEvent, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-                                 Margin="0, 5, 0, 0"/>
+                                 Margin="0, 0, 0, 0"/>
                     </ScrollViewer>
                 </StackPanel>
             </Grid>
 
             <!-- GridSplitter -->
-            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="#3C3C3C" />
+            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="#FF313131" />
 
             <!-- Right Side of GridSplitter -->
             <Grid Grid.Column="2">
@@ -79,30 +79,29 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
                 <!-- DataGridBuilder -->
-                <StackPanel Grid.Row="0" Margin="0, 0, 0, 0">
-                    <Label Content="Audio Project Builder" Margin="0, 0, 0, 0" FontSize="14"/>
-                    <DataGrid x:Name="AudioEditorDataGridBuilder" AutoGenerateColumns="False"/>
+                <StackPanel Grid.Row="0">
+                    <DataGrid x:Name="AudioEditorDataGridBuilder" AutoGenerateColumns="False" EnableRowVirtualization="True" EnableColumnVirtualization="True"/>
                 </StackPanel>
 
+                <!-- Divider -->
+                <Border Grid.Row="1" Height="5" Background="#FF313131"/>
+
                 <!-- Controls Section -->
-                <StackPanel Grid.Row="1" MinHeight="25" Margin="0, 5, 0, 0" Orientation="Horizontal">
+                <StackPanel Grid.Row="2" MinHeight="25" Margin="0, 5, 0, 0" Orientation="Horizontal">
                     <Button Content="Add Row" Command="{Binding AddRowToDataGridCommand}" Margin="5, 0, 0, 0" VerticalAlignment="Center" Width="100"/>
-                    <Button Content="Remove Row" Command="{Binding RemoveRowFromDataGridCommand}" Margin="5, 0, 0, 0" VerticalAlignment="Center" Width="100"/>
                     <Button Content="Play Audio" Command="{Binding PlayAudioCommand}" Margin="5, 0, 0, 0" VerticalAlignment="Center" Width="100"/>
                     <CheckBox Content="Show Custom States Only" Margin="5, 0, 0, 0" VerticalAlignment="Center" IsChecked="{Binding ShowCustomStatesOnly, Mode=TwoWay}" />
                 </StackPanel>
 
                 <!-- Divider -->
-                <Border Grid.Row="2" Height="5" Background="#3C3C3C" Margin="0, 10, 0, 0"/>
+                <Border Grid.Row="3" Height="5" Background="#FF313131" Margin="0, 5, 0, 0"/>
 
                 <!-- DataGrid -->
-                <StackPanel Grid.Row="3" Margin="0, 0, 0, 0">
-                    <Label Content="Audio Project" Margin="0, 0, 0, 0" FontSize="14"/>
-                    <DataGrid x:Name="AudioEditorDataGrid" Margin="0, 0, 0, 0" AutoGenerateColumns="False"/>
-                </StackPanel>
+                <DataGrid Grid.Row="4" x:Name="AudioEditorDataGrid" AutoGenerateColumns="False" VerticalScrollBarVisibility="Auto"/>
             </Grid>
         </Grid>
     </Grid>
