@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Text;
 using System.Text.Json;
 using Editors.Audio.AudioEditor.ViewModels;
@@ -102,6 +103,21 @@ namespace Editors.Audio.AudioEditor
 
                 DialogueEventsWithStateGroupsWithQualifiers[dialogueEvent.Key] = stateGroupsWithQualifiers;
             }
+        }
+
+        public static void ClearDataGridData(ObservableCollection<Dictionary<string, object>>  dataGridData)
+        {
+            dataGridData.Clear();
+        }
+
+        public static void ClearDataGridBuilderData(ObservableCollection<Dictionary<string, object>>  dataGridBuilderData)
+        {
+            dataGridBuilderData.Clear();
+        }
+
+        public static void ClearAudioProjectEvents(ObservableCollection<string> audioProjectEvents)
+        {
+            audioProjectEvents.Clear();
         }
 
         // Apparently WPF doesn't_like_underscores so double them up in order for them to be displayed in the UI.

@@ -23,7 +23,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
         readonly ILogger _logger = Logging.Create<NewCustomStatesViewModel>();
         private Action _closeAction;
 
-        public NotifyAttr<string> DisplayName { get; set; } = new NotifyAttr<string>("New Custom States");
+        public NotifyAttr<string> DisplayName { get; set; } = new NotifyAttr<string>("New Custom States Project");
 
         // The properties for each settings.
         [ObservableProperty] private string _statesProjectFileName; 
@@ -85,15 +85,15 @@ namespace Editors.Audio.AudioEditor.ViewModels
             InitialiseStatesProject();
 
             // Add the States Project with empty events to the PackFile.
-            AddToPackFile(_packFileService, AudioProjectInstance.StatesProject, AudioProjectInstance.FileName, AudioProjectInstance.Directory, AudioProjectInstance.Type);
+            AddToPackFile(_packFileService, AudioProjectInstance.StatesAudioProject, AudioProjectInstance.FileName, AudioProjectInstance.Directory, AudioProjectInstance.Type);
 
             CloseWindowAction();
         }
 
         public void InitialiseStatesProject()
         {
-            if (AudioProjectInstance.StatesProject == null)
-                AudioProjectInstance.StatesProject = new StatesProject();
+            if (AudioProjectInstance.StatesAudioProject == null)
+                AudioProjectInstance.StatesAudioProject = new StatesAudioProject();
 
             AudioProjectInstance.Type = ProjectType.statesaproj;
             AudioProjectInstance.FileName = StatesProjectFileName;

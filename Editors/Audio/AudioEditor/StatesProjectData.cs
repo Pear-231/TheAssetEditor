@@ -8,7 +8,7 @@ namespace Editors.Audio.AudioEditor
 {
     public class StatesProjectData
     {
-        public class StatesProject
+        public class StatesAudioProject
         {
             public List<StatesProjectItems> StatesProjectItems { get; set; } = [];
         }
@@ -26,15 +26,15 @@ namespace Editors.Audio.AudioEditor
 
         public static readonly List<string> ModdedStateGroups = ["VO_Actor", "VO_Culture", "VO_Faction_Leader", "VO_Battle_Selection", "VO_Battle_Special_Ability"];
 
-        public static void ConvertDataGridBuilderDataToStatesProject(ObservableCollection<Dictionary<string, object>> dataGridBuilderData)
+        public static void ConvertDataGridToStatesAudioProject(ObservableCollection<Dictionary<string, object>> dataGridData)
         {
-            if (dataGridBuilderData.Count() == 0)
+            if (dataGridData.Count() == 0)
                 return;
 
-            var statesProject = AudioProjectInstance.StatesProject;
+            var statesProject = AudioProjectInstance.StatesAudioProject;
             statesProject.StatesProjectItems = new List<StatesProjectItems>();
 
-            foreach (var dataGridItem in dataGridBuilderData)
+            foreach (var dataGridItem in dataGridData)
             {
                 var statesProjectItem = new StatesProjectItems
                 {
@@ -59,7 +59,7 @@ namespace Editors.Audio.AudioEditor
             }
         }
 
-        public static void ConvertStatesProjectToDataGridBuilderData(ObservableCollection<Dictionary<string, object>> dataGridBuilderData, StatesProject statesProject)
+        public static void ConvertStatesAudioProjectToDataGrid(ObservableCollection<Dictionary<string, object>> dataGridData, StatesAudioProject statesProject)
         {
             foreach (var statesProjectItem in statesProject.StatesProjectItems)
             {
@@ -73,7 +73,7 @@ namespace Editors.Audio.AudioEditor
                     dataGridRow[stateGroup] = state;
                 }
 
-                dataGridBuilderData.Add(dataGridRow);
+                dataGridData.Add(dataGridRow);
             }
         }
     }

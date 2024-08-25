@@ -41,7 +41,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
         readonly ILogger _logger = Logging.Create<NewVOAudioProjectViewModel>();
         private Action _closeAction;
 
-        public NotifyAttr<string> DisplayName { get; set; } = new NotifyAttr<string>("New VO Project");
+        public NotifyAttr<string> DisplayName { get; set; } = new NotifyAttr<string>("New VO Audio Project");
 
         // The properties for each settings.
         [ObservableProperty] private string _vOProjectFileName;
@@ -238,7 +238,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
             _audioEditorViewModel.ResetAudioEditorViewModelData();
 
             // Create the list of events to be displayed in the AudioEditor.
-            CreateAudioProjectEventsList();
+            CreateAudioProjectEventsList(_audioEditorViewModel.AudioProjectEvents);
 
             // Create the object for State Groups with qualifiers so that their keys in the AudioProject dictionary are unique.
             AddQualifiersToStateGroups(_audioRepository.DialogueEventsWithStateGroups);
@@ -247,7 +247,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
             InitialiseVOAudioProject();
 
             // Add the VO Project with empty events to the PackFile.
-            AddToPackFile(_packFileService, AudioProjectInstance.VOProject, AudioProjectInstance.FileName, AudioProjectInstance.Directory, AudioProjectInstance.Type);
+            AddToPackFile(_packFileService, AudioProjectInstance.VOAudioProject, AudioProjectInstance.FileName, AudioProjectInstance.Directory, AudioProjectInstance.Type);
 
             // Load the custom States so that they can be referenced when the Event is loaded.
             //PrepareCustomStatesForComboBox(this);
@@ -255,9 +255,9 @@ namespace Editors.Audio.AudioEditor.ViewModels
             CloseWindowAction();
         }
 
-        public void CreateAudioProjectEventsList()
+        public void CreateAudioProjectEventsList(ObservableCollection<string> audioProjectEvents)
         {
-            _audioEditorViewModel.AudioProjectEvents.Clear();
+            ClearAudioProjectEvents(audioProjectEvents);
 
             foreach (var checkBox in DialogueEventCheckBoxes)
             {
@@ -271,8 +271,8 @@ namespace Editors.Audio.AudioEditor.ViewModels
 
         public void InitialiseVOAudioProject()
         {
-            if (AudioProjectInstance.VOProject == null)
-                AudioProjectInstance.VOProject = new VOProject();
+            if (AudioProjectInstance.VOAudioProject == null)
+                AudioProjectInstance.VOAudioProject = new VOAudioProject();
 
             AudioProjectInstance.Type = ProjectType.voaproj;
             AudioProjectInstance.FileName = VOProjectFileName;
@@ -285,7 +285,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 StatesProjectFilePath = StatesProjectFilePath
             };
 
-            AudioProjectInstance.VOProject.Settings = settings;
+            AudioProjectInstance.VOAudioProject.Settings = settings;
 
             // Create Dialogue Events.
             var dialogueEvents = new List<DialogueEvent>();
@@ -300,7 +300,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 dialogueEvents.Add(dialogueEvent);
             }
 
-            AudioProjectInstance.VOProject.DialogueEvents = dialogueEvents;
+            AudioProjectInstance.VOAudioProject.DialogueEvents = dialogueEvents;
         }
 
         public void ResetNewVOAudioProjectViewModelData()

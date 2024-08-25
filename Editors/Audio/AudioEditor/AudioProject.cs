@@ -17,9 +17,9 @@ namespace Editors.Audio.AudioEditor
 
         public static AudioProject AudioProjectInstance => _instance;
 
-        public VOProject VOProject { get; set; } = new VOProject();
+        public VOAudioProject VOAudioProject { get; set; } = new VOAudioProject();
 
-        public StatesProject StatesProject { get; set; } = new StatesProject();
+        public StatesAudioProject StatesAudioProject { get; set; } = new StatesAudioProject();
 
         public static Dictionary<string, Dictionary<string, string>> DialogueEventsWithStateGroupsWithQualifiers { get; set; } = new();
 
@@ -35,14 +35,10 @@ namespace Editors.Audio.AudioEditor
 
         public string PreviousSelectedAudioProjectEvent { get; set; }
 
-        private AudioProject()
-        {
-        }
-
         public void ResetAudioProjectData()
         {
-            VOProject = null;
-            StatesProject = null;
+            VOAudioProject = null;
+            StatesAudioProject = null;
             DialogueEventsWithStateGroupsWithQualifiers = null;
             StateGroupsWithCustomStates = null;
             Type = null;

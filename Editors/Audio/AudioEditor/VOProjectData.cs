@@ -9,7 +9,7 @@ namespace Editors.Audio.AudioEditor
 {
     public class VOProjectData
     {
-        public class VOProject
+        public class VOAudioProject
         {
             public Settings Settings { get; set; }
             public List<Event> Events { get; set; } = [];
@@ -53,17 +53,17 @@ namespace Editors.Audio.AudioEditor
             public string State { get; set; }
         }
 
-        public static void ConvertDataGridBuilderDataToVOProject(ObservableCollection<Dictionary<string, object>> dataGridBuilderData, string audioProjectEvent)
+        public static void ConvertDataGridToVOAudioProject(ObservableCollection<Dictionary<string, object>> dataGridData, string audioProjectEvent)
         {
-            if (dataGridBuilderData.Count() == 0 || audioProjectEvent == null || audioProjectEvent == "")
+            if (audioProjectEvent == null || audioProjectEvent == "")
                 return;
 
-            var voProject = AudioProjectInstance.VOProject;
+            var voProject = AudioProjectInstance.VOAudioProject;
             var dialogueEvent = voProject.DialogueEvents.FirstOrDefault(dialogueEvent => dialogueEvent.Name == audioProjectEvent); // Find the corresponding DialogueEvent in AudioProject
             var decisionTree = dialogueEvent.DecisionTree;
             decisionTree.Clear();
 
-            foreach (var dataGridItem in dataGridBuilderData)
+            foreach (var dataGridItem in dataGridData)
             {
                 // Validation to ensure that the State Groups are in the correct order.
                 var orderedStateGroupsAndStates = ValidateStateGroupsOrder(dataGridItem, audioProjectEvent);
@@ -95,7 +95,7 @@ namespace Editors.Audio.AudioEditor
             }
         }
 
-        public static void ConvertVOProjectToDataGridBuilderData(ObservableCollection<Dictionary<string, object>> dataGridBuilderData, VOProject voProject, string selectedAudioProjectEvent)
+        public static void ConvertVOAudioProjectToDataGrid(ObservableCollection<Dictionary<string, object>> dataGridData, VOAudioProject voProject, string selectedAudioProjectEvent)
         {
             var dialogueEvent = voProject.DialogueEvents.FirstOrDefault(dialogueEvent => dialogueEvent.Name == selectedAudioProjectEvent); // Find the corresponding DialogueEvent in AudioProject
 
@@ -130,7 +130,7 @@ namespace Editors.Audio.AudioEditor
                     }
                 }
 
-                dataGridBuilderData.Add(dataGridRow);
+                dataGridData.Add(dataGridRow);
             }
         }
     }

@@ -20,19 +20,83 @@ namespace Editors.Audio.AudioEditor
         {
         }
 
+        public static void ConfigureDataGrid(AudioEditorViewModel viewModel, IAudioRepository audioRepository, string dataGridName, ObservableCollection<Dictionary<string, object>> dataGridData)
+        {
+            var selectedAudioProjectEvent = viewModel.SelectedAudioProjectEvent;
+
+            var dataGrid = GetDataGrid(dataGridName);
+            dataGrid.CanUserAddRows = false; // Setting this bastard to false ensures that data won't go missing from the last row when a new row is added. Wtf WPF.
+            dataGrid.ItemsSource = dataGridData;
+            dataGrid.Columns.Clear();
+
+            var stateGroups = audioRepository.DialogueEventsWithStateGroups[selectedAudioProjectEvent];
+            var stateGroupsWithQualifiers = AudioProject.DialogueEventsWithStateGroupsWithQualifiers[selectedAudioProjectEvent];
+
+            var stateGroupsCount = stateGroups.Count() + 1;
+            var columnWidth = stateGroupsCount > 0 ? 1.0 / stateGroupsCount : 1.0;
+
+            foreach (var kvp in stateGroupsWithQualifiers)
+            {
+                var stateGroupWithQualifier = kvp.Key;
+
+                // Column for State Group:
+                var stateGroupColumn = new DataGridTemplateColumn
+                {
+                    Header = AddExtraUnderscoresToString(stateGroupWithQualifier),
+                    Width = new DataGridLength(columnWidth, DataGridLengthUnitType.Star),
+                    IsReadOnly = true
+                };
+
+                var textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
+
+                textBlockFactory.SetBinding(TextBlock.TextProperty, new Binding($"[{AddExtraUnderscoresToString(stateGroupWithQualifier)}]"));
+                textBlockFactory.SetValue(TextBlock.PaddingProperty, new Thickness(5, 2.5, 2.5, 5));
+
+                var cellTemplate = new DataTemplate();
+
+                cellTemplate.VisualTree = textBlockFactory;
+
+                stateGroupColumn.CellTemplate = cellTemplate;
+
+                dataGrid.Columns.Add(stateGroupColumn);
+            }
+
+            // Column for Audio files TextBox with Tooltip:
+            var soundsTextColumn = new DataGridTemplateColumn
+            {
+                Header = "Audio Files",
+                Width = new DataGridLength(columnWidth, DataGridLengthUnitType.Star),
+                IsReadOnly = true
+            };
+
+            var soundsCellTemplate = new DataTemplate();
+            var soundsTextBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
+            soundsTextBlockFactory.SetBinding(TextBlock.TextProperty, new Binding("[AudioFilesDisplay]"));
+
+            // Create and set the tooltip binding:
+            var tooltipBinding = new Binding("[AudioFiles]")
+            {
+                Mode = BindingMode.OneWay,
+                Converter = new ConvertToolTipCollectionToString()
+            };
+
+            soundsTextBlockFactory.SetBinding(FrameworkElement.ToolTipProperty, tooltipBinding);
+            soundsTextBlockFactory.SetValue(TextBlock.PaddingProperty, new Thickness(5, 2.5, 2.5, 5));
+
+            soundsCellTemplate.VisualTree = soundsTextBlockFactory;
+            soundsTextColumn.CellTemplate = soundsCellTemplate;
+
+            dataGrid.Columns.Add(soundsTextColumn);
+        }
+
         public static void ConfigureDataGridBuilder(AudioEditorViewModel viewModel, IAudioRepository audioRepository, bool showCustomStatesOnly, string dataGridName, ObservableCollection<Dictionary<string, object>> dataGridBuilderData)
         {
             var selectedAudioProjectEvent = viewModel.SelectedAudioProjectEvent;
 
             var dataGrid = GetDataGrid(dataGridName);
-
-            // DataGrid settings:
             dataGrid.CanUserAddRows = false; // Setting this bastard to false ensures that data won't go missing from the last row when a new row is added. Wtf WPF.
             dataGrid.ItemsSource = dataGridBuilderData;
-
-            // Clear existing data:
             dataGrid.Columns.Clear();
-            dataGridBuilderData.Clear();
 
             var stateGroups = audioRepository.DialogueEventsWithStateGroups[selectedAudioProjectEvent];
             var stateGroupsWithQualifiers = AudioProject.DialogueEventsWithStateGroupsWithQualifiers[selectedAudioProjectEvent];
@@ -162,7 +226,6 @@ namespace Editors.Audio.AudioEditor
                 }
             }));
 
-            // Bind the SelectedItem property
             factory.SetBinding(System.Windows.Controls.Primitives.Selector.SelectedItemProperty, binding);
             factory.SetValue(ItemsControl.IsTextSearchEnabledProperty, true);
             factory.SetValue(ComboBox.IsEditableProperty, true);
@@ -222,10 +285,7 @@ namespace Editors.Audio.AudioEditor
                         var rowDataContext = dataGridRow.DataContext;
 
                         if (rowDataContext is Dictionary<string, object> dataGridRowContext)
-                        {
-                            // Pass the entire ItemsSource (dataGridBuilderData) and the specific row context to AddAudioFiles
                             AudioEditorViewModel.AddAudioFiles(dataGridRowContext, textBox);
-                        }
                     }
                 }
             }));
@@ -236,81 +296,6 @@ namespace Editors.Audio.AudioEditor
             template.VisualTree = factory;
 
             return template;
-        }
-
-        public static void ConfigureDataGrid(AudioEditorViewModel viewModel, IAudioRepository audioRepository, bool showCustomStatesOnly, string dataGridName, ObservableCollection<Dictionary<string, object>> dataGridBuilderData)
-        {
-            var selectedAudioProjectEvent = viewModel.SelectedAudioProjectEvent;
-
-            var dataGrid = GetDataGrid(dataGridName);
-
-            // DataGrid settings:
-            dataGrid.CanUserAddRows = false; // Setting this to false ensures that data won't go missing from the last row when a new row is added.
-            dataGrid.ItemsSource = dataGridBuilderData;
-
-            // Clear existing data:
-            dataGrid.Columns.Clear();
-            dataGridBuilderData.Clear();
-
-            var stateGroups = audioRepository.DialogueEventsWithStateGroups[selectedAudioProjectEvent];
-            var stateGroupsWithQualifiers = AudioProject.DialogueEventsWithStateGroupsWithQualifiers[selectedAudioProjectEvent];
-
-            var stateGroupsCount = stateGroups.Count() + 1;
-            var columnWidth = stateGroupsCount > 0 ? 1.0 / stateGroupsCount : 1.0;
-
-            foreach (var kvp in stateGroupsWithQualifiers)
-            {
-                var stateGroupWithQualifier = kvp.Key;
-
-                // Column for State Group:
-                var stateGroupColumn = new DataGridTemplateColumn
-                {
-                    Header = AddExtraUnderscoresToString(stateGroupWithQualifier),
-                    Width = new DataGridLength(columnWidth, DataGridLengthUnitType.Star),
-                    IsReadOnly = true
-                };
-
-                var cellTemplate = new DataTemplate();
-                var textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
-                textBlockFactory.SetBinding(TextBlock.TextProperty, new Binding($"[{AddExtraUnderscoresToString(stateGroupWithQualifier)}]"));
-
-                // Add padding to the TextBlock within the cell template
-                textBlockFactory.SetValue(TextBlock.PaddingProperty, new Thickness(5, 2.5, 2.5, 5));
-
-                cellTemplate.VisualTree = textBlockFactory;
-                stateGroupColumn.CellTemplate = cellTemplate;
-
-                dataGrid.Columns.Add(stateGroupColumn);
-            }
-
-            // Column for Audio files TextBox with Tooltip:
-            var soundsTextColumn = new DataGridTemplateColumn
-            {
-                Header = "Audio Files",
-                Width = new DataGridLength(columnWidth, DataGridLengthUnitType.Star),
-                IsReadOnly = true
-            };
-
-            var soundsCellTemplate = new DataTemplate();
-            var soundsTextBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
-            soundsTextBlockFactory.SetBinding(TextBlock.TextProperty, new Binding("[AudioFilesDisplay]"));
-
-            // Create and set the tooltip binding:
-            var tooltipBinding = new Binding("[AudioFiles]")
-            {
-                Mode = BindingMode.OneWay,
-                Converter = new ConvertToolTipCollectionToString()
-            };
-
-            soundsTextBlockFactory.SetBinding(FrameworkElement.ToolTipProperty, tooltipBinding);
-
-            // Add padding to the TextBlock within the cell template
-            soundsTextBlockFactory.SetValue(TextBlock.PaddingProperty, new Thickness(5, 2.5, 2.5, 5));
-
-            soundsCellTemplate.VisualTree = soundsTextBlockFactory;
-            soundsTextColumn.CellTemplate = soundsCellTemplate;
-
-            dataGrid.Columns.Add(soundsTextColumn);
         }
     }
 }
