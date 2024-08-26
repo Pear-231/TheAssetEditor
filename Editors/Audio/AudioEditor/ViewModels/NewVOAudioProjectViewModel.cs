@@ -262,10 +262,6 @@ namespace Editors.Audio.AudioEditor.ViewModels
             _audioEditorViewModel.SetDataGridControlsVisibility(false);
             _audioEditorViewModel.SetDataGridVisibility(true);
             _audioEditorViewModel.SetDataGridContextMenuVisibility(true);
-
-            // Set enablement of UI elements.
-            if (!string.IsNullOrEmpty(StatesProjectDirectory))
-                _audioEditorViewModel.IsShowModdedStatesCheckBoxEnabled = false;
         }
 
         public void CreateAudioProjectEventsList(ObservableCollection<string> audioProjectEvents)

@@ -72,7 +72,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
         [ObservableProperty] private bool _audioProjectExplorerVisibility = false;        
         [ObservableProperty] private bool _dataGridBuilderAndControlsVisibility = false;
         [ObservableProperty] private bool _dataGridControlsVisibility = false;
-        [ObservableProperty] private bool _dataGridVisibility = true;
+        [ObservableProperty] private bool _dataGridVisibility = false;
         [ObservableProperty] private bool _dataGridContextMenuVisibility = false;
 
         // UI enablement controls.
@@ -99,6 +99,9 @@ namespace Editors.Audio.AudioEditor.ViewModels
         {
             if (string.IsNullOrEmpty(newValue))
                 return;
+
+            if (!string.IsNullOrEmpty(AudioProjectInstance.VOAudioProject.Settings.StatesProjectDirectory))
+                IsShowModdedStatesCheckBoxEnabled = true;
 
             AudioProjectInstance.SelectedAudioProjectEvent = newValue;
 
