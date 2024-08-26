@@ -261,6 +261,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
             _audioEditorViewModel.SetDataGridBuilderAndControlsVisibility(true);
             _audioEditorViewModel.SetDataGridControlsVisibility(false);
             _audioEditorViewModel.SetDataGridVisibility(true);
+            _audioEditorViewModel.SetDataGridContextMenuVisibility(true);
         }
 
         public void CreateAudioProjectEventsList(ObservableCollection<string> audioProjectEvents)

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -38,8 +39,10 @@ using static Editors.Audio.Utility.SoundPlayer;
 // Add some sorting of to the modded states files.
 
 // Features:
-// Copy and paste of rows
+// Copy and paste of rows - need to ensure that you can only copy or paste, not both though you need to manage cases where this you open an event to paste into it and you instead want to copy
 // Audio compiler update
+// Fix the combobox delays or just make it stop highlighting the text when you click it
+// Need visibility stuff for the menu so that you can't paste between events unless it's a dialogue event
 
 namespace Editors.Audio.AudioEditor.ViewModels
 {
@@ -58,6 +61,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
         [ObservableProperty] private ObservableCollection<Dictionary<string, object>> _dataGridBuilderData = [];
         [ObservableProperty] private ObservableCollection<Dictionary<string, object>> _dataGridData = [];
         [ObservableProperty] private ObservableCollection<Dictionary<string, object>> _selectedDataGridRows = [];
+        [ObservableProperty] private ObservableCollection<Dictionary<string, object>> _copiedDataGridRows = [];
 
         // Properties the user can control.
         [ObservableProperty] private string _selectedAudioProjectEvent;
@@ -69,9 +73,11 @@ namespace Editors.Audio.AudioEditor.ViewModels
         [ObservableProperty] private bool _dataGridBuilderAndControlsVisibility = false;
         [ObservableProperty] private bool _dataGridControlsVisibility = false;
         [ObservableProperty] private bool _dataGridVisibility = false;
+        [ObservableProperty] private bool _dataGridContextMenuVisibility = false;
 
         // UI enablement controls.
         [ObservableProperty] private bool _isPlayAudioButtonEnabled = false;
+        [ObservableProperty] private bool _isPasteEnabled = true;
 
         public AudioEditorViewModel(IAudioRepository audioRepository, PackFileService packFileService, IWindowFactory windowFactory, SoundPlayer soundPlayer)
         {
@@ -79,6 +85,13 @@ namespace Editors.Audio.AudioEditor.ViewModels
             _packFileService = packFileService;
             _windowFactory = windowFactory;
             _soundPlayer = soundPlayer;
+
+            DataGridData.CollectionChanged += OnDataGridDataChanged;
+        }
+
+        private void OnDataGridDataChanged(object dataGridData, NotifyCollectionChangedEventArgs e)
+        {
+            SetIsPasteEnabled();
         }
 
         partial void OnSelectedAudioProjectEventChanged(string oldValue, string newValue)
@@ -107,6 +120,8 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 // Load the new Event data from the audio project
                 LoadDialogueEvent(ShowModdedStatesOnly, areStateGroupsEqual);
             }
+
+            SetIsPasteEnabled();
         }
 
         partial void OnShowModdedStatesOnlyChanged(bool value)
@@ -339,8 +354,8 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 foreach (var kvp in stateGroupsWithQualifiers)
                 {
                     var stateGroupWithQualifier = kvp.Key;
-                    var stateGroupKey = AddExtraUnderscoresToString(stateGroupWithQualifier);
-                    newRow[stateGroupKey] = "";
+                    var columnHeader = AddExtraUnderscoresToString(stateGroupWithQualifier);
+                    newRow[columnHeader] = "";
                 }
 
                 newRow["AudioFiles"] = new List<string> { };
@@ -411,24 +426,61 @@ namespace Editors.Audio.AudioEditor.ViewModels
             }
         }
 
-        
+        [RelayCommand] public void CopyRows()
+        {
+            // Initialise new data rather than setting it directly so it's not referencing the original object which for example gets cleared when a new Event is selected.
+            CopiedDataGridRows = new ObservableCollection<Dictionary<string, object>>();
 
+            foreach (var item in SelectedDataGridRows)
+                CopiedDataGridRows.Add(new Dictionary<string, object>(item));
 
+            SetIsPasteEnabled();
+        }
 
+        [RelayCommand] public void PasteRows()
+        {
+            if (IsPasteEnabled)
+            {
+                foreach (var copiedDataGridRow in CopiedDataGridRows)
+                    DataGridData.Add(copiedDataGridRow);
+            }
 
+            SetIsPasteEnabled();
+        }
 
-        /*
-            factory.SetValue(ContentControl.ContentProperty, "Play Audio");
-            factory.SetValue(FrameworkElement.ToolTipProperty, "Play an audio file at random to simulate the Dialogue Event being triggered in game.");
-        */
+        public void SetIsPasteEnabled()
+        {
+            if (CopiedDataGridRows.Count == 0)
+                return;
 
+            var areAnyCopiedRowsInDataGrid = CopiedDataGridRows.Any(copiedRow => DataGridData.Any(dataGridRow => copiedRow.Count == dataGridRow.Count && !copiedRow.Except(dataGridRow).Any()));
 
+            var stateGroupsWithQualifiers = DialogueEventsWithStateGroupsWithQualifiers[SelectedAudioProjectEvent];
 
+            var dialogueEventStateGroups = new List<string>();
 
+            foreach (var kvp in stateGroupsWithQualifiers)
+            {
+                var stateGroupWithQualifier = AddExtraUnderscoresToString(kvp.Key);
+                dialogueEventStateGroups.Add(stateGroupWithQualifier);
+            }
 
+            var copiedDataGridRowStateGroups = new List<string>();
 
+            foreach (var kvp in CopiedDataGridRows[0])
+            {
+                if (kvp.Key != "AudioFiles" && kvp.Key != "AudioFilesDisplay")
+                    copiedDataGridRowStateGroups.Add(kvp.Key);
+            }
 
+            var areStateGroupsEqual = dialogueEventStateGroups.SequenceEqual(copiedDataGridRowStateGroups);
 
+            if (!areStateGroupsEqual || areAnyCopiedRowsInDataGrid)
+                IsPasteEnabled = false;
+
+            else if (areStateGroupsEqual && !areAnyCopiedRowsInDataGrid)
+                IsPasteEnabled = true;
+        }
 
 
         public void RemoveRowFromDataGrid(Dictionary<string, object> rowToRemove)
@@ -484,6 +536,11 @@ namespace Editors.Audio.AudioEditor.ViewModels
         public void SetDataGridVisibility(bool isVisible)
         {
             DataGridVisibility = isVisible;
+        }
+
+        public void SetDataGridContextMenuVisibility(bool isVisible)
+        {
+            DataGridContextMenuVisibility = isVisible;
         }
 
         public void ResetAudioEditorViewModelData()

@@ -13,7 +13,6 @@ namespace Editors.Audio.AudioEditor
 {
     internal static class DataGridHelpers
     {
-
         public static T FindVisualChild<T>(DependencyObject parent, string name) where T : DependencyObject
         {
             for (var i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)

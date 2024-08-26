@@ -8,8 +8,8 @@ using System.Windows.Data;
 using System.Windows.Media;
 using Editors.Audio.AudioEditor.ViewModels;
 using Editors.Audio.Storage;
-using Shared.Core.PackFiles;
 using static Editors.Audio.AudioEditor.AudioEditorHelpers;
+using static Editors.Audio.AudioEditor.AudioEditorView;
 using static Editors.Audio.AudioEditor.DataGridHelpers;
 
 namespace Editors.Audio.AudioEditor
@@ -23,7 +23,7 @@ namespace Editors.Audio.AudioEditor
             dataGrid.ItemsSource = dataGridBuilder;
             dataGrid.Columns.Clear();
 
-            // Column for Remove State StatePath button:
+            // Column for remove row button.
             var removeButtonColumn = new DataGridTemplateColumn
             {
                 CellTemplate = CreateRemoveRowButtonTemplate(viewModel),
@@ -41,7 +41,7 @@ namespace Editors.Audio.AudioEditor
             {
                 var stateGroupWithExtraUnderscores = AddExtraUnderscoresToString(stateGroup);
 
-                // Column for State Group:
+                // Column for State Group.
                 var stateGroupColumn = new DataGridTemplateColumn
                 {
                     Header = stateGroupWithExtraUnderscores,
@@ -79,7 +79,7 @@ namespace Editors.Audio.AudioEditor
             dataGrid.ItemsSource = dataGridData;
             dataGrid.Columns.Clear();
 
-            // Column for Remove State StatePath button:
+            // Column for remove row button.
             var removeButtonColumn = new DataGridTemplateColumn
             {
                 CellTemplate = CreateRemoveRowButtonTemplate(viewModel),
@@ -100,7 +100,7 @@ namespace Editors.Audio.AudioEditor
                 var stateGroupWithQualifier = kvp.Key;
                 var stateGroupWithQualifierWithExtraUnderscores = AddExtraUnderscoresToString(stateGroupWithQualifier);
 
-                // Column for State Group:
+                // Column for State Group.
                 var stateGroupColumn = new DataGridTemplateColumn
                 {
                     Header = stateGroupWithQualifierWithExtraUnderscores,
@@ -122,7 +122,7 @@ namespace Editors.Audio.AudioEditor
                 dataGrid.Columns.Add(stateGroupColumn);
             }
 
-            // Column for Audio files TextBox with Tooltip:
+            // Column for Audio files TextBox with Tooltip.
             var soundsTextColumn = new DataGridTemplateColumn
             {
                 Header = "Audio Files",
@@ -134,7 +134,7 @@ namespace Editors.Audio.AudioEditor
             var soundsTextBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
             soundsTextBlockFactory.SetBinding(TextBlock.TextProperty, new Binding("[AudioFilesDisplay]"));
 
-            // Create and set the tooltip binding:
+            // Create and set the tooltip binding.
             var tooltipBinding = new Binding("[AudioFiles]")
             {
                 Mode = BindingMode.OneWay,
@@ -150,7 +150,7 @@ namespace Editors.Audio.AudioEditor
             dataGrid.Columns.Add(soundsTextColumn);
         }
 
-        public static void ConfigureAudioProjectDataGridBuilder(AudioEditorViewModel viewModel, IAudioRepository audioRepository, PackFileService packFileService, bool showModdedStates, string dataGridName, ObservableCollection<Dictionary<string, object>> dataGridBuilderData)
+        public static void ConfigureAudioProjectDataGridBuilder(AudioEditorViewModel viewModel, IAudioRepository audioRepository, bool showModdedStates, string dataGridName, ObservableCollection<Dictionary<string, object>> dataGridBuilderData)
         {
             var selectedAudioProjectEvent = viewModel.SelectedAudioProjectEvent;
 
@@ -200,7 +200,7 @@ namespace Editors.Audio.AudioEditor
                     states.AddRange(vanillaStates);
                 }
 
-                // Column for State Group:
+                // Column for State Group.
                 var column = new DataGridTemplateColumn
                 {
                     Header = stateGroupWithQualifierWithExtraUnderscores,
@@ -211,7 +211,7 @@ namespace Editors.Audio.AudioEditor
                 dataGrid.Columns.Add(column);
             }
 
-            // Column for Audio files TextBox:
+            // Column for Audio files TextBox.
             var soundsTextBoxColumn = new DataGridTemplateColumn
             {
                 Header = "Audio Files",
@@ -221,10 +221,10 @@ namespace Editors.Audio.AudioEditor
 
             dataGrid.Columns.Add(soundsTextBoxColumn);
 
-            // Column for Audio files '...' button:
+            // Column for Audio files '...' button.
             var soundsButtonColumn = new DataGridTemplateColumn
             {
-                CellTemplate = CreateSoundsButtonTemplate(viewModel, packFileService),
+                CellTemplate = CreateSoundsButtonTemplate(viewModel),
                 Width = 30.0,
                 CanUserResize = false
             };
@@ -328,7 +328,7 @@ namespace Editors.Audio.AudioEditor
             return template;
         }
 
-        public static DataTemplate CreateSoundsButtonTemplate(AudioEditorViewModel viewModel, PackFileService packFileService)
+        public static DataTemplate CreateSoundsButtonTemplate(AudioEditorViewModel viewModel)
         {
             var template = new DataTemplate();
             var factory = new FrameworkElementFactory(typeof(Button));
@@ -348,7 +348,7 @@ namespace Editors.Audio.AudioEditor
                         var rowDataContext = dataGridRow.DataContext;
 
                         if (rowDataContext is Dictionary<string, object> dataGridRowContext)
-                            AudioEditorViewModel.AddAudioFiles(viewModel, packFileService, dataGridRowContext, textBox);
+                            AudioEditorViewModel.AddAudioFiles(dataGridRowContext, textBox);
                     }
                 }
             }));
@@ -367,7 +367,7 @@ namespace Editors.Audio.AudioEditor
             var factory = new FrameworkElementFactory(typeof(Button));
             factory.SetValue(ContentControl.ContentProperty, "✖");
             factory.SetValue(Control.FontFamilyProperty, new FontFamily("Segoe UI Symbol")); // This font supports the character.
-            factory.SetValue(FrameworkElement.ToolTipProperty, "Remove State StatePath");
+            factory.SetValue(FrameworkElement.ToolTipProperty, "PLACEHOLDER");
 
             // Handle button click event
             factory.AddHandler(System.Windows.Controls.Primitives.ButtonBase.ClickEvent, new RoutedEventHandler((sender, e) =>

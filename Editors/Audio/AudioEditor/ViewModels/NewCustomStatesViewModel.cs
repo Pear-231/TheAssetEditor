@@ -93,6 +93,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
             _audioEditorViewModel.SetDataGridBuilderAndControlsVisibility(false);
             _audioEditorViewModel.SetDataGridControlsVisibility(true);
             _audioEditorViewModel.SetDataGridVisibility(true);
+            _audioEditorViewModel.SetDataGridContextMenuVisibility(false);
 
             ConvertDataGridToStatesAudioProject(_audioEditorViewModel.DataGridData);
 

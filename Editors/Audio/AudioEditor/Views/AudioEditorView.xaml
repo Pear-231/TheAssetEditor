@@ -116,7 +116,8 @@
                 <!-- DataGrid Builder Controls Section -->
                 <StackPanel Grid.Row="2" MinHeight="25" Margin="0, 5, 0, 0" Orientation="Horizontal" Visibility="{Binding DataGridBuilderAndControlsVisibility, Converter={StaticResource BoolToVisibilityConverter}}">
                     <Button Content="Add Row" Command="{Binding AddRowFromDataGridBuilderToDataGridCommand}" Margin="5, 0, 0, 0" VerticalAlignment="Center" Width="100" HorizontalAlignment="Left"/>
-                    <Button Content="Play Audio" Command="{Binding PlayRandomAudioFileCommand}" Margin="5, 0, 0, 0" VerticalAlignment="Center" Width="100" HorizontalAlignment="Left" IsEnabled="{Binding IsPlayAudioButtonEnabled}"/>
+                    <Button Content="Play Audio" ToolTip="Play an audio file at random to simulate the Dialogue Event being triggered in game." 
+                            Command="{Binding PlayRandomAudioFileCommand}" Margin="5, 0, 0, 0" VerticalAlignment="Center" Width="100" HorizontalAlignment="Left" IsEnabled="{Binding IsPlayAudioButtonEnabled}"/>
                     <CheckBox Content="Show Custom States Only" Margin="5, 0, 0, 0" VerticalAlignment="Center" IsChecked="{Binding ShowModdedStatesOnly, Mode=TwoWay}" HorizontalAlignment="Left"/>
                 </StackPanel>
 
@@ -129,7 +130,21 @@
                 <Border Grid.Row="4" Height="5" Background="#FF313131" Margin="0, 5, 0, 0" Visibility="{Binding DataGridVisibility, Converter={StaticResource BoolToVisibilityConverter}}"/>
 
                 <!-- DataGrid -->
-                <DataGrid Grid.Row="5" x:Name="AudioEditorDataGrid" AutoGenerateColumns="False" VerticalScrollBarVisibility="Auto" SelectionChanged="DataGrid_SelectionChanged" Visibility="{Binding DataGridVisibility, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                <DataGrid 
+                    Grid.Row="5" 
+                    x:Name="AudioEditorDataGrid" 
+                    AutoGenerateColumns="False" 
+                    VerticalScrollBarVisibility="Auto" 
+                    SelectionChanged="DataGrid_SelectionChanged" 
+                    Visibility="{Binding DataGridVisibility, Converter={StaticResource BoolToVisibilityConverter}}">
+
+                    <DataGrid.ContextMenu>
+                        <ContextMenu Visibility="{Binding DataGridContextMenuVisibility, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <MenuItem Header="Copy" Command="{Binding CopyRowsCommand}"/>
+                            <MenuItem Header="Paste" Command="{Binding PasteRowsCommand}" IsEnabled="{Binding IsPasteEnabled}"/>
+                        </ContextMenu>
+                    </DataGrid.ContextMenu>
+                </DataGrid>
             </Grid>
         </Grid>
     </Grid>
