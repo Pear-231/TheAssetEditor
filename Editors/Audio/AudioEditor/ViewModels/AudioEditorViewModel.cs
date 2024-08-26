@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -27,6 +26,7 @@ using static Editors.Audio.AudioEditor.AudioProject;
 using static Editors.Audio.AudioEditor.DataGridConfiguration;
 using static Editors.Audio.AudioEditor.StatesProjectData;
 using static Editors.Audio.AudioEditor.VOProjectData;
+using static Editors.Audio.Utility.SoundPlayer;
 
 // TODO:
 // something to remove rows with empty data
@@ -38,10 +38,8 @@ using static Editors.Audio.AudioEditor.VOProjectData;
 // Add some sorting of to the modded states files.
 
 // Features:
-// Audio browsing within Pack
 // Copy and paste of rows
 // Audio compiler update
-// Play Sound button
 
 namespace Editors.Audio.AudioEditor.ViewModels
 {
@@ -59,6 +57,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
         [ObservableProperty] private ObservableCollection<string> _audioProjectEvents = [];
         [ObservableProperty] private ObservableCollection<Dictionary<string, object>> _dataGridBuilderData = [];
         [ObservableProperty] private ObservableCollection<Dictionary<string, object>> _dataGridData = [];
+        [ObservableProperty] private ObservableCollection<Dictionary<string, object>> _selectedDataGridRows = [];
 
         // Properties the user can control.
         [ObservableProperty] private string _selectedAudioProjectEvent;
@@ -71,19 +70,15 @@ namespace Editors.Audio.AudioEditor.ViewModels
         [ObservableProperty] private bool _dataGridControlsVisibility = false;
         [ObservableProperty] private bool _dataGridVisibility = false;
 
+        // UI enablement controls.
+        [ObservableProperty] private bool _isPlayAudioButtonEnabled = false;
+
         public AudioEditorViewModel(IAudioRepository audioRepository, PackFileService packFileService, IWindowFactory windowFactory, SoundPlayer soundPlayer)
         {
             _audioRepository = audioRepository;
             _packFileService = packFileService;
             _windowFactory = windowFactory;
             _soundPlayer = soundPlayer;
-
-            DataGridData.CollectionChanged += OnDataGridDataChanged;
-        }
-
-        private void OnDataGridDataChanged(object dataGridData, NotifyCollectionChangedEventArgs e)
-        {
-            // May use later...
         }
 
         partial void OnSelectedAudioProjectEventChanged(string oldValue, string newValue)
@@ -116,7 +111,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
 
         partial void OnShowModdedStatesOnlyChanged(bool value)
         {
-            ConfigureAudioProjectDataGridBuilder(this, _audioRepository, _packFileService, ShowModdedStatesOnly, "AudioEditorDataGridBuilder", DataGridBuilderData);
+            ConfigureAudioProjectDataGridBuilder(this, _audioRepository, ShowModdedStatesOnly, "AudioEditorDataGridBuilder", DataGridBuilderData);
             
             ClearDataGridBuilderData(DataGridBuilderData);
             
@@ -230,7 +225,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
             // Configure the DataGrids.
             if (showModdedStatesOnly == true || areStateGroupsEqual == false)
             {
-                ConfigureAudioProjectDataGridBuilder(this, _audioRepository, _packFileService, showModdedStatesOnly, "AudioEditorDataGridBuilder", DataGridBuilderData);
+                ConfigureAudioProjectDataGridBuilder(this, _audioRepository, showModdedStatesOnly, "AudioEditorDataGridBuilder", DataGridBuilderData);
                 ConfigureAudioProjectDataGrid(this, _audioRepository, "AudioEditorDataGrid", DataGridData);
             }
 
@@ -401,6 +396,21 @@ namespace Editors.Audio.AudioEditor.ViewModels
             DataGridData.Add(newRow);
         }
 
+        [RelayCommand] public void PlayRandomAudioFile()
+        {
+            if (SelectedDataGridRows.Count == 1)
+            {
+                if (SelectedDataGridRows[0].TryGetValue("AudioFiles", out var audioFilesObj) && audioFilesObj is List<string> audioFiles && audioFiles.Any())
+                {
+                    var random = new Random();
+                    var randomIndex = random.Next(audioFiles.Count);
+                    var randomAudioFile = audioFiles[randomIndex];
+
+                    PlaySound(randomAudioFile);
+                }
+            }
+        }
+
         
 
 
@@ -426,13 +436,28 @@ namespace Editors.Audio.AudioEditor.ViewModels
             DataGridData.Remove(rowToRemove);
         }
 
-        public static void AddAudioFiles(AudioEditorViewModel viewModel, PackFileService packFileService, Dictionary<string, object> dataGridRow, TextBox textBox)
+        public static void AddAudioFiles(Dictionary<string, object> dataGridRow, TextBox textBox)
         {
-            string[] extentions = {".wav", ".wem"};
-            using var browser = new PackFileBrowserWindow(packFileService, extentions, -1);
-
-            if (browser.ShowDialog())
+            var dialog = new OpenFileDialog()
             {
+                Multiselect = true,
+                Filter = "WAV files (*.wav)|*.wav"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                var filePaths = dialog.FileNames;
+                var fileNames = filePaths.Select(Path.GetFileName);
+                var fileNamesString = string.Join(", ", fileNames);
+                var filePathsString = string.Join(", ", filePaths.Select(filePath => $"\"{filePath}\""));
+
+                textBox.Text = fileNamesString;
+                textBox.ToolTip = filePathsString;
+
+                var audioFiles = new List<string>(filePaths);
+
+                dataGridRow["AudioFiles"] = audioFiles;
+                dataGridRow["AudioFilesDisplay"] = fileNamesString;
             }
         }
 

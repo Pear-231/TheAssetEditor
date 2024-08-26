@@ -6,9 +6,6 @@ using Shared.Core.PackFiles;
 
 namespace Editors.Audio.AudioEditor.Views
 {
-    /// <summary>
-    /// Interaction logic for NewVOAudioProjectView.xaml
-    /// </summary>
     public partial class NewVOAudioProjectView : UserControl
     {
         private readonly IAudioRepository _audioRepository;

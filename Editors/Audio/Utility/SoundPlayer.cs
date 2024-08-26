@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using Editors.Audio.Storage;
 using Serilog;
 using Shared.Core.ErrorHandling;
@@ -66,26 +63,18 @@ namespace Editors.Audio.Utility
             return result.IsSuccess;
         }
 
-        public static void PlaySound(Dictionary<string, object> dataGridRowContext)
+        public static void PlaySound(string audioFile)
         {
-            if (dataGridRowContext.TryGetValue("AudioFiles", out var audioFilesObj) && audioFilesObj is List<string> audioFiles && audioFiles.Any())
+            s_logger.Here().Information($"Playing: {audioFile}");
+
+            using var process = new Process();
+            process.StartInfo = new ProcessStartInfo(audioFile)
             {
-                var random = new Random();
-                var randomIndex = random.Next(audioFiles.Count);
-                var randomAudioFile = audioFiles[randomIndex];
+                UseShellExecute = true
+            };
 
-                s_logger.Here().Information($"Playing: {randomAudioFile}");
-
-                using var process = new Process();
-                process.StartInfo = new ProcessStartInfo(randomAudioFile)
-                {
-                    UseShellExecute = true
-                };
-
-                process.Start();
-            }
+            process.Start();
         }
-
 
         PackFile FindSoundFile(string language, string soundId)
         {

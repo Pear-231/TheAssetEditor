@@ -6,9 +6,6 @@ using Shared.Core.PackFiles;
 
 namespace Editors.Audio.AudioEditor.Views
 {
-    /// <summary>
-    /// Interaction logic for NewCustomStatesView.xaml
-    /// </summary>
     public partial class NewCustomStatesView : UserControl
     {
         private readonly IAudioRepository _audioRepository;
