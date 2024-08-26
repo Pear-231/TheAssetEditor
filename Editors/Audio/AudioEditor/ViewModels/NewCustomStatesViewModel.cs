@@ -88,6 +88,12 @@ namespace Editors.Audio.AudioEditor.ViewModels
             AddToPackFile(_packFileService, AudioProjectInstance.StatesAudioProject, AudioProjectInstance.FileName, AudioProjectInstance.Directory, AudioProjectInstance.Type);
 
             CloseWindowAction();
+
+            // Make the appropriate UI elements visible.
+            _audioEditorViewModel.SetAudioEditorVisibility(true);
+            _audioEditorViewModel.SetDataGridBuilderAndControlsVisibility(false);
+            _audioEditorViewModel.SetDataGridControlsVisibility(true);
+            _audioEditorViewModel.SetDataGridVisibility(true);
         }
 
         public void InitialiseStatesProject()

@@ -14,13 +14,64 @@ using static Editors.Audio.AudioEditor.DataGridHelpers;
 
 namespace Editors.Audio.AudioEditor
 {
-    public class DialogueEventDataGrid
+    public class DataGridConfiguration
     {
-        public DialogueEventDataGrid()
+        public static void ConfigureStatesAudioProjectDataGrid(AudioEditorViewModel viewModel, string dataGridName, ObservableCollection<Dictionary<string, object>> dataGridBuilder)
         {
+            var dataGrid = GetDataGrid(dataGridName);
+            dataGrid.CanUserAddRows = false; // Setting this bastard to false ensures that data won't go missing from the last row when a new row is added. Wtf WPF.
+            dataGrid.ItemsSource = dataGridBuilder;
+            dataGrid.Columns.Clear();
+
+            // Column for Remove State StatePath button:
+            var removeButtonColumn = new DataGridTemplateColumn
+            {
+                CellTemplate = CreateRemoveRowButtonTemplate(viewModel),
+                Width = 20,
+                CanUserResize = false
+            };
+
+            dataGrid.Columns.Add(removeButtonColumn);
+
+            var stateGroups = StatesProjectData.ModdedStateGroups;
+            var stateGroupsCount = stateGroups.Count + 3;
+            var columnWidth = stateGroupsCount > 0 ? 1.0 / stateGroupsCount : 1.0;
+
+            foreach (var stateGroup in stateGroups)
+            {
+                var stateGroupWithExtraUnderscores = AddExtraUnderscoresToString(stateGroup);
+
+                // Column for State Group:
+                var stateGroupColumn = new DataGridTemplateColumn
+                {
+                    Header = stateGroupWithExtraUnderscores,
+                    Width = new DataGridLength(columnWidth, DataGridLengthUnitType.Star)
+                };
+
+                var textBoxFactory = new FrameworkElementFactory(typeof(TextBox));
+
+                textBoxFactory.SetBinding(TextBox.TextProperty, new Binding($"[{stateGroupWithExtraUnderscores}]")
+                {
+                    UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
+                    Mode = BindingMode.TwoWay
+                });
+
+                textBoxFactory.SetValue(TextBox.PaddingProperty, new Thickness(5, 2.5, 2.5, 5));
+
+                var cellTemplate = new DataTemplate
+                {
+                    VisualTree = textBoxFactory
+                };
+
+                stateGroupColumn.CellTemplate = cellTemplate;
+                stateGroupColumn.CellEditingTemplate = cellTemplate;
+
+                dataGrid.Columns.Add(stateGroupColumn);
+            }
         }
 
-        public static void ConfigureDataGrid(AudioEditorViewModel viewModel, IAudioRepository audioRepository, string dataGridName, ObservableCollection<Dictionary<string, object>> dataGridData)
+
+        public static void ConfigureAudioProjectDataGrid(AudioEditorViewModel viewModel, IAudioRepository audioRepository, string dataGridName, ObservableCollection<Dictionary<string, object>> dataGridData)
         {
             var selectedAudioProjectEvent = viewModel.SelectedAudioProjectEvent;
 
@@ -29,27 +80,38 @@ namespace Editors.Audio.AudioEditor
             dataGrid.ItemsSource = dataGridData;
             dataGrid.Columns.Clear();
 
+            // Column for Remove State StatePath button:
+            var removeButtonColumn = new DataGridTemplateColumn
+            {
+                CellTemplate = CreateRemoveRowButtonTemplate(viewModel),
+                Width = 20,
+                CanUserResize = false
+            };
+
+            dataGrid.Columns.Add(removeButtonColumn);
+
             var stateGroups = audioRepository.DialogueEventsWithStateGroups[selectedAudioProjectEvent];
             var stateGroupsWithQualifiers = AudioProject.DialogueEventsWithStateGroupsWithQualifiers[selectedAudioProjectEvent];
 
-            var stateGroupsCount = stateGroups.Count() + 1;
+            var stateGroupsCount = stateGroups.Count + 1;
             var columnWidth = stateGroupsCount > 0 ? 1.0 / stateGroupsCount : 1.0;
 
             foreach (var kvp in stateGroupsWithQualifiers)
             {
                 var stateGroupWithQualifier = kvp.Key;
+                var stateGroupWithQualifierWithExtraUnderscores = AddExtraUnderscoresToString(stateGroupWithQualifier);
 
                 // Column for State Group:
                 var stateGroupColumn = new DataGridTemplateColumn
                 {
-                    Header = AddExtraUnderscoresToString(stateGroupWithQualifier),
+                    Header = stateGroupWithQualifierWithExtraUnderscores,
                     Width = new DataGridLength(columnWidth, DataGridLengthUnitType.Star),
                     IsReadOnly = true
                 };
 
                 var textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
 
-                textBlockFactory.SetBinding(TextBlock.TextProperty, new Binding($"[{AddExtraUnderscoresToString(stateGroupWithQualifier)}]"));
+                textBlockFactory.SetBinding(TextBlock.TextProperty, new Binding($"[{stateGroupWithQualifierWithExtraUnderscores}]"));
                 textBlockFactory.SetValue(TextBlock.PaddingProperty, new Thickness(5, 2.5, 2.5, 5));
 
                 var cellTemplate = new DataTemplate();
@@ -89,7 +151,7 @@ namespace Editors.Audio.AudioEditor
             dataGrid.Columns.Add(soundsTextColumn);
         }
 
-        public static void ConfigureDataGridBuilder(AudioEditorViewModel viewModel, IAudioRepository audioRepository, bool showCustomStatesOnly, string dataGridName, ObservableCollection<Dictionary<string, object>> dataGridBuilderData)
+        public static void ConfigureAudioProjectDataGridBuilder(AudioEditorViewModel viewModel, IAudioRepository audioRepository, bool showCustomStatesOnly, string dataGridName, ObservableCollection<Dictionary<string, object>> dataGridBuilderData)
         {
             var selectedAudioProjectEvent = viewModel.SelectedAudioProjectEvent;
 
@@ -102,12 +164,13 @@ namespace Editors.Audio.AudioEditor
             var stateGroupsWithQualifiers = AudioProject.DialogueEventsWithStateGroupsWithQualifiers[selectedAudioProjectEvent];
             var stateGroupsWithCustomStates = AudioProject.AudioProjectInstance.StateGroupsWithCustomStates;
 
-            var stateGroupsCount = stateGroups.Count() + 1;
+            var stateGroupsCount = stateGroups.Count + 1;
             var columnWidth = stateGroupsCount > 0 ? 1.0 / stateGroupsCount : 1.0;
 
             foreach (var kvp in stateGroupsWithQualifiers)
             {
                 var stateGroupWithQualifier = kvp.Key;
+                var stateGroupWithQualifierWithExtraUnderscores = AddExtraUnderscoresToString(stateGroupWithQualifier);
                 var stateGroup = kvp.Value;
 
                 var states = new List<string>();
@@ -138,8 +201,8 @@ namespace Editors.Audio.AudioEditor
                 // Column for State Group:
                 var column = new DataGridTemplateColumn
                 {
-                    Header = AddExtraUnderscoresToString(stateGroupWithQualifier),
-                    CellTemplate = CreateStatesComboBoxTemplate(states, stateGroupWithQualifier, showCustomStatesOnly),
+                    Header = stateGroupWithQualifierWithExtraUnderscores,
+                    CellTemplate = CreateStatesComboBoxTemplate(states, stateGroupWithQualifierWithExtraUnderscores, showCustomStatesOnly),
                     Width = new DataGridLength(columnWidth, DataGridLengthUnitType.Star),
                 };
 
@@ -167,12 +230,12 @@ namespace Editors.Audio.AudioEditor
             dataGrid.Columns.Add(soundsButtonColumn);
         }
 
-        public static DataTemplate CreateStatesComboBoxTemplate(List<string> states, string stateGroupWithQualifier, bool showCustomStatesOnly)
+        public static DataTemplate CreateStatesComboBoxTemplate(List<string> states, string stateGroupWithQualifierWithExtraUnderscores, bool showCustomStatesOnly)
         {
             var template = new DataTemplate();
             var factory = new FrameworkElementFactory(typeof(ComboBox));
 
-            var binding = new Binding($"[{AddExtraUnderscoresToString(stateGroupWithQualifier)}]")
+            var binding = new Binding($"[{stateGroupWithQualifierWithExtraUnderscores}]")
             {
                 Mode = BindingMode.TwoWay,
                 UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
@@ -236,8 +299,6 @@ namespace Editors.Audio.AudioEditor
             return template;
         }
 
-
-
         public static DataTemplate CreateSoundsTextBoxTemplate()
         {
             var template = new DataTemplate();
@@ -292,6 +353,32 @@ namespace Editors.Audio.AudioEditor
 
             factory.SetValue(ContentControl.ContentProperty, "...");
             factory.SetValue(FrameworkElement.ToolTipProperty, "Browse wav files");
+
+            template.VisualTree = factory;
+
+            return template;
+        }
+
+        public static DataTemplate CreateRemoveRowButtonTemplate(AudioEditorViewModel viewModel)
+        {
+            var template = new DataTemplate();
+            var factory = new FrameworkElementFactory(typeof(Button));
+            factory.SetValue(ContentControl.ContentProperty, "✖");
+            factory.SetValue(Control.FontFamilyProperty, new FontFamily("Segoe UI Symbol")); // This font supports the character.
+            factory.SetValue(FrameworkElement.ToolTipProperty, "Remove State StatePath");
+
+            // Handle button click event
+            factory.AddHandler(System.Windows.Controls.Primitives.ButtonBase.ClickEvent, new RoutedEventHandler((sender, e) =>
+            {
+                var button = sender as Button;
+                var dataGridRow = FindVisualParent<DataGridRow>(button);
+
+                if (dataGridRow != null && viewModel != null)
+                {
+                    if (dataGridRow.DataContext is Dictionary<string, object> dataGridRowContext)
+                        viewModel.RemoveRowFromDataGrid(dataGridRowContext);
+                }
+            }));
 
             template.VisualTree = factory;
 

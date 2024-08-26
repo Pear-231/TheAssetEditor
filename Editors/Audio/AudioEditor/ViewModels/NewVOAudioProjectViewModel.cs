@@ -253,6 +253,12 @@ namespace Editors.Audio.AudioEditor.ViewModels
             //PrepareCustomStatesForComboBox(this);
 
             CloseWindowAction();
+
+            // Make the appropriate UI elements visible.
+            _audioEditorViewModel.SetAudioEditorVisibility(true);
+            _audioEditorViewModel.SetDataGridBuilderAndControlsVisibility(true);
+            _audioEditorViewModel.SetDataGridControlsVisibility(false);
+            _audioEditorViewModel.SetDataGridVisibility(true);
         }
 
         public void CreateAudioProjectEventsList(ObservableCollection<string> audioProjectEvents)

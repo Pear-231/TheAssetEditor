@@ -24,8 +24,7 @@ using Shared.Core.ToolCreation;
 using Shared.Ui.BaseDialogs.WindowHandling;
 using static Editors.Audio.AudioEditor.AudioEditorHelpers;
 using static Editors.Audio.AudioEditor.AudioProject;
-using static Editors.Audio.AudioEditor.DialogueEventDataGrid;
-using static Editors.Audio.AudioEditor.ModdedStatesDataGrid;
+using static Editors.Audio.AudioEditor.DataGridConfiguration;
 using static Editors.Audio.AudioEditor.StatesProjectData;
 using static Editors.Audio.AudioEditor.VOProjectData;
 
@@ -36,6 +35,7 @@ using static Editors.Audio.AudioEditor.VOProjectData;
 // something for modded states so that when the file is saved it sorts the file so that states are sorted so that there's no empty gaps in the row (unless there's nothing to add there)
 // Add sorting of the audio project events list so that its in alphabetical order (or the same order as the events list checkboxes)
 // Add sorting to the DataGrid so it displays them in alphabetical order, probably do this via a button.
+// Make some way of turning dialogue events into audio projects
 
 namespace Editors.Audio.AudioEditor.ViewModels
 {
@@ -49,12 +49,20 @@ namespace Editors.Audio.AudioEditor.ViewModels
 
         public NotifyAttr<string> DisplayName { get; set; } = new NotifyAttr<string>("Audio Editor");
 
-        [ObservableProperty] private string _selectedAudioProjectEvent;
-        [ObservableProperty] private bool _showCustomStatesOnly;
-
+        // Audio Editor data.
         [ObservableProperty] private ObservableCollection<string> _audioProjectEvents = [];
         [ObservableProperty] private ObservableCollection<Dictionary<string, object>> _dataGridBuilderData = [];
         [ObservableProperty] private ObservableCollection<Dictionary<string, object>> _dataGridData = [];
+
+        // Properties the user can control.
+        [ObservableProperty] private string _selectedAudioProjectEvent;
+        [ObservableProperty] private bool _showCustomStatesOnly;
+
+        // UI visibility controls.
+        [ObservableProperty] private bool _audioEditorVisibility = false;
+        [ObservableProperty] private bool _dataGridBuilderAndControlsVisibility = false;
+        [ObservableProperty] private bool _dataGridControlsVisibility = false;
+        [ObservableProperty] private bool _dataGridVisibility = false;
 
         public AudioEditorViewModel(IAudioRepository audioRepository, PackFileService packFileService, IWindowFactory windowFactory, SoundPlayer soundPlayer)
         {
@@ -220,8 +228,8 @@ namespace Editors.Audio.AudioEditor.ViewModels
             // Configure the DataGrids.
             if (showCustomStatesOnly == true || !areStateGroupsEqual)
             {
-                ConfigureDataGridBuilder(this, audioRepository, showCustomStatesOnly, "AudioEditorDataGridBuilder", DataGridBuilderData);
-                ConfigureDataGrid(this, audioRepository, "AudioEditorDataGrid", DataGridData);
+                ConfigureAudioProjectDataGridBuilder(this, audioRepository, showCustomStatesOnly, "AudioEditorDataGridBuilder", DataGridBuilderData);
+                ConfigureAudioProjectDataGrid(this, audioRepository, "AudioEditorDataGrid", DataGridData);
             }
 
             // Clear the previous DataGrid Data.
@@ -245,13 +253,15 @@ namespace Editors.Audio.AudioEditor.ViewModels
             _logger.Here().Information($"Loaded Event: {SelectedAudioProjectEvent}");
         }
 
+
+
         public void LoadModdedStates()
         {
             if (string.IsNullOrEmpty(SelectedAudioProjectEvent))
                 return;
 
             // Configure the DataGrids.
-            ConfigureDataGrid(this, "AudioEditorDataGrid", DataGridBuilderData);
+            ConfigureStatesAudioProjectDataGrid(this, "AudioEditorDataGrid", DataGridData);
             ClearDataGridBuilderData(DataGridBuilderData);
 
             // Populate the DataGrid with the data from the Audio Project.
@@ -361,7 +371,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
             }
         }
 
-        [RelayCommand] public void AddRowToDataGrid()
+        [RelayCommand] public void AddRowFromDataGridBuilderToDataGrid()
         {
             if (DataGridBuilderData.Count == 0)
                 return;
@@ -388,7 +398,13 @@ namespace Editors.Audio.AudioEditor.ViewModels
             AddRowToDataGridBuilder();
         }
 
+        [RelayCommand] public void AddRowToDataGrid()
+        {
+            var newRow = new Dictionary<string, object>();
+            DataGridData.Add(newRow);
+        }
 
+        
 
 
 
@@ -408,9 +424,9 @@ namespace Editors.Audio.AudioEditor.ViewModels
 
 
 
-        public void RemoveStatePath(Dictionary<string, object> rowToRemove)
+        public void RemoveRowFromDataGrid(Dictionary<string, object> rowToRemove)
         {
-            DataGridBuilderData.Remove(rowToRemove);
+            DataGridData.Remove(rowToRemove);
         }
 
         public static void AddAudioFiles(Dictionary<string, object> dataGridRow, TextBox textBox)
@@ -436,6 +452,26 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 dataGridRow["AudioFiles"] = audioFiles;
                 dataGridRow["AudioFilesDisplay"] = fileNamesString;
             }
+        }
+
+        public void SetAudioEditorVisibility(bool isVisible)
+        {
+            AudioEditorVisibility = isVisible;
+        }
+
+        public void SetDataGridBuilderAndControlsVisibility(bool isVisible)
+        {
+            DataGridBuilderAndControlsVisibility = isVisible;
+        }
+
+        public void SetDataGridControlsVisibility(bool isVisible)
+        {
+            DataGridControlsVisibility = isVisible;
+        }
+
+        public void SetDataGridVisibility(bool isVisible)
+        {
+            DataGridVisibility = isVisible;
         }
 
         public void ResetAudioEditorViewModelData()
