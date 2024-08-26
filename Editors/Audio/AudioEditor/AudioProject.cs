@@ -21,9 +21,9 @@ namespace Editors.Audio.AudioEditor
 
         public StatesAudioProject StatesAudioProject { get; set; } = new StatesAudioProject();
 
-        public static Dictionary<string, Dictionary<string, string>> DialogueEventsWithStateGroupsWithQualifiers { get; set; } = new();
+        public static Dictionary<string, Dictionary<string, string>> DialogueEventsWithStateGroupsWithQualifiers { get; set; } = [];
 
-        public Dictionary<string, List<string>> StateGroupsWithCustomStates { get; set; } = new();
+        public Dictionary<string, List<string>> StateGroupsWithCustomStates { get; set; } = [];
 
         public ProjectType? Type { get; set; }
 

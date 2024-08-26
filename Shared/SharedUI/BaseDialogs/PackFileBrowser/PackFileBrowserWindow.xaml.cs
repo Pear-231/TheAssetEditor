@@ -17,9 +17,9 @@ namespace CommonControls.PackFileBrowser
 
         public PackFileBrowserWindow(PackFileService packfileService) => Create(packfileService);
 
-        public PackFileBrowserWindow(PackFileService packfileService, string[] extentions)
+        public PackFileBrowserWindow(PackFileService packfileService, string[] extentions, int autoExapandResultsAfterLimitedCount = 50)
         {
-            Create(packfileService);
+            Create(packfileService, autoExapandResultsAfterLimitedCount);
             ViewModel.Filter.SetExtentions(extentions.ToList());
         }
 
@@ -30,13 +30,13 @@ namespace CommonControls.PackFileBrowser
             ViewModel.Filter.SetExtentions(extentions.ToList());
         }
 
-        void Create(PackFileService packfileService)
+        void Create(PackFileService packfileService, int autoExapandResultsAfterLimitedCount = 50)
         {
             ViewModel = new PackFileBrowserViewModel(packfileService, allowFolderSelection: AllowFolderSelection);
             ViewModel.ContextMenu = new OpenFileContexMenuHandler(packfileService);
             ViewModel.FileOpen += ViewModel_FileOpen;
             ViewModel.FolderSelected += ViewModel_FolderSelected;
-            ViewModel.Filter.AutoExapandResultsAfterLimitedCount = 50;
+            ViewModel.Filter.AutoExapandResultsAfterLimitedCount = autoExapandResultsAfterLimitedCount;
             InitializeComponent();
             DataContext = this;
 

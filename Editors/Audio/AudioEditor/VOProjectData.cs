@@ -20,7 +20,7 @@ namespace Editors.Audio.AudioEditor
         {
             public string BnkName { get; set; }
             public string Language { get; set; }
-            public string StatesProjectFilePath { get; set; }
+            public string StatesProjectDirectory { get; set; }
         }
 
         public class Event
@@ -58,8 +58,8 @@ namespace Editors.Audio.AudioEditor
             if (audioProjectEvent == null || audioProjectEvent == "")
                 return;
 
-            var voProject = AudioProjectInstance.VOAudioProject;
-            var dialogueEvent = voProject.DialogueEvents.FirstOrDefault(dialogueEvent => dialogueEvent.Name == audioProjectEvent); // Find the corresponding DialogueEvent in AudioProject
+            var voAudioProject = AudioProjectInstance.VOAudioProject;
+            var dialogueEvent = voAudioProject.DialogueEvents.FirstOrDefault(dialogueEvent => dialogueEvent.Name == audioProjectEvent); // Find the corresponding DialogueEvent in AudioProject
             var decisionTree = dialogueEvent.DecisionTree;
             decisionTree.Clear();
 
@@ -95,9 +95,9 @@ namespace Editors.Audio.AudioEditor
             }
         }
 
-        public static void ConvertVOAudioProjectToDataGrid(ObservableCollection<Dictionary<string, object>> dataGridData, VOAudioProject voProject, string selectedAudioProjectEvent)
+        public static void ConvertVOAudioProjectToDataGrid(ObservableCollection<Dictionary<string, object>> dataGridData, VOAudioProject voAudioProject, string selectedAudioProjectEvent)
         {
-            var dialogueEvent = voProject.DialogueEvents.FirstOrDefault(dialogueEvent => dialogueEvent.Name == selectedAudioProjectEvent); // Find the corresponding DialogueEvent in AudioProject
+            var dialogueEvent = voAudioProject.DialogueEvents.FirstOrDefault(dialogueEvent => dialogueEvent.Name == selectedAudioProjectEvent); // Find the corresponding DialogueEvent in AudioProject
 
             foreach (var decisionNode in dialogueEvent.DecisionTree)
             {

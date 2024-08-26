@@ -40,6 +40,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
             _packFileService = packFileService;
             _audioEditorViewModel = audioEditorViewModel;
 
+            // Default values.
             StatesProjectDirectory = "audioprojects";
         }
 
@@ -62,13 +63,13 @@ namespace Editors.Audio.AudioEditor.ViewModels
 
         [RelayCommand] public void SetNewFileLocation()
         {
-            using var browser = new PackFileBrowserWindow(_packFileService, [".OleIsADonkey"], true); //Set it to some non-existant file type and it will show only folders.
+            using var browser = new PackFileBrowserWindow(_packFileService, [".OleIsADonkey"], true); // Set it to some non-existant file type and it will show only folders.
 
             if (browser.ShowDialog())
             {
                 var filePath = browser.SelectedPath;
                 StatesProjectDirectory = filePath;
-                _logger.Here().Information($"Custom States file path set to: {filePath}");
+                _logger.Here().Information($"States Audio Project directory set to: {filePath}");
             }
         }
 
@@ -77,9 +78,6 @@ namespace Editors.Audio.AudioEditor.ViewModels
             // Remove any pre-existing data.
             AudioProjectInstance.ResetAudioProjectData();
             _audioEditorViewModel.ResetAudioEditorViewModelData();
-
-            var dialogueEvent = "modded_states";
-            _audioEditorViewModel.AudioProjectEvents.Add(dialogueEvent);
 
             // Initialise States Project.
             InitialiseStatesProject();
@@ -91,9 +89,14 @@ namespace Editors.Audio.AudioEditor.ViewModels
 
             // Make the appropriate UI elements visible.
             _audioEditorViewModel.SetAudioEditorVisibility(true);
+            _audioEditorViewModel.SetAudioProjectExplorerVisibility(false);
             _audioEditorViewModel.SetDataGridBuilderAndControlsVisibility(false);
             _audioEditorViewModel.SetDataGridControlsVisibility(true);
             _audioEditorViewModel.SetDataGridVisibility(true);
+
+            ConvertDataGridToStatesAudioProject(_audioEditorViewModel.DataGridData);
+
+            _audioEditorViewModel.LoadModdedStates();
         }
 
         public void InitialiseStatesProject()

@@ -8,6 +8,7 @@ using Shared.Core.ErrorHandling;
 using Shared.Core.PackFiles;
 using Shared.Core.PackFiles.Models;
 using static Editors.Audio.AudioEditor.AudioProject;
+using static Editors.Audio.AudioEditor.StatesProjectData;
 
 namespace Editors.Audio.AudioEditor
 {
@@ -102,6 +103,44 @@ namespace Editors.Audio.AudioEditor
                 }
 
                 DialogueEventsWithStateGroupsWithQualifiers[dialogueEvent.Key] = stateGroupsWithQualifiers;
+            }
+        }
+
+        public static void PrepareModdedStatesForComboBox(PackFileService packFileService)
+        {
+            var filePath = AudioProjectInstance.VOAudioProject.Settings.StatesProjectDirectory;
+
+            if (filePath == null)
+                return;
+
+            var file = packFileService.FindFile(filePath);
+            var bytes = file.DataSource.ReadData();
+            var statesAudioProjectJson = Encoding.UTF8.GetString(bytes);
+            var statesAudioProject = JsonSerializer.Deserialize<StatesAudioProject>(statesAudioProjectJson);
+
+            AudioProjectInstance.StatesAudioProject = statesAudioProject;
+
+            if (AudioProjectInstance.StateGroupsWithCustomStates == null)
+                AudioProjectInstance.StateGroupsWithCustomStates = new Dictionary<string, List<string>>();
+
+            else
+                AudioProjectInstance.StateGroupsWithCustomStates.Clear();
+
+            foreach (var statesProjectItem in statesAudioProject.StatesProjectItems)
+            {
+                foreach (var stateGroupStatePair in statesProjectItem.StatesProjectItem)
+                {
+                    var stateGroup = stateGroupStatePair.StateGroup;
+                    var state = stateGroupStatePair.State;
+
+                    if (string.IsNullOrEmpty(state))
+                        continue;
+
+                    if (!AudioProjectInstance.StateGroupsWithCustomStates.ContainsKey(stateGroup))
+                        AudioProjectInstance.StateGroupsWithCustomStates[stateGroup] = new List<string>();
+
+                    AudioProjectInstance.StateGroupsWithCustomStates[stateGroup].Add(state);
+                }
             }
         }
 

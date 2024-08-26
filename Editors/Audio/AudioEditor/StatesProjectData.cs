@@ -28,20 +28,22 @@ namespace Editors.Audio.AudioEditor
 
         public static void ConvertDataGridToStatesAudioProject(ObservableCollection<Dictionary<string, object>> dataGridData)
         {
-            var statesProject = AudioProjectInstance.StatesAudioProject;
-            statesProject.StatesProjectItems = new List<StatesProjectItems>();
+            var statesAudioProject = AudioProjectInstance.StatesAudioProject;
+            statesAudioProject.StatesProjectItems = new List<StatesProjectItems>();
+
+            var stateGroups = ModdedStateGroups;
 
             foreach (var dataGridItem in dataGridData)
             {
-                var statesProjectItem = new StatesProjectItems
+                var statesAudioProjectItem = new StatesProjectItems
                 {
                     StatesProjectItem = new List<StateGroupStatePair>()
                 };
 
-                foreach (var kvp in dataGridItem)
+                foreach (var stateGroup in stateGroups)
                 {
-                    var stateGroup = RemoveExtraUnderscoresFromString(kvp.Key);
-                    var state = kvp.Value.ToString();
+                    var stateGroupKey = AddExtraUnderscoresToString(stateGroup); 
+                    var state = dataGridItem.ContainsKey(stateGroupKey) ? dataGridItem[stateGroupKey].ToString() : string.Empty;
 
                     var stateGroupStatePair = new StateGroupStatePair
                     {
@@ -49,20 +51,20 @@ namespace Editors.Audio.AudioEditor
                         State = state
                     };
 
-                    statesProjectItem.StatesProjectItem.Add(stateGroupStatePair);
+                    statesAudioProjectItem.StatesProjectItem.Add(stateGroupStatePair);
                 }
 
-                statesProject.StatesProjectItems.Add(statesProjectItem);
+                statesAudioProject.StatesProjectItems.Add(statesAudioProjectItem);
             }
         }
 
-        public static void ConvertStatesAudioProjectToDataGrid(ObservableCollection<Dictionary<string, object>> dataGridData, StatesAudioProject statesProject)
+        public static void ConvertStatesAudioProjectToDataGrid(ObservableCollection<Dictionary<string, object>> dataGridData, StatesAudioProject statesAudioProject)
         {
-            foreach (var statesProjectItem in statesProject.StatesProjectItems)
+            foreach (var statesAudioProjectItem in statesAudioProject.StatesProjectItems)
             {
                 var dataGridRow = new Dictionary<string, object>();
 
-                foreach (var stateGroupStatePair in statesProjectItem.StatesProjectItem)
+                foreach (var stateGroupStatePair in statesAudioProjectItem.StatesProjectItem)
                 {
                     var stateGroup = AddExtraUnderscoresToString(stateGroupStatePair.StateGroup);
                     var state = stateGroupStatePair.State;

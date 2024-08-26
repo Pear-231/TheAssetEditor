@@ -31,11 +31,17 @@ using static Editors.Audio.AudioEditor.VOProjectData;
 // TODO:
 // something to remove rows with empty data
 // something to validate no state paths are the same
-// something for the modded states so that the datagrid for building isn't active but the main datagrid is.
 // something for modded states so that when the file is saved it sorts the file so that states are sorted so that there's no empty gaps in the row (unless there's nothing to add there)
 // Add sorting of the audio project events list so that its in alphabetical order (or the same order as the events list checkboxes)
 // Add sorting to the DataGrid so it displays them in alphabetical order, probably do this via a button.
 // Make some way of turning dialogue events into audio projects
+// Add some sorting of to the modded states files.
+
+// Features:
+// Audio browsing within Pack
+// Copy and paste of rows
+// Audio compiler update
+// Play Sound button
 
 namespace Editors.Audio.AudioEditor.ViewModels
 {
@@ -56,10 +62,11 @@ namespace Editors.Audio.AudioEditor.ViewModels
 
         // Properties the user can control.
         [ObservableProperty] private string _selectedAudioProjectEvent;
-        [ObservableProperty] private bool _showCustomStatesOnly;
+        [ObservableProperty] private bool _showModdedStatesOnly;
 
         // UI visibility controls.
         [ObservableProperty] private bool _audioEditorVisibility = false;
+        [ObservableProperty] private bool _audioProjectExplorerVisibility = false;        
         [ObservableProperty] private bool _dataGridBuilderAndControlsVisibility = false;
         [ObservableProperty] private bool _dataGridControlsVisibility = false;
         [ObservableProperty] private bool _dataGridVisibility = false;
@@ -103,22 +110,17 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 }
 
                 // Load the new Event data from the audio project
-                LoadDialogueEvent(_audioRepository, ShowCustomStatesOnly, areStateGroupsEqual);
-            }
-
-            else if (AudioProjectInstance.Type == ProjectType.statesaproj)
-            {
-                // Save the Event data to the Audio Project.
-                ConvertDataGridToStatesAudioProject(DataGridData);
-                
-                LoadModdedStates();
+                LoadDialogueEvent(ShowModdedStatesOnly, areStateGroupsEqual);
             }
         }
 
-        partial void OnShowCustomStatesOnlyChanged(bool value)
+        partial void OnShowModdedStatesOnlyChanged(bool value)
         {
-            // Load the Event again to reset the ComboBoxes in the DataGrid.
-            LoadDialogueEvent(_audioRepository, ShowCustomStatesOnly);
+            ConfigureAudioProjectDataGridBuilder(this, _audioRepository, _packFileService, ShowModdedStatesOnly, "AudioEditorDataGridBuilder", DataGridBuilderData);
+            
+            ClearDataGridBuilderData(DataGridBuilderData);
+            
+            AddRowToDataGridBuilder();
         }
 
         [RelayCommand] public void NewVOProject()
@@ -157,7 +159,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
         [RelayCommand] public void LoadVOProject()
         {
             var audioProjectType = ProjectType.voaproj;
-            using var browser = new PackFileBrowserWindow(_packFileService, [ProjectType.voaproj.ToString()]);
+            using var browser = new PackFileBrowserWindow(_packFileService, [audioProjectType.ToString()]);
 
             if (browser.ShowDialog())
             {
@@ -172,19 +174,19 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 var fileName = Path.GetFileName(filePath);
                 var file = _packFileService.FindFile(filePath);
                 var bytes = file.DataSource.ReadData();
-                var voProjectJson = Encoding.UTF8.GetString(bytes);
-                var voProject = JsonSerializer.Deserialize<VOAudioProject>(voProjectJson);
+                var vOAudioProjectJson = Encoding.UTF8.GetString(bytes);
+                var vOAudioProject = JsonSerializer.Deserialize<VOAudioProject>(vOAudioProjectJson);
 
                 // Set the AudioProjectInstance data.
-                AudioProjectInstance.VOAudioProject = voProject;
+                AudioProjectInstance.VOAudioProject = vOAudioProject;
                 AudioProjectInstance.Type = audioProjectType;
                 AudioProjectInstance.FileName = fileName;
 
                 // Create the list of Events used in the Events ComboBox.
                 CreateEventsListFromVOProject();
 
-                // Load the object which stores the custom States for use in the States ComboBox.
-                //PrepareCustomStatesForComboBox(this);
+                // Get the modded states from States Audio Project and prepare them for being added to the DataGrid ComboBoxes.
+                PrepareModdedStatesForComboBox(_packFileService);
 
                 _logger.Here().Information($"Loaded VO Audio Project: {fileName}");
             }
@@ -197,7 +199,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
 
             if (browser.ShowDialog())
             {
-                // Remove any pre-existing data otherwise DataGrid isn't happy.
+                // Remove any pre-existing data otherwise Data_packFileServiceGrid isn't happy.
                 ResetAudioEditorViewModelData();
                 AudioProjectInstance.ResetAudioProjectData();
 
@@ -220,16 +222,16 @@ namespace Editors.Audio.AudioEditor.ViewModels
             }
         }
 
-        public void LoadDialogueEvent(IAudioRepository audioRepository, bool showCustomStatesOnly, bool areStateGroupsEqual = false)
+        public void LoadDialogueEvent(bool showModdedStatesOnly, bool areStateGroupsEqual = false)
         {
             if (string.IsNullOrEmpty(SelectedAudioProjectEvent))
                 return;
 
             // Configure the DataGrids.
-            if (showCustomStatesOnly == true || !areStateGroupsEqual)
+            if (showModdedStatesOnly == true || areStateGroupsEqual == false)
             {
-                ConfigureAudioProjectDataGridBuilder(this, audioRepository, showCustomStatesOnly, "AudioEditorDataGridBuilder", DataGridBuilderData);
-                ConfigureAudioProjectDataGrid(this, audioRepository, "AudioEditorDataGrid", DataGridData);
+                ConfigureAudioProjectDataGridBuilder(this, _audioRepository, _packFileService, showModdedStatesOnly, "AudioEditorDataGridBuilder", DataGridBuilderData);
+                ConfigureAudioProjectDataGrid(this, _audioRepository, "AudioEditorDataGrid", DataGridData);
             }
 
             // Clear the previous DataGrid Data.
@@ -257,12 +259,9 @@ namespace Editors.Audio.AudioEditor.ViewModels
 
         public void LoadModdedStates()
         {
-            if (string.IsNullOrEmpty(SelectedAudioProjectEvent))
-                return;
-
-            // Configure the DataGrids.
+            // Configure the DataGrid.
             ConfigureStatesAudioProjectDataGrid(this, "AudioEditorDataGrid", DataGridData);
-            ClearDataGridBuilderData(DataGridBuilderData);
+            ClearDataGridData(DataGridData);
 
             // Populate the DataGrid with the data from the Audio Project.
             var statesAudioProject = AudioProjectInstance.StatesAudioProject;
@@ -273,8 +272,6 @@ namespace Editors.Audio.AudioEditor.ViewModels
 
             else
                 InitialiseModdedStatesDataGrid();
-
-            _logger.Here().Information($"Loaded Event: {SelectedAudioProjectEvent}");
         }
 
         private void InitialiseDialogueEventDataGrid(List<DecisionNode> decisionTree)
@@ -429,34 +426,24 @@ namespace Editors.Audio.AudioEditor.ViewModels
             DataGridData.Remove(rowToRemove);
         }
 
-        public static void AddAudioFiles(Dictionary<string, object> dataGridRow, TextBox textBox)
+        public static void AddAudioFiles(AudioEditorViewModel viewModel, PackFileService packFileService, Dictionary<string, object> dataGridRow, TextBox textBox)
         {
-            var dialog = new OpenFileDialog()
+            string[] extentions = {".wav", ".wem"};
+            using var browser = new PackFileBrowserWindow(packFileService, extentions, -1);
+
+            if (browser.ShowDialog())
             {
-                Multiselect = true,
-                Filter = "WAV files (*.wav)|*.wav"
-            };
-
-            if (dialog.ShowDialog() == true)
-            {
-                var filePaths = dialog.FileNames;
-                var fileNames = filePaths.Select(Path.GetFileName);
-                var fileNamesString = string.Join(", ", fileNames);
-                var filePathsString = string.Join(", ", filePaths.Select(filePath => $"\"{filePath}\""));
-
-                textBox.Text = fileNamesString;
-                textBox.ToolTip = filePathsString;
-
-                var audioFiles = new List<string>(filePaths);
-
-                dataGridRow["AudioFiles"] = audioFiles;
-                dataGridRow["AudioFilesDisplay"] = fileNamesString;
             }
         }
 
         public void SetAudioEditorVisibility(bool isVisible)
         {
             AudioEditorVisibility = isVisible;
+        }
+
+        public void SetAudioProjectExplorerVisibility(bool isVisible)
+        {
+            AudioProjectExplorerVisibility = isVisible;
         }
 
         public void SetDataGridBuilderAndControlsVisibility(bool isVisible)
@@ -477,8 +464,9 @@ namespace Editors.Audio.AudioEditor.ViewModels
         public void ResetAudioEditorViewModelData()
         {
             SelectedAudioProjectEvent = null;
-            ShowCustomStatesOnly = false;
+            ShowModdedStatesOnly = false;
             ClearAudioProjectEvents(AudioProjectEvents);
+            ClearDataGridData(DataGridData);
             ClearDataGridBuilderData(DataGridBuilderData);
         }
 
