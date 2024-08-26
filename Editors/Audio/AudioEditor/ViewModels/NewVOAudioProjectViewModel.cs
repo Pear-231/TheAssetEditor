@@ -255,13 +255,17 @@ namespace Editors.Audio.AudioEditor.ViewModels
 
             CloseWindowAction();
 
-            // Make the appropriate UI elements visible.
+            // Set visibility of UI elements.
             _audioEditorViewModel.SetAudioEditorVisibility(true);
             _audioEditorViewModel.SetAudioProjectExplorerVisibility(true);
             _audioEditorViewModel.SetDataGridBuilderAndControlsVisibility(true);
             _audioEditorViewModel.SetDataGridControlsVisibility(false);
             _audioEditorViewModel.SetDataGridVisibility(true);
             _audioEditorViewModel.SetDataGridContextMenuVisibility(true);
+
+            // Set enablement of UI elements.
+            if (!string.IsNullOrEmpty(StatesProjectDirectory))
+                _audioEditorViewModel.IsShowModdedStatesCheckBoxEnabled = false;
         }
 
         public void CreateAudioProjectEventsList(ObservableCollection<string> audioProjectEvents)

@@ -87,8 +87,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
 
             CloseWindowAction();
 
-            // Make the appropriate UI elements visible.
-            _audioEditorViewModel.SetAudioEditorVisibility(true);
+            // Set visibility of UI elements.
             _audioEditorViewModel.SetAudioProjectExplorerVisibility(false);
             _audioEditorViewModel.SetDataGridBuilderAndControlsVisibility(false);
             _audioEditorViewModel.SetDataGridControlsVisibility(true);

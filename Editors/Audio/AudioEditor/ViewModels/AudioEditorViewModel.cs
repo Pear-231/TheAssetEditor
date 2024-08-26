@@ -72,12 +72,13 @@ namespace Editors.Audio.AudioEditor.ViewModels
         [ObservableProperty] private bool _audioProjectExplorerVisibility = false;        
         [ObservableProperty] private bool _dataGridBuilderAndControlsVisibility = false;
         [ObservableProperty] private bool _dataGridControlsVisibility = false;
-        [ObservableProperty] private bool _dataGridVisibility = false;
+        [ObservableProperty] private bool _dataGridVisibility = true;
         [ObservableProperty] private bool _dataGridContextMenuVisibility = false;
 
         // UI enablement controls.
         [ObservableProperty] private bool _isPlayAudioButtonEnabled = false;
         [ObservableProperty] private bool _isPasteEnabled = true;
+        [ObservableProperty] private bool _isShowModdedStatesCheckBoxEnabled = false;
 
         public AudioEditorViewModel(IAudioRepository audioRepository, PackFileService packFileService, IWindowFactory windowFactory, SoundPlayer soundPlayer)
         {
