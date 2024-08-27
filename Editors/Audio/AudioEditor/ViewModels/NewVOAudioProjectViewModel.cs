@@ -239,7 +239,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
             _audioEditorViewModel.ResetAudioEditorViewModelData();
 
             // Create the list of events to be displayed in the AudioEditor.
-            CreateAudioProjectEventsList(_audioEditorViewModel.AudioProjectEvents);
+            CreateAudioProjectEventsList();
 
             // Create the object for State Groups with qualifiers so that their keys in the AudioProject dictionary are unique.
             AddQualifiersToStateGroups(_audioRepository.DialogueEventsWithStateGroups);
@@ -262,11 +262,15 @@ namespace Editors.Audio.AudioEditor.ViewModels
             _audioEditorViewModel.SetDataGridControlsVisibility(false);
             _audioEditorViewModel.SetDataGridVisibility(true);
             _audioEditorViewModel.SetDataGridContextMenuVisibility(true);
+
+            // Set initial SelectedAudioProjectEvent.
+            var firstAudioProjectEvent = _audioEditorViewModel.AudioProjectEvents[0];
+            _audioEditorViewModel.SelectedAudioProjectEvent = firstAudioProjectEvent;
         }
 
-        public void CreateAudioProjectEventsList(ObservableCollection<string> audioProjectEvents)
+        public void CreateAudioProjectEventsList()
         {
-            ClearAudioProjectEvents(audioProjectEvents);
+            ClearAudioProjectEvents(_audioEditorViewModel.AudioProjectEvents);
 
             foreach (var checkBox in DialogueEventCheckBoxes)
             {
