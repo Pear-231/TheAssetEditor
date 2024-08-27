@@ -13,6 +13,8 @@ using Editors.Audio.Storage;
 using static Editors.Audio.AudioEditor.AudioEditorHelpers;
 using static Editors.Audio.AudioEditor.AudioEditorView;
 using static Editors.Audio.AudioEditor.DataGridHelpers;
+using Xceed.Wpf.Toolkit;
+using System.Windows.Input;
 
 namespace Editors.Audio.AudioEditor
 {
@@ -160,7 +162,7 @@ namespace Editors.Audio.AudioEditor
                 return;
 
             var dataGrid = GetDataGrid(dataGridName);
-            dataGrid.CanUserAddRows = false; // Setting this bastard to false ensures that data won't go missing from the last row when a new row is added. Wtf WPF.
+            dataGrid.CanUserAddRows = false;
             dataGrid.ItemsSource = dataGridBuilderData;
             dataGrid.Columns.Clear();
 
@@ -190,7 +192,7 @@ namespace Editors.Audio.AudioEditor
 
                 if (showModdedStates && (stateGroup == "VO_Actor" || stateGroup == "VO_Culture" || stateGroup == "VO_Battle_Selection" || stateGroup == "VO_Battle_Special_Ability" || stateGroup == "VO_Faction_Leader"))
                 {
-                    states.Add("Any"); // Still needs an Any State in addition to custom States.
+                    states.Add("Any");
                     states.AddRange(customStates);
                 }
 
@@ -202,7 +204,6 @@ namespace Editors.Audio.AudioEditor
                     states.AddRange(vanillaStates);
                 }
 
-                // Column for State Group.
                 var column = new DataGridTemplateColumn
                 {
                     Header = stateGroupWithQualifierWithExtraUnderscores,
@@ -213,7 +214,16 @@ namespace Editors.Audio.AudioEditor
                 dataGrid.Columns.Add(column);
             }
 
-            // Column for Audio files TextBox.
+            // Add the "Avoid Last Played" column
+            var avoidLastPlayedColumn = new DataGridTemplateColumn
+            {
+                Header = "Avoid Last Played",
+                CellTemplate = CreateAvoidLastPlayedUpDownTemplate(),
+                Width = DataGridLength.Auto,
+            };
+
+            dataGrid.Columns.Add(avoidLastPlayedColumn);
+
             var soundsTextBoxColumn = new DataGridTemplateColumn
             {
                 Header = "Audio Files",
@@ -223,7 +233,6 @@ namespace Editors.Audio.AudioEditor
 
             dataGrid.Columns.Add(soundsTextBoxColumn);
 
-            // Column for Audio files '...' button.
             var soundsButtonColumn = new DataGridTemplateColumn
             {
                 CellTemplate = CreateSoundsButtonTemplate(viewModel),
@@ -237,7 +246,7 @@ namespace Editors.Audio.AudioEditor
         public static DataTemplate CreateStatesComboBoxTemplate(List<string> states, string stateGroupWithQualifierWithExtraUnderscores, bool showCustomStatesOnly)
         {
             var template = new DataTemplate();
-            var factory = new FrameworkElementFactory(typeof(ComboBox));
+            var factory = new FrameworkElementFactory(typeof(WatermarkComboBox));
 
             // Convert the list of states to ObservableCollection for better binding support
             var observableStates = new ObservableCollection<string>(states);
@@ -254,88 +263,106 @@ namespace Editors.Audio.AudioEditor
                 return false;
             };
 
+            // Bind the ItemsSource of the WatermarkComboBox to the ICollectionView
+            factory.SetValue(WatermarkComboBox.ItemsSourceProperty, collectionView);
+            factory.SetValue(WatermarkComboBox.IsEditableProperty, true);
+            factory.SetValue(WatermarkComboBox.IsTextSearchEnabledProperty, true);
+            factory.SetValue(WatermarkComboBox.WatermarkProperty, "Select a State...");
+            //factory.SetValue(WatermarkComboBox.WatermarkBackgroundProperty, Brushes.Pink);
+
+            // Bind the selected value to the corresponding data property
             var binding = new Binding($"[{stateGroupWithQualifierWithExtraUnderscores}]")
             {
                 Mode = BindingMode.TwoWay,
                 UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
             };
 
+            factory.SetBinding(WatermarkComboBox.SelectedItemProperty, binding);
+
+            // Set up event handlers for text change and selection change to handle filtering
             factory.AddHandler(FrameworkElement.LoadedEvent, new RoutedEventHandler((sender, args) =>
             {
-                if (sender is ComboBox comboBox)
+                if (sender is WatermarkComboBox comboBox)
                 {
-                    // Set the ItemsSource to the ICollectionView
-                    comboBox.ItemsSource = collectionView;
-
-                    if (comboBox.Template.FindName("PART_EditableTextBox", comboBox) is TextBox textBox)
+                    // Ensure the control template is applied before finding PART_EditableTextBox
+                    comboBox.Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
                     {
-                        var debounceTimer = new DispatcherTimer
-                        {
-                            Interval = TimeSpan.FromMilliseconds(200),
-                            IsEnabled = false
-                        };
+                        var textBox = comboBox.Template.FindName("PART_EditableTextBox", comboBox) as TextBox;
 
-                        var lastFilterText = string.Empty;
-
-                        textBox.TextChanged += (s, e) =>
+                        if (textBox != null)
                         {
-                            lastFilterText = textBox.Text;
-                            debounceTimer.Stop();
-                            debounceTimer.Start();
-                        };
+                            // Set the background and foreground of the TextBox to shades of pink
+                            //textBox.Background = Brushes.LightPink; // Light pink background
+                            //textBox.Foreground = Brushes.DeepPink; // Deep pink foreground
 
-                        debounceTimer.Tick += (s, e) =>
-                        {
-                            debounceTimer.Stop();
-                            // Ensure UI updates are performed on the UI thread
-                            Application.Current.Dispatcher.Invoke(() =>
+                            var debounceTimer = new DispatcherTimer
                             {
-                                collectionView.Filter = item =>
+                                Interval = TimeSpan.FromMilliseconds(200),
+                                IsEnabled = false
+                            };
+
+                            var lastFilterText = string.Empty;
+
+                            textBox.TextChanged += (s, e) =>
+                            {
+                                if (e.Changes.Count > 0 && !IsNavigatingWithArrowKeys(e))
                                 {
-                                    if (item is string state)
+                                    lastFilterText = textBox.Text;
+                                    debounceTimer.Stop();
+                                    debounceTimer.Start();
+                                }
+                            };
+
+                            debounceTimer.Tick += (s, e) =>
+                            {
+                                debounceTimer.Stop();
+                                Application.Current.Dispatcher.Invoke(() =>
+                                {
+                                    collectionView.Filter = item =>
                                     {
-                                        return state.Contains(lastFilterText, StringComparison.OrdinalIgnoreCase);
-                                    }
-                                    return false;
-                                };
-                                comboBox.IsDropDownOpen = true;
-                            });
-                        };
-
-                        textBox.LostFocus += (s, e) =>
-                        {
-                            var finalText = textBox.Text;
-
-                            if (!string.IsNullOrWhiteSpace(finalText) && !states.Contains(finalText))
-                            {
-                                textBox.Text = string.Empty;
-                                comboBox.SelectedItem = null;
-                            }
-                        };
-
-                        comboBox.SelectionChanged += (s, e) =>
-                        {
-                            // Ensure the ComboBox's TextBox does not highlight text
-                            if (comboBox.Template.FindName("PART_EditableTextBox", comboBox) is TextBox selectedTextBox)
-                            {
-                                selectedTextBox.Dispatcher.Invoke(() =>
-                                {
-                                    selectedTextBox.Select(0, 0); // Remove selection
-                                    selectedTextBox.CaretIndex = selectedTextBox.Text.Length; // Move caret to the end
+                                        if (item is string state)
+                                        {
+                                            return state.Contains(lastFilterText, StringComparison.OrdinalIgnoreCase);
+                                        }
+                                        return false;
+                                    };
+                                    comboBox.IsDropDownOpen = true;
                                 });
-                            }
-                        };
-                    }
+                            };
+
+                            textBox.LostFocus += (s, e) =>
+                            {
+                                var finalText = textBox.Text;
+
+                                if (!string.IsNullOrWhiteSpace(finalText) && !states.Contains(finalText))
+                                {
+                                    textBox.Text = string.Empty;
+                                    comboBox.SelectedItem = null;
+                                }
+                            };
+
+                            comboBox.SelectionChanged += (s, e) =>
+                            {
+                                textBox.Dispatcher.Invoke(() =>
+                                {
+                                    textBox.Select(0, 0);
+                                    textBox.CaretIndex = textBox.Text.Length;
+                                });
+                            };
+                        }
+                    }));
                 }
             }));
 
-            factory.SetBinding(System.Windows.Controls.Primitives.Selector.SelectedItemProperty, binding);
-            factory.SetValue(ItemsControl.IsTextSearchEnabledProperty, true);
-            factory.SetValue(ComboBox.IsEditableProperty, true);
-
             template.VisualTree = factory;
-
             return template;
+        }
+
+
+        // Helper method to determine if the user is navigating using arrow keys
+        private static bool IsNavigatingWithArrowKeys(TextChangedEventArgs e)
+        {
+            return Keyboard.IsKeyDown(Key.Up) || Keyboard.IsKeyDown(Key.Down);
         }
 
         public static DataTemplate CreateSoundsTextBoxTemplate()
@@ -418,6 +445,30 @@ namespace Editors.Audio.AudioEditor
                         viewModel.RemoveRowFromDataGrid(dataGridRowContext);
                 }
             }));
+
+            template.VisualTree = factory;
+
+            return template;
+        }
+
+        public static DataTemplate CreateAvoidLastPlayedUpDownTemplate()
+        {
+            var template = new DataTemplate();
+            var factory = new FrameworkElementFactory(typeof(IntegerUpDown));
+
+            // Configure the IntegerUpDown control
+            factory.SetValue(IntegerUpDown.MinimumProperty, 1);
+            factory.SetValue(IntegerUpDown.MaximumProperty, 5);
+            factory.SetValue(IntegerUpDown.ValueProperty, 1); 
+            factory.SetValue(IntegerUpDown.WidthProperty, 120.0);
+
+            // Bind the control's Value property to the appropriate data source
+            var binding = new Binding("AvoidLastPlayed")
+            {
+                Mode = BindingMode.TwoWay,
+                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+            };
+            factory.SetBinding(IntegerUpDown.ValueProperty, binding);
 
             template.VisualTree = factory;
 

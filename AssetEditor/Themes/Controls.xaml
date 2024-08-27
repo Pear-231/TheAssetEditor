@@ -2,7 +2,38 @@
                     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:ap="clr-namespace:FramePFX.Themes.Attached"
-                    xmlns:themes="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero2">
+                    xmlns:themes="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero2"
+                    xmlns:extendedwpftoolkit="http://schemas.xceed.com/wpf/xaml/toolkit">
+
+    <Style TargetType="{x:Type extendedwpftoolkit:WatermarkComboBox}">
+        <Setter Property="WatermarkBackground" Value="{DynamicResource ComboBox.Static.Background}"/>
+        <Setter Property="WatermarkTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <TextBlock Text="{Binding}"
+                     Foreground="{DynamicResource ComboBox.Static.Glyph}"
+                     Focusable="False"/>
+        </DataTemplate>
+            </Setter.Value>
+        </Setter>
+
+        <Setter Property="Padding" Value="4,1"/>
+        <Setter Property="Foreground" Value="{DynamicResource Button.Static.Foreground}"/>
+        <Setter Property="Background" Value="{DynamicResource ComboBox.Static.Background}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource ComboBox.Static.Background}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}"/>
+
+        <Setter Property="ItemContainerStyle">
+            <Setter.Value>
+                <Style TargetType="ComboBoxItem">
+                    <Setter Property="Background" Value="{DynamicResource Popup.Static.Background}"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                </Style>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="FocusVisual">
         <Setter Property="Control.Template">
             <Setter.Value>
