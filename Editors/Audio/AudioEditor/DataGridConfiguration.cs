@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
+using System.Windows.Threading;
 using Editors.Audio.AudioEditor.ViewModels;
 using Editors.Audio.Storage;
 using static Editors.Audio.AudioEditor.AudioEditorHelpers;
@@ -237,6 +239,21 @@ namespace Editors.Audio.AudioEditor
             var template = new DataTemplate();
             var factory = new FrameworkElementFactory(typeof(ComboBox));
 
+            // Convert the list of states to ObservableCollection for better binding support
+            var observableStates = new ObservableCollection<string>(states);
+            var collectionView = CollectionViewSource.GetDefaultView(observableStates);
+
+            // Apply initial filtering to the CollectionView
+            collectionView.Filter = item =>
+            {
+                if (item is string state)
+                {
+                    // Only show states that match the filtering criteria
+                    return !showCustomStatesOnly || state.StartsWith("Custom", StringComparison.OrdinalIgnoreCase);
+                }
+                return false;
+            };
+
             var binding = new Binding($"[{stateGroupWithQualifierWithExtraUnderscores}]")
             {
                 Mode = BindingMode.TwoWay,
@@ -247,43 +264,64 @@ namespace Editors.Audio.AudioEditor
             {
                 if (sender is ComboBox comboBox)
                 {
-                    comboBox.ItemsSource = states;
+                    // Set the ItemsSource to the ICollectionView
+                    comboBox.ItemsSource = collectionView;
 
-                    // Ensure that the text box is not highlighted after selection
                     if (comboBox.Template.FindName("PART_EditableTextBox", comboBox) is TextBox textBox)
                     {
-                        textBox.TextChanged += (s, e) =>
+                        var debounceTimer = new DispatcherTimer
                         {
-                            var filterText = textBox.Text;
-                            var filteredItems = states.Where(item => item.Contains(filterText, StringComparison.OrdinalIgnoreCase)).ToList();
-
-                            comboBox.ItemsSource = filteredItems;
-                            comboBox.IsDropDownOpen = true; // Keep the drop-down open to show filtered results.
+                            Interval = TimeSpan.FromMilliseconds(200),
+                            IsEnabled = false
                         };
 
-                        // Handle LostFocus event to ensure final text is genuinely a State and warn the user if not.
+                        var lastFilterText = string.Empty;
+
+                        textBox.TextChanged += (s, e) =>
+                        {
+                            lastFilterText = textBox.Text;
+                            debounceTimer.Stop();
+                            debounceTimer.Start();
+                        };
+
+                        debounceTimer.Tick += (s, e) =>
+                        {
+                            debounceTimer.Stop();
+                            // Ensure UI updates are performed on the UI thread
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                collectionView.Filter = item =>
+                                {
+                                    if (item is string state)
+                                    {
+                                        return state.Contains(lastFilterText, StringComparison.OrdinalIgnoreCase);
+                                    }
+                                    return false;
+                                };
+                                comboBox.IsDropDownOpen = true;
+                            });
+                        };
+
                         textBox.LostFocus += (s, e) =>
                         {
                             var finalText = textBox.Text;
 
                             if (!string.IsNullOrWhiteSpace(finalText) && !states.Contains(finalText))
                             {
-                                MessageBox.Show("Invalid State. Select a State from the list.", "Invalid State", MessageBoxButton.OK, MessageBoxImage.Warning);
                                 textBox.Text = string.Empty;
                                 comboBox.SelectedItem = null;
                             }
                         };
 
-                        // Handle SelectionChanged event to clear text selection after item is selected
                         comboBox.SelectionChanged += (s, e) =>
                         {
                             // Ensure the ComboBox's TextBox does not highlight text
                             if (comboBox.Template.FindName("PART_EditableTextBox", comboBox) is TextBox selectedTextBox)
                             {
-                                selectedTextBox.Dispatcher.InvokeAsync(() =>
+                                selectedTextBox.Dispatcher.Invoke(() =>
                                 {
-                                    selectedTextBox.Select(0, 0); // Remove selection by setting selection start and length to 0
-                                    selectedTextBox.CaretIndex = 0; // Move the caret to the start position
+                                    selectedTextBox.Select(0, 0); // Remove selection
+                                    selectedTextBox.CaretIndex = selectedTextBox.Text.Length; // Move caret to the end
                                 });
                             }
                         };
@@ -294,7 +332,6 @@ namespace Editors.Audio.AudioEditor
             factory.SetBinding(System.Windows.Controls.Primitives.Selector.SelectedItemProperty, binding);
             factory.SetValue(ItemsControl.IsTextSearchEnabledProperty, true);
             factory.SetValue(ComboBox.IsEditableProperty, true);
-            factory.SetValue(ItemsControl.ItemsSourceProperty, states);
 
             template.VisualTree = factory;
 
