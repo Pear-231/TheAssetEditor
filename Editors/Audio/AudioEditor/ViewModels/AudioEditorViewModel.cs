@@ -43,6 +43,8 @@ using static Editors.Audio.Utility.SoundPlayer;
 // Audio compiler update
 // Fix the combobox delays or just make it stop highlighting the text when you click it
 // Need visibility stuff for the menu so that you can't paste between events unless it's a dialogue event
+// Change logo
+// Can't add row until all states are selected and sound
 
 namespace Editors.Audio.AudioEditor.ViewModels
 {
