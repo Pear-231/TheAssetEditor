@@ -7,7 +7,6 @@ namespace Editors.Audio.BnkCompiler.ObjectConfiguration.Warhammer3
         Dictionary<string, uint> EventMixerIds { get; }
         Dictionary<string, uint> DialogueEventMixerIds { get; }
         Dictionary<string, uint> AttenuationIds { get; }
-
     }
 
     public class WwiseIdProvider : IVanillaObjectIds

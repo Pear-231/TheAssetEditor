@@ -23,15 +23,13 @@ namespace Editors.Audio.AudioEditor
         {
             get
             {
-                var treeViewItems = new ObservableCollection<object>();
-
                 // Other SounBank objects e.g. ActionEvents and MusicEvents are not present as they don't currently need to be displayed in the TreeView, only their SoundBank does.
+                var treeViewItems = new ObservableCollection<object>();
                 if (DialogueEvents != null)
                 {
                     foreach (var dialogueEvent in DialogueEvents)
                         treeViewItems.Add(dialogueEvent);
-                }    
-
+                }
                 return treeViewItems;
             }
         }

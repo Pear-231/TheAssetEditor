@@ -127,7 +127,6 @@ namespace Editors.Audio.Storage
                     }
                 }
             }
-
             return null;
         }
 
@@ -160,9 +159,7 @@ namespace Editors.Audio.Storage
                     StateGroupsWithStates[stateGroup.StateGroupName] = new List<string>();
 
                 foreach (var state in stateGroup.States)
-                {
                     StateGroupsWithStates[stateGroup.StateGroupName].Add(state);
-                }
             }
         }
     }

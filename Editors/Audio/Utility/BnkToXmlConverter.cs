@@ -20,7 +20,6 @@ namespace Editors.Audio.Utility
                 CreateNoWindow = true,
                 UseShellExecute = true,
             };
-
             using var process = Process.Start(processInfo);
         }
     }

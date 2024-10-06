@@ -38,17 +38,14 @@ namespace Editors.Audio.AudioEditor.ViewModels
             _audioProjectService.AudioProject.AudioProjectTreeViewItems.Clear();
 
             var actionEventSoundBanks = _audioProjectService.AudioProject.SoundBanks.Where(soundBank => soundBank.Type == SoundBankType.ActionEventBnk.ToString()).ToList();
-
             if (actionEventSoundBanks.Count != 0)
                 AudioProjectTreeViewItems.Add(new ActionEventSoundBanksTreeViewWrapper { ActionEventSoundBanks = new ObservableCollection<SoundBank>(actionEventSoundBanks) });
 
             var dialogueEventSoundBanks = _audioProjectService.AudioProject.SoundBanks.Where(soundBank => soundBank.Type == SoundBankType.DialogueEventBnk.ToString()).ToList();
-
             if (dialogueEventSoundBanks.Count != 0)
                 AudioProjectTreeViewItems.Add(new DialogueEventSoundBanksTreeViewWrapper { DialogueEventSoundBanks = new ObservableCollection<SoundBank>(dialogueEventSoundBanks) });
 
             var musicEventSoundBanks = _audioProjectService.AudioProject.SoundBanks.Where(soundBank => soundBank.Type == SoundBankType.MusicEventBnk.ToString()).ToList();
-
             if (musicEventSoundBanks.Count != 0)
                 AudioProjectTreeViewItems.Add(new MusicEventSoundBanksTreeViewWrapper { MusicEventSoundBanks = new ObservableCollection<SoundBank>(musicEventSoundBanks) });
 
@@ -72,20 +69,17 @@ namespace Editors.Audio.AudioEditor.ViewModels
 
                     _logger.Here().Information($"Loaded Action Event SoundBank: {selectedSoundBank.Name}");
                 }
-
                 else if (selectedSoundBank.Type == SoundBankType.MusicEventBnk.ToString())
                 {
                     throw new NotImplementedException();
                 }
             }
-
             else if (_selectedAudioProjectTreeItem is DialogueEvent selectedDialogueEvent)
             {
                 if (_audioProjectService.StateGroupsWithCustomStates == null || _audioProjectService.StateGroupsWithCustomStates.Count == 0)
                     IsShowModdedStatesCheckBoxEnabled = true;
 
                 var areStateGroupsEqual = false;
-
                 if (_previousSelectedAudioProjectTreeItem is DialogueEvent previousSelectedDialogueEvent)
                 {
                     var newEventStateGroups = _audioRepository.DialogueEventsWithStateGroups[selectedDialogueEvent.Name];
@@ -100,7 +94,6 @@ namespace Editors.Audio.AudioEditor.ViewModels
 
                 _logger.Here().Information($"Loaded DialogueEvent: {selectedDialogueEvent.Name}");
             }
-
             else if (_selectedAudioProjectTreeItem is StateGroup selectedStateGroup)
             {
                 var stateGroupWithExtraUnderscores = AddExtraUnderscoresToString(selectedStateGroup.Name);

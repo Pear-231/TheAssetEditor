@@ -23,16 +23,13 @@ namespace Editors.Audio.AudioEditor.ViewModels
             // Configure the DataGrids when necessary.
             if (selectedSoundBank.Name == "Movies" || _previousSelectedAudioProjectTreeItem == null)
                 ConfigureAudioProjectViewerDataGridForActionEventSoundBank(this, _audioRepository, selectedSoundBank, _dataGridNameName, AudioProjectViewerDataGrid);
-
             else if (_previousSelectedAudioProjectTreeItem is not SoundBank)
                 ConfigureAudioProjectViewerDataGridForActionEventSoundBank(this, _audioRepository, selectedSoundBank, _dataGridNameName, AudioProjectViewerDataGrid);
-
             else if (_previousSelectedAudioProjectTreeItem is SoundBank previousSelectedSoundBank)
             {
                 if (previousSelectedSoundBank.Type != SoundBankType.ActionEventBnk.ToString())
                     ConfigureAudioProjectViewerDataGridForActionEventSoundBank(this, _audioRepository, selectedSoundBank, _dataGridNameName, AudioProjectViewerDataGrid);
             }
-
 
             // Clear the previous DataGrid Data.
             ClearDataGrid(AudioProjectViewerDataGrid);
@@ -76,7 +73,6 @@ namespace Editors.Audio.AudioEditor.ViewModels
             {
                 var dataGridRow = new Dictionary<string, object>();
                 dataGridRow[AddExtraUnderscoresToString(stateGroup.Name)] = state.Name;
-
                 audioProjectViewerDataGrid.Add(dataGridRow);
             }
         }
@@ -89,7 +85,6 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 dataGridRow["Event"] = soundBankEvent.Name;
                 dataGridRow["AudioFiles"] = soundBankEvent.AudioFiles;
                 dataGridRow["AudioFilesDisplay"] = soundBankEvent.AudioFilesDisplay;
-
                 audioProjectViewerDataGrid.Add(dataGridRow);
             }
         }
@@ -103,7 +98,6 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 dataGridRow["AudioFilesDisplay"] = decisionNode.AudioFilesDisplay;
 
                 var stateGroupsWithQualifiersList = DialogueEventsWithStateGroupsWithQualifiersAndStateGroups[dialogueEvent.Name].ToList();
-
                 foreach (var (node, kvp) in decisionNode.StatePath.Nodes.Zip(stateGroupsWithQualifiersList, (node, kvp) => (node, kvp)))
                 {
                     var stateGroupfromDialogueEvent = node.StateGroup.Name;
@@ -157,10 +151,9 @@ namespace Editors.Audio.AudioEditor.ViewModels
 
             if (_selectedAudioProjectTreeItem is DialogueEvent selectedDialogueEvent)
             {
-                var stateGroupsWithQualifiers = DialogueEventsWithStateGroupsWithQualifiersAndStateGroups[selectedDialogueEvent.Name];
-
                 var dialogueEventStateGroups = new List<string>();
 
+                var stateGroupsWithQualifiers = DialogueEventsWithStateGroupsWithQualifiersAndStateGroups[selectedDialogueEvent.Name];
                 foreach (var kvp in stateGroupsWithQualifiers)
                 {
                     var stateGroupWithQualifier = AddExtraUnderscoresToString(kvp.Key);
@@ -168,7 +161,6 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 }
 
                 var copiedDataGridRowStateGroups = new List<string>();
-
                 foreach (var kvp in CopiedDataGridRows[0])
                 {
                     if (kvp.Key != "AudioFiles" && kvp.Key != "AudioFilesDisplay")
@@ -176,10 +168,8 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 }
 
                 var areStateGroupsEqual = dialogueEventStateGroups.SequenceEqual(copiedDataGridRowStateGroups);
-
                 if (!areStateGroupsEqual || areAnyCopiedRowsInDataGrid)
                     IsPasteEnabled = false;
-
                 else if (areStateGroupsEqual && !areAnyCopiedRowsInDataGrid)
                     IsPasteEnabled = true;
             }

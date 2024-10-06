@@ -20,6 +20,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
         private readonly PackFileService _packFileService;
         private readonly AudioEditorViewModel _audioEditorViewModel;
         private readonly IAudioProjectService _audioProjectService;
+
         private Action _closeAction;
 
         public NotifyAttr<string> DisplayName { get; set; } = new NotifyAttr<string>("New Audio Project");

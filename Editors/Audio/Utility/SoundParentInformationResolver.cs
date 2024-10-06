@@ -41,7 +41,6 @@ namespace Editors.Audio.Utility
             return output;
         }
 
-
         ParentStructure GetAudioParentStructure(HircItem sound, IAudioRepository audioRepository, out List<BusItem> busses)
         {
             busses = new List<BusItem>();
@@ -63,25 +62,21 @@ namespace Editors.Audio.Utility
                     busInfo = $" - With AudioBus [{mixerInstance.NodeBaseParams.OverrideBusId}]";
                     busses.Add(new BusItem() { SourceDescription = $"{node.Item.Type}[{node.Item.Id}]", BusId = mixerInstance.NodeBaseParams.OverrideBusId });
                 }
-
                 else if (node.Item is CAkSound_v136 soundInstance && soundInstance.NodeBaseParams.OverrideBusId != 0)
                 {
                     busInfo = $" - With AudioBus [{soundInstance.NodeBaseParams.OverrideBusId}]";
                     busses.Add(new BusItem() { SourceDescription = $"{node.Item.Type}[{node.Item.Id}]", BusId = soundInstance.NodeBaseParams.OverrideBusId });
                 }
-
                 else if (node.Item is CAkRanSeqCntr_v136 randInstance && randInstance.NodeBaseParams.OverrideBusId != 0)
                 {
                     busInfo = $" - With AudioBus [{randInstance.NodeBaseParams.OverrideBusId}]";
                     busses.Add(new BusItem() { SourceDescription = $"{node.Item.Type}[{node.Item.Id}]", BusId = randInstance.NodeBaseParams.OverrideBusId });
                 }
-
                 else if (node.Item is CAkLayerCntr_v136 layerInstance && layerInstance.NodeBaseParams.OverrideBusId != 0)
                 {
                     busInfo = $" - With AudioBus [{layerInstance.NodeBaseParams.OverrideBusId}]";
                     busses.Add(new BusItem() { SourceDescription = $"{node.Item.Type}[{node.Item.Id}]", BusId = layerInstance.NodeBaseParams.OverrideBusId });
                 }
-
                 else if (node.Item is CAkSwitchCntr_v136 switchInstance && switchInstance.NodeBaseParams.OverrideBusId != 0)
                 {
                     busInfo = $" - With AudioBus [{switchInstance.NodeBaseParams.OverrideBusId}]";
@@ -136,13 +131,7 @@ namespace Editors.Audio.Utility
                     output.Last().GraphItems.Add(graphItem);
                 }
             }
-
             return output;
         }
-
-
-
-
     }
-
 }

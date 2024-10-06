@@ -35,7 +35,6 @@ namespace Editors.Audio.BnkCompiler.ObjectGeneration.Warhammer3
             };
 
             wwiseActorMixer.UpdateSize();
-
             return wwiseActorMixer;
         }
     }

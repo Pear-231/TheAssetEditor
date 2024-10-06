@@ -117,7 +117,7 @@ namespace Editors.Audio.Storage
             var allHircs = parsedBnkList.SelectMany(x => x.HircChuck.Hircs);
             PrintHircList(allHircs, "All");
 
-            if (failedBnks.Any())
+            if (failedBnks.Count != 0)
                 _logger.Here().Error($"{failedBnks.Count} banks failed: {string.Join("\n", failedBnks)}");
 
             return output;

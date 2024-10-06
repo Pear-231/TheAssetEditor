@@ -37,7 +37,6 @@ namespace Editors.Audio.BnkCompiler.ObjectGeneration.Warhammer3
             wwiseRandomContainer.AkPlaylist = allChildIds.Select(CreateAkPlaylistItem).ToList();
 
             wwiseRandomContainer.UpdateSize();
-
             return wwiseRandomContainer;
         }
 

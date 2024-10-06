@@ -23,7 +23,6 @@ namespace Editors.Audio.Utility
         {
             public List<DecisionPathItem> Items { get; set; } = new List<DecisionPathItem>();
             public uint ChildNodeId { get; set; }
-
             public string GetAsString(string separator = ".") => string.Join(separator, Items.Select(x => x.DisplayName));
         }
 

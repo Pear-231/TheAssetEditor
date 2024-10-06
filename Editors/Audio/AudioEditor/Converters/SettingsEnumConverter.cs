@@ -11,16 +11,12 @@ namespace Editors.Audio.AudioEditor.Converters
         {
             if (value == null)
                 return value;
-
             else if (value is Language language)
                 return GetStringFromLanguage(language);
-
             else if (value is AudioType EventType)
                 return GetStringFromAudioType(EventType);
-
             else if (value is AudioSubtype dialogueEventSubtype)
                 return GetStringFromAudioSubtype(dialogueEventSubtype);
-
             else
                 return null;
         }

@@ -56,7 +56,6 @@ namespace KitbasherEditor.Views
 
             if (e.NewValue == null)
                 tb.UnSubscribe(e.OldValue as ObservableCollection<ISceneNode>);
-
             else
                 tb.Subscribe(e.NewValue as ObservableCollection<ISceneNode>);
         }
@@ -73,13 +72,10 @@ namespace KitbasherEditor.Views
 
         private void MultiSelectTreeView_PreviewMouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            TreeViewItem treeViewItem = VisualUpwardSearch(e.OriginalSource as DependencyObject);
-            
+            var treeViewItem = VisualUpwardSearch(e.OriginalSource as DependencyObject);
             if (treeViewItem != null)
             {
-                var node = treeViewItem.DataContext as SceneNode;
-
-                if (node != null)
+                if (treeViewItem.DataContext is SceneNode node)
                     node.IsExpanded = !node.IsExpanded;
             }
 
@@ -113,7 +109,6 @@ namespace KitbasherEditor.Views
                 treeViewItem.Foreground = _selectedForegroundBrush;
                 SelectedObjects.Add(node);
             }
-
             else
             {
                 Deselect(treeViewItem, node);
@@ -149,7 +144,6 @@ namespace KitbasherEditor.Views
 
                 ChangeSelectedState(treeViewItem, snode);
             }
-
             finally
             {
                 SelectedObjects.CollectionChanged += SelectedObjects_CollectionChanged;
@@ -190,7 +184,6 @@ namespace KitbasherEditor.Views
                         }
                     }
                 }
-
                 else if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Remove)
                 {
                     foreach (var item in e.OldItems)
@@ -204,13 +197,11 @@ namespace KitbasherEditor.Views
                         }
                     }
                 }
-
                 else
                 {
                     throw new Exception("Unknown event in MultiSelectTreeView::SelectedObjects_CollectionChanged " + e.Action);
                 }
             }
-
             finally
             {
                 SelectedObjects.CollectionChanged += SelectedObjects_CollectionChanged;
@@ -221,9 +212,6 @@ namespace KitbasherEditor.Views
         bool IsShiftPressed { get => Keyboard.IsKeyDown(Key.LeftShift); }
     }
 
-    /// <summary>
-    /// Interaction logic for SceneExplorerView.xaml
-    /// </summary>
     public partial class SceneExplorerView : UserControl
     {
         public SceneExplorerView()
@@ -238,8 +226,6 @@ namespace KitbasherEditor.Views
                 item.IsExpanded = !item.IsExpanded;
             e.Handled = true;
         }
-
-
     }
 
     public class TreeItemDataTemplateSelector : DataTemplateSelector
@@ -257,7 +243,6 @@ namespace KitbasherEditor.Views
                     return element.FindResource("ReferenceTreeNodeStyle") as HierarchicalDataTemplate;
 
             }
-
             return null;
         }
     }

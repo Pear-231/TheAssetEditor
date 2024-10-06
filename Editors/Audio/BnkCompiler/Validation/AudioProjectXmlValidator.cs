@@ -43,7 +43,6 @@ namespace Editors.Audio.BnkCompiler.Validation
         }
 
         // Check for unreferenced ids
-
         List<IAudioProjectHircItem> GetAllItems(CompilerData projectXml)
         {
             var output = new List<IAudioProjectHircItem>();
@@ -82,13 +81,11 @@ namespace Editors.Audio.BnkCompiler.Validation
         public ActionValidator(List<IAudioProjectHircItem> allItems)
         {
             RuleFor(x => x.Id).NotEmpty().WithMessage("Item is missing ID");
-            //RuleFor(x => x.ChildId).Must(x => ValidateChildReference(x, allItems)).WithMessage($"ActionChild has invalid reference");
             RuleFor(x => x.Type)
                 .NotEmpty().WithMessage("ActionChild has no type")
                 .Must(ValidateChildActionType).WithMessage(x => $"ActionChild has invalid type '{x.Type}'. Valid values are {string.Join(", ", ValidActionTypes)}");
         }
 
-        private bool ValidateChildReference(uint id, List<IAudioProjectHircItem> allItems) => allItems.Any(x => x.Id == id);
         private bool ValidateChildActionType(string childType) => ValidActionTypes.Contains(childType, StringComparer.InvariantCultureIgnoreCase);
     }
 
