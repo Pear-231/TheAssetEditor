@@ -194,7 +194,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
                     var randomIndex = random.Next(audioFiles.Count);
                     var randomAudioFile = audioFiles[randomIndex];
 
-                    PlaySound(randomAudioFile);
+                    PlayWavFile(randomAudioFile);
                 }
             }
         }

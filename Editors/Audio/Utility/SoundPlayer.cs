@@ -1,69 +1,57 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
+using System.Linq;
 using Editors.Audio.Storage;
 using Serilog;
 using Shared.Core.ErrorHandling;
 using Shared.Core.PackFiles;
 using Shared.Core.PackFiles.Models;
+using static Editors.Audio.AudioEditor.AudioEditorSettings;
 
 namespace Editors.Audio.Utility
 {
     public class SoundPlayer
     {
         private static readonly ILogger s_logger = Logging.Create<SoundPlayer>();
-        private readonly string _language = "english(uk)";
 
         private readonly PackFileService _pfs;
-        private readonly IAudioRepository _audioRepository;
         private readonly VgStreamWrapper _vgStreamWrapper;
 
-        public SoundPlayer(PackFileService pfs, IAudioRepository audioRepository, VgStreamWrapper vgStreamWrapper)
+        public SoundPlayer(PackFileService pfs, VgStreamWrapper vgStreamWrapper)
         {
             _pfs = pfs;
-            _audioRepository = audioRepository;
             _vgStreamWrapper = vgStreamWrapper;
         }
 
-        public bool PlaySound(string sourceId, uint parentEventId)
+        public bool ConvertWemToWav(string wemFileName)
         {
-            if (sourceId == null)
+            if (wemFileName == null)
             {
-                s_logger.Here().Warning("Input is not a valid wwise sound");
+                s_logger.Here().Warning("Input is not a valid wem file.");
                 return false;
             }
 
-            s_logger.Here().Information($"User selected {sourceId}.wem to be played");
-            var outputName = $"{_audioRepository.GetNameFromHash(parentEventId)}-{sourceId}";
-
-            var audioFile = FindSoundFile(_language, sourceId);
-
+            var audioFile = FindWemFile(wemFileName, _pfs);
             if (audioFile == null)
             {
-                s_logger.Here().Error("Unable to find sound");
+                s_logger.Here().Error("Unable to find wem file.");
                 return true;
             }
 
-            s_logger.Here().Information($"Trying to play Sound '{_pfs.GetFullPath(audioFile)}'");
-            var result = _vgStreamWrapper.ConvertFromWem(outputName, audioFile.DataSource.ReadData());
-
+            var result = _vgStreamWrapper.ConvertWemToWav(wemFileName.ToString(), audioFile.DataSource.ReadData());
             if (result.IsSuccess)
             {
-                s_logger.Here().Information($"Sound converted, playing: {result.Item}");
-                using var p = new Process();
-                p.StartInfo = new ProcessStartInfo(result.Item)
-                {
-                    UseShellExecute = true
-                };
+                s_logger.Here().Information($"Wem file converted to wav.");
 
-                p.Start();
+                PlayWavFile(result.Item);
             }
-
             else
-                s_logger.Here().Error("Unable to export sound");
+                s_logger.Here().Error("Unable to export wav file.");
 
             return result.IsSuccess;
         }
 
-        public static void PlaySound(string audioFile)
+        public static void PlayWavFile(string audioFile)
         {
             s_logger.Here().Information($"Playing: {audioFile}");
 
@@ -76,15 +64,21 @@ namespace Editors.Audio.Utility
             process.Start();
         }
 
-        PackFile FindSoundFile(string language, string soundId)
+        public static PackFile FindWemFile(string soundId, PackFileService pfs)
         {
-            var audioFile = _pfs.FindFile($"audio\\wwise\\{soundId}.wem");
+            var audioFile = pfs.FindFile($"audio\\wwise\\{soundId}.wem");
 
-            if (audioFile == null)
-                audioFile = _pfs.FindFile($"audio\\wwise\\{language}\\{soundId}.wem");
+            foreach (var languageEnum in Enum.GetValues(typeof(Language)).Cast<Language>())
+            {
+                var language = GetStringFromLanguage(languageEnum);
+
+                if (audioFile == null)
+                    audioFile = pfs.FindFile($"audio\\wwise\\{language}\\{soundId}.wem");
+                else break;
+            }
 
             if (audioFile == null) // Attila
-                audioFile = _pfs.FindFile($"audio\\{soundId}.wem");
+                audioFile = pfs.FindFile($"audio\\{soundId}.wem");
 
             return audioFile;
         }

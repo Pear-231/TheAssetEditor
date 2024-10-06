@@ -30,7 +30,7 @@ namespace Editors.Audio.Utility
             }
         }
 
-        public Result<string> ConvertFromWem(string fileNameWithoutExtention, byte[] wemBytes)
+        public Result<string> ConvertWemToWav(string fileNameWithoutExtention, byte[] wemBytes)
         {
             Guard.IsNotNull(wemBytes);
             Guard.IsNotNullOrEmpty(fileNameWithoutExtention);

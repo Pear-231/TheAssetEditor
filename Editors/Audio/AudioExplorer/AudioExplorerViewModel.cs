@@ -119,7 +119,7 @@ namespace Editors.Audio.AudioExplorer
             var match = regex.Match(nodeDisplayName);
             var sourceId = match.Groups[1].Value;
 
-            _soundPlayer.PlaySound(sourceId, TreeList.First().Item.Id);
+            _soundPlayer.ConvertWemToWav(sourceId);
         }
 
         public void LoadHircFromIdAction()
