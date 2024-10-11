@@ -27,8 +27,10 @@ namespace Editors.Audio.AudioExplorer
         public void Refresh(bool showEvents, bool showDialogEvents)
         {
             var typesToShow = new List<HircType>();
+
             if (showEvents)
                 typesToShow.Add(HircType.Event);
+
             if (showDialogEvents)
                 typesToShow.Add(HircType.Dialogue_Event);
 

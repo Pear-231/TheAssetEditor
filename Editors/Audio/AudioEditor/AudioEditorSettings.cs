@@ -513,7 +513,6 @@ namespace Editors.Audio.AudioEditor
                         var qualifier = voActorCount > 1 ? "VO_Actor (Reference)" : "VO_Actor (Source)";
                         stateGroupsWithQualifiers[qualifier] = "VO_Actor";
                     }
-
                     else if (stateGroup == "VO_Culture")
                     {
                         voCultureCount++;
@@ -521,7 +520,6 @@ namespace Editors.Audio.AudioEditor
                         var qualifier = voCultureCount > 1 ? "VO_Culture (Reference)" : "VO_Culture (Source)";
                         stateGroupsWithQualifiers[qualifier] = "VO_Culture";
                     }
-
                     else
                     {
                         // No qualifier needed, add the same state group as both original and qualified

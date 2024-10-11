@@ -28,18 +28,14 @@ namespace Editors.Audio.Utility
             var dialogEvents = allHircItems.OfType<ICADialogEvent>();
 
             foreach (var dialogEvent in dialogEvents)
-            {
                 PrintDialogEventInfo(dialogEvent);
-            }
         }
 
         private void PrintDialogEventInfo(ICADialogEvent dialogEvent)
         {
-            var hircItem = dialogEvent as HircItem; // Assuming HircItem is the base type with an Id
-            if (hircItem == null)
-            {
+            // Assuming HircItem is the base type with an Id
+            if (dialogEvent is not HircItem hircItem)
                 throw new InvalidCastException("dialogEvent is not a HircItem.");
-            }
 
             var helper = new DecisionPathHelper(_repository);
             var paths = helper.GetDecisionPaths(dialogEvent);
@@ -58,7 +54,6 @@ namespace Editors.Audio.Utility
             Console.WriteLine(info);
             var filePath = @"C:\Users\george\Desktop\dialogue_events_state_groups.txt";
             File.AppendAllText(filePath, info + Environment.NewLine);
-
         }
     }
 
@@ -164,11 +159,7 @@ namespace Editors.Audio.Utility
                         ProcessNext(normalSwitch.Id, actionTreeNode);
                 }
             }
-            else
-            {
-
-                ProcessNext(childId, actionTreeNode);
-            }
+            else ProcessNext(childId, actionTreeNode);
         }
 
         private void ProcessSound(HircItem item, HircTreeItem parent)
@@ -269,7 +260,7 @@ namespace Editors.Audio.Utility
             var node = new HircTreeItem() { DisplayName = $"Music Rand Container", Item = item };
             parent.Children.Add(node);
 
-            if (hirc.pPlayList.Any())
+            if (hirc.pPlayList.Count != 0)
             {
                 foreach (var playList in hirc.pPlayList.First().pPlayList)
                     ProcessNext(playList.SegmentID, node);

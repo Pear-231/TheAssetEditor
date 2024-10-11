@@ -43,7 +43,6 @@ namespace Editors.Audio.Utility
             var rootNode = BuildHierarchy(item);
 
             var flatList = GetHircParents(rootNode);
-            //flatList.Reverse();
             return flatList;
         }
 

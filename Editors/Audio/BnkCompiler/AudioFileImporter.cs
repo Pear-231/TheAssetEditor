@@ -67,7 +67,6 @@ namespace Editors.Audio.BnkCompiler
             // Load
             var createdFiles = PackFileUtil.LoadFilesFromDisk(_pfs, new PackFileUtil.FileRef(wemPath, GetExpectedFolder(compilerData), $"{hashName}.wem"));
             sound.FilePath = _pfs.GetFullPath(createdFiles.First());
-
             return Result<bool>.FromOk(true);
         }
 
@@ -76,7 +75,6 @@ namespace Editors.Audio.BnkCompiler
             var basePath = "audio\\wwise";
             if (string.IsNullOrEmpty(compilerData.ProjectSettings.Language) == false)
                 basePath += $"\\{compilerData.ProjectSettings.Language}";
-
             return basePath;
         }
     }

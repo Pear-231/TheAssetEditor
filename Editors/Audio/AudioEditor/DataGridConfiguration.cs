@@ -336,9 +336,7 @@ namespace Editors.Audio.AudioEditor
             {
                 if (sender is ComboBox comboBox)
                 {
-                    var textBox = comboBox.Template.FindName("PART_EditableTextBox", comboBox) as TextBox;
-
-                    if (textBox != null)
+                    if (comboBox.Template.FindName("PART_EditableTextBox", comboBox) is TextBox textBox)
                     {
                         var debounceTimer = new DispatcherTimer
                         {

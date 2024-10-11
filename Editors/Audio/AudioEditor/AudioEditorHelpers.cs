@@ -34,13 +34,11 @@ namespace Editors.Audio.AudioEditor
             {
                 var stateGroups = decisionNode.StatePath.Nodes.Select(node => node.StateGroup.Name).ToList();
                 var comparisonStateGroups = comparisonStatePath.Nodes.Select(node => node.StateGroup.Name).ToList();
-
                 if (!stateGroups.SequenceEqual(comparisonStateGroups))
                     return null;
 
                 var states = decisionNode.StatePath.Nodes.Select(node => node.State).ToList();
                 var comparisonStates = comparisonStatePath.Nodes.Select(node => node.State).ToList();
-
                 if (states.SequenceEqual(comparisonStates))
                     return decisionNode;
             }
@@ -62,7 +60,6 @@ namespace Editors.Audio.AudioEditor
                 {
                     foreach (var state in stateGroup.States)
                     {
-
                         if (!stateGroupsWithModdedtates.ContainsKey(stateGroup.Name))
                             stateGroupsWithModdedtates[stateGroup.Name] = new List<string>();
 
@@ -92,18 +89,14 @@ namespace Editors.Audio.AudioEditor
             for (var i = 0; i < decisionTree.Count; i++)
             {
                 var existingStateName = decisionTree[i].StatePath.Nodes.First().State.Name;
-
                 var comparison = string.Compare(newStateName, existingStateName, StringComparison.Ordinal);
-
                 if (comparison < 0)
                 {
                     insertIndex = i;
                     break;
                 }
-
                 else if (comparison == 0)
                     insertIndex = i + 1;
-
                 else
                     insertIndex = i + 1;
             }
@@ -120,15 +113,12 @@ namespace Editors.Audio.AudioEditor
             for (var i = 0; i < events.Count; i++)
             {
                 var existingEventName = events[i].Name;
-
                 var comparison = string.Compare(newEventName, existingEventName, StringComparison.Ordinal);
-
                 if (comparison < 0)
                 {
                     insertIndex = i;
                     break;
                 }
-
                 else if (comparison == 0)
                     insertIndex = i + 1;
                 else
@@ -147,7 +137,6 @@ namespace Editors.Audio.AudioEditor
             for (var i = 0; i < states.Count; i++)
             {
                 var existingStateName = states[i].Name;
-
                 var comparison = string.Compare(newStateName, existingStateName, StringComparison.Ordinal);
 
                 if (comparison < 0)
@@ -155,10 +144,8 @@ namespace Editors.Audio.AudioEditor
                     insertIndex = i;
                     break;
                 }
-
                 else if (comparison == 0)
                     insertIndex = i + 1;
-
                 else
                     insertIndex = i + 1;
             }
@@ -175,16 +162,13 @@ namespace Editors.Audio.AudioEditor
             {
                 var currentValue = audioProjectViewerDataGrid[i].First().Value.ToString();
                 var comparison = string.Compare(newValue, currentValue, StringComparison.Ordinal);
-
                 if (comparison < 0)
                 {
                     insertIndex = i;
                     break;
                 }
-
                 else if (comparison == 0)
                     insertIndex = i + 1;
-
                 else
                     insertIndex = i + 1;
             }
@@ -217,7 +201,6 @@ namespace Editors.Audio.AudioEditor
                     soundBankEvent.AudioFiles = filePaths;
                     soundBankEvent.AudioFilesDisplay = fileNamesString;
                 }
-
                 else if (kvp.Key != "AudioFiles" && kvp.Key != "AudioFilesDisplay")
                     soundBankEvent.Name = kvp.Value.ToString();
             }
@@ -241,7 +224,6 @@ namespace Editors.Audio.AudioEditor
                     decisionNode.AudioFiles = filePaths;
                     decisionNode.AudioFilesDisplay = fileNamesString;
                 }
-
                 else if (kvp.Key != "AudioFiles" && kvp.Key != "AudioFilesDisplay")
                 {
                     var stateGroupWithQualifierAndExtraUnderscores = kvp.Key;
@@ -286,7 +268,6 @@ namespace Editors.Audio.AudioEditor
             }
 
             var matchingStatePath = GetMatchingDecisionNode(statePath, selectedDialogueEvent);
-
             if (matchingStatePath != null)
             {
                 selectedDialogueEvent.DecisionTree.Remove(matchingStatePath);
@@ -301,7 +282,6 @@ namespace Editors.Audio.AudioEditor
                 if (stateGroupDictionary.TryGetValue(stateGroupWithQualifier, out var stateGroup))
                     return stateGroup;
             }
-
             return null;
         }
 
@@ -324,16 +304,13 @@ namespace Editors.Audio.AudioEditor
 
                 if (child is T typedChild && child is FrameworkElement element && element.Name == name)
                     return typedChild;
-
                 else
                 {
                     var foundChild = FindVisualChild<T>(child, name);
-
                     if (foundChild != null)
                         return foundChild;
                 }
             }
-
             return null;
         }
 

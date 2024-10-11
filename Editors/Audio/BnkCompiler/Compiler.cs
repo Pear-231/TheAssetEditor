@@ -44,7 +44,7 @@ namespace Editors.Audio.BnkCompiler
 
             // Ensure all write ids are not causing conflicts.
             var allIds = hircChunk.Hircs.Select(x => x.Id).ToList();
-            var originalCount = allIds.Count();
+            var originalCount = allIds.Count;
             var uniqueCount = allIds.Distinct().Count();
             Guard.IsEqualTo(originalCount, uniqueCount);
 
@@ -63,7 +63,7 @@ namespace Editors.Audio.BnkCompiler
             return Result<CompileResult>.FromOk(compileResult);
         }
 
-        private PackFile ConvertToPackFile(BkhdHeader header, HircChunk hircChunk, string outputFile)
+        private static PackFile ConvertToPackFile(BkhdHeader header, HircChunk hircChunk, string outputFile)
         {
             var outputName = $"{outputFile}.bnk";
             var headerBytes = BkhdParser.GetAsByteArray(header);
@@ -79,7 +79,6 @@ namespace Editors.Audio.BnkCompiler
             var bnkPackFile = new PackFile(outputName, new MemorySource(bytes));
             var parser = new BnkParser();
             var result = parser.Parse(bnkPackFile, "test\\fakefilename.bnk");
-
             return bnkPackFile;
         }
 

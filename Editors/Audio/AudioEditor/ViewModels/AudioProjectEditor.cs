@@ -21,7 +21,6 @@ namespace Editors.Audio.AudioEditor.ViewModels
             {
                 LoadDialogueEventForAudioProjectEditor(selectedDialogueEvent, ShowModdedStatesOnly);
                 LoadDialogueEventForAudioProjectViewer(selectedDialogueEvent, ShowModdedStatesOnly);
-
                 _logger.Here().Information($"Loaded DialogueEvent: {selectedDialogueEvent.Name}");
             }
         }
@@ -31,23 +30,19 @@ namespace Editors.Audio.AudioEditor.ViewModels
             // Configure the DataGrids when necessary.
             if (selectedSoundBank.Name == "Movies" || _previousSelectedAudioProjectTreeItem == null)
                 ConfigureAudioProjectEditorDataGridForActionEventSoundBank(this, _audioRepository, _dataGridBuilderName, AudioProjectEditorDataGrid);
-
             else if (_previousSelectedAudioProjectTreeItem is not SoundBank)
                 ConfigureAudioProjectEditorDataGridForActionEventSoundBank(this, _audioRepository, _dataGridBuilderName, AudioProjectEditorDataGrid);
-
             else if (_previousSelectedAudioProjectTreeItem is SoundBank previousSelectedSoundBank)
             {
                 if (previousSelectedSoundBank.Type != SoundBankType.ActionEventBnk.ToString())
                     ConfigureAudioProjectEditorDataGridForActionEventSoundBank(this, _audioRepository, _dataGridBuilderName, AudioProjectEditorDataGrid);
             }
 
-
             // Clear the previous DataGrid Data.
             ClearDataGrid(AudioProjectEditorDataGrid);
 
             // Set the format of the DataGrids.
             SetAudioProjectEditorDataGridToActionEventSoundBank();
-
         }
 
         private void LoadDialogueEventForAudioProjectEditor(DialogueEvent selectedDialogueEvent, bool showModdedStatesOnly, bool areStateGroupsEqual = false)
@@ -81,7 +76,6 @@ namespace Editors.Audio.AudioEditor.ViewModels
         {
             var dataGridRow = new Dictionary<string, object> { };
             dataGridRow[moddedStateGroupWithExtraUnderscores] = string.Empty;
-
             AudioProjectEditorDataGrid.Add(dataGridRow);
         }
 
@@ -91,14 +85,12 @@ namespace Editors.Audio.AudioEditor.ViewModels
             dataGridRow["Event"] = string.Empty;
             dataGridRow["AudioFiles"] = new List<string> { };
             dataGridRow["AudioFilesDisplay"] = string.Empty;
-
             AudioProjectEditorDataGrid.Add(dataGridRow);
         }
 
         private void SetAudioProjectEditorDataGridToDialogueEvent(DialogueEvent dialogueEvent)
         {
             var dataGridRow = new Dictionary<string, object>();
-
             var stateGroupsWithQualifiers = DialogueEventsWithStateGroupsWithQualifiersAndStateGroups[dialogueEvent.Name];
 
             foreach (var kvp in stateGroupsWithQualifiers)
@@ -110,7 +102,6 @@ namespace Editors.Audio.AudioEditor.ViewModels
 
             dataGridRow["AudioFiles"] = new List<string> { };
             dataGridRow["AudioFilesDisplay"] = string.Empty;
-
             AudioProjectEditorDataGrid.Add(dataGridRow);
         }
 
@@ -120,18 +111,15 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 return;
 
             var newRow = new Dictionary<string, object>();
-
             foreach (var kvp in AudioProjectEditorDataGrid[0])
             {
                 var column = kvp.Key;
                 var cellValue = kvp.Value;
-
                 if (column == "AudioFiles" && cellValue is List<string> stringList)
                 {
                     var newList = new List<string>(stringList);
                     newRow[column] = newList;
                 }
-
                 else
                     newRow[column] = cellValue.ToString();
             }
@@ -147,19 +135,16 @@ namespace Editors.Audio.AudioEditor.ViewModels
                     SetAudioProjectEditorDataGridToActionEventSoundBank();
                     AddDataGridRowToActionEventSoundBank(newRow, soundBank);
                 }
-
                 else if (soundBank.MusicEvents != null)
                 {
                     throw new NotImplementedException();
                 }
             }
-
             else if (_selectedAudioProjectTreeItem is DialogueEvent selectedDalogueEvent)
             {
                 SetAudioProjectEditorDataGridToDialogueEvent(selectedDalogueEvent);
                 AddDataGridRowToDialogueEvent(newRow, selectedDalogueEvent);
             }
-
             else if (_selectedAudioProjectTreeItem is StateGroup moddedStateGroup)
             {
                 SetAudioProjectEditorDataGridToModdedStateGroup(moddedStateGroup.Name);
@@ -176,7 +161,6 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 {
                     throw new NotImplementedException();
                 }
-
                 else if (_selectedAudioProjectTreeItem is DialogueEvent selectedDalogueEvent)
                 {
                     RemoveDataGridRowFromDialogueEvent(AudioProjectViewerDataGrid, SelectedDataGridRows[0], selectedDalogueEvent);

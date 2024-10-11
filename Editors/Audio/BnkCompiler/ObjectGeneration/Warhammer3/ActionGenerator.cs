@@ -29,8 +29,8 @@ namespace Editors.Audio.BnkCompiler.ObjectGeneration.Warhammer3
             wwiseAction.idExt = inputAction.ChildId;
             wwiseAction.AkPlayActionParams.byBitVector = 0x04;
             wwiseAction.AkPlayActionParams.bankId = WwiseHash.Compute(project.ProjectSettings.BnkName);
+            
             wwiseAction.UpdateSize();
-
             return wwiseAction;
         }
     }

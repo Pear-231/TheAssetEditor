@@ -13,7 +13,6 @@ namespace Editors.Audio.Utility
     public class SoundPlayer
     {
         private static readonly ILogger s_logger = Logging.Create<SoundPlayer>();
-
         private readonly PackFileService _pfs;
         private readonly VgStreamWrapper _vgStreamWrapper;
 
@@ -77,8 +76,7 @@ namespace Editors.Audio.Utility
                 else break;
             }
 
-            if (audioFile == null) // Attila
-                audioFile = pfs.FindFile($"audio\\{soundId}.wem");
+            audioFile ??= pfs.FindFile($"audio\\{soundId}.wem");
 
             return audioFile;
         }

@@ -73,7 +73,6 @@ namespace Editors.Audio.BnkCompiler.ObjectGeneration.Warhammer3
             }
 
             wwiseSound.UpdateSize();
-
             return wwiseSound;
         }
 

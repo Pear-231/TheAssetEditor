@@ -141,7 +141,6 @@ namespace Editors.Audio.BnkCompiler
                 AddDialogueEvents(audioRepository, mixers, input, compilerData);
 
             compilerData.StoreWwiseObjects();
-
             return compilerData;
         }
     }

@@ -71,7 +71,6 @@ namespace Editors.Audio.AudioEditor.ViewModels
                         AudioProjectSubtypes.Add(subtype);
                 }
             }
-
             else
             {
                 IsAudioSubtypeEnabled = false;
@@ -131,7 +130,6 @@ namespace Editors.Audio.AudioEditor.ViewModels
         private void HandleDialogueEventCheckBoxChanged(DialogueEventCheckBox changedItem)
         {
             IsAnyAudioProjectItemChecked = DialogueEventCheckBoxes.Any(checkBox => checkBox.IsChecked);
-
             IsAddToAudioProjectButtonEnabled = IsAnyAudioProjectItemChecked;
         }
 
@@ -162,9 +160,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
         [RelayCommand] public void SelectNone()
         {
             foreach (var checkBox in DialogueEventCheckBoxes)
-            {
                 checkBox.IsChecked = false;
-            }
         }
 
         [RelayCommand] public void ResetAudioProjectConfiguration()
@@ -179,18 +175,15 @@ namespace Editors.Audio.AudioEditor.ViewModels
             var audioTypeEnum = (AudioType)Enum.Parse(typeof(AudioType), SelectedAudioType.ToString());
             var audioType = GetStringFromAudioType(audioTypeEnum);
             var soundBankType = GetSoundBankTypeFromAudioType(audioTypeEnum);
-
             if (soundBankType == SoundBankType.DialogueEventBnk)
             {
                 var dialogueEventSoundBanks = _audioProjectService.AudioProject.SoundBanks.Where(soundBank => soundBank.Type == SoundBankType.DialogueEventBnk.ToString()).ToList();
                 var audioProjectHasDialogueEvents = dialogueEventSoundBanks.Any(soundBank => soundBank.DialogueEvents.Any());
-
                 if (!audioProjectHasDialogueEvents)
                     InitialiseModdedStatesGroups(_audioProjectService.AudioProject.ModdedStates, _audioProjectService.AudioProject.AudioProjectTreeViewItems);
 
                 // Check whether the SounBank exists, if not add it.
                 var soundBank = GetSoundBankFromSelectedAudioType(SelectedAudioType, _audioProjectService.AudioProject.SoundBanks);
-
                 if (soundBank == null)
                 {
                     soundBank = new SoundBank
@@ -204,7 +197,6 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 }
 
                 var selectedConfigurationDialogueEvents = GetCheckedDialogueEventsInAudioProjectConfiguration();
-
                 foreach (var dialogueEventName in selectedConfigurationDialogueEvents)
                     soundBank.DialogueEvents.Add(new DialogueEvent { Name = dialogueEventName });
             }
@@ -213,17 +205,12 @@ namespace Editors.Audio.AudioEditor.ViewModels
             {
                 // Check whether the SounBank exists, if not add it.
                 var soundBank = GetSoundBankFromSelectedAudioType(SelectedAudioType, _audioProjectService.AudioProject.SoundBanks);
-
-                if (soundBank == null)
-                {
-                    soundBank = new SoundBank
+                soundBank ??= new SoundBank
                     {
                         Name = audioType,
                         Type = soundBankType.ToString(),
                         ActionEvents = new ObservableCollection<ActionEvent>()
                     };
-                }
-
                 _audioProjectService.AudioProject.SoundBanks.Add(soundBank);
             }
 
@@ -244,7 +231,6 @@ namespace Editors.Audio.AudioEditor.ViewModels
         private HashSet<string> GetCheckedDialogueEventsInAudioProjectConfiguration()
         {
             var selectedDialogueEvents = new HashSet<string>();
-
             foreach (var checkBox in DialogueEventCheckBoxes)
             {
                 if (checkBox.IsChecked == true && checkBox.IsEnabled == true)
@@ -253,7 +239,6 @@ namespace Editors.Audio.AudioEditor.ViewModels
                     selectedDialogueEvents.Add(dialogueEventName);
                 }
             }
-
             return selectedDialogueEvents;
         }
     }

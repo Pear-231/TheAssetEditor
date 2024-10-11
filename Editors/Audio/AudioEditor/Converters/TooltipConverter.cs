@@ -16,23 +16,18 @@ namespace Editors.Audio.AudioEditor.Converters
             {
                 if (value is IEnumerable<string> collection)
                     return string.Join(", ", collection.Select(item => $"\"{item}\""));
-
                 else if (value is IList<string> list)
                     return string.Join(", ", list.Select(item => $"\"{item}\""));
-
                 else if (value is IEnumerable enumerable)
                 {
                     var stringValue = new StringBuilder();
-
                     foreach (var item in enumerable)
                     {
                         stringValue.Append($"\"{item.ToString()}\"");
                         stringValue.Append(", ");
                     }
-
                     return stringValue.ToString().TrimEnd([',', ' ']);
                 }
-
                 return string.Empty;
             }
 

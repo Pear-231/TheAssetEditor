@@ -8,26 +8,18 @@ namespace Editors.Audio.BnkCompiler.ObjectGeneration
     {
         public List<IAudioProjectHircItem> Sort(CompilerData project)
         {
-            // Sort
             var sortedProjectItems = new List<IAudioProjectHircItem>();
-
-            // HashSet to keep track of added items
             var addedItems = new HashSet<IAudioProjectHircItem>();
-
-            // Add mixers and their children
             var mixers = SortActorMixerList(project);
+
             foreach (var mixer in mixers)
             {
                 var children = mixer.Children.ToList();
                 children.Reverse();
 
-                // Create a list to store children
                 var mixerChildren = new List<IAudioProjectHircItem>();
-
-                // Iterate over the mixer children
                 foreach (var child in children)
                 {
-                    // Find game sounds with the child name
                     IAudioProjectHircItem gameSound = null;
                     foreach (var sound in project.Sounds)
                     {
@@ -41,44 +33,36 @@ namespace Editors.Audio.BnkCompiler.ObjectGeneration
                     if (gameSound != null)
                     {
                         mixerChildren.Add(gameSound);
-                        continue; // Move to the next child
+                        continue;
                     }
 
-                    // Find random containers with the child name
+                    // Find random containers with the child name.
                     foreach (var container in project.RandomContainers)
                     {
                         if (container.Id == child && !addedItems.Contains(container))
                         {
-                            // Collect children of the random container
                             var containerChildren = new List<IAudioProjectHircItem>();
-
                             foreach (var containerchild in container.Children)
                             {
                                 var gameSoundChild = project.Sounds.FirstOrDefault(sound => sound.Id == containerchild);
                                 if (gameSoundChild != null && !addedItems.Contains(gameSoundChild))
-                                {
                                     containerChildren.Add(gameSoundChild);
-                                }
                             }
 
-                            // Sort container children by key
                             var sortedContainerChildren = containerChildren.OrderBy(child => child.Id).ToList();
-
-                            // Add container children to sortedProjectItems
                             foreach (var containerChild in sortedContainerChildren)
                             {
                                 sortedProjectItems.Add(containerChild);
                                 addedItems.Add(containerChild);
                             }
 
-                            // Add the random container itself after its children
+                            // Add the random container itself after its children.
                             sortedProjectItems.Add(container);
                             addedItems.Add(container);
                         }
                     }
                 }
 
-                // Add mixer children
                 foreach (var child in mixerChildren)
                 {
                     if (!addedItems.Contains(child))
@@ -88,7 +72,6 @@ namespace Editors.Audio.BnkCompiler.ObjectGeneration
                     }
                 }
 
-                // Add current mixer
                 if (!addedItems.Contains(mixer))
                 {
                     sortedProjectItems.Add(mixer);
@@ -96,7 +79,6 @@ namespace Editors.Audio.BnkCompiler.ObjectGeneration
                 }
             }
 
-            // Add Events and actions
             var sortedEvents = project.Events.OrderBy(x => x).ToList();
             foreach (var currentEvent in sortedEvents)
             {
@@ -105,7 +87,6 @@ namespace Editors.Audio.BnkCompiler.ObjectGeneration
 
                 sortedProjectItems.AddRange(sortedActions);
 
-                // Add current event
                 if (!addedItems.Contains(currentEvent))
                 {
                     sortedProjectItems.Add(currentEvent);
@@ -113,11 +94,9 @@ namespace Editors.Audio.BnkCompiler.ObjectGeneration
                 }
             }
 
-            // Add Dialogue Events
             var sortedDialogueEvents = project.DialogueEvents.OrderBy(x => x).ToList();
             foreach (var currentDialogueEvent in sortedDialogueEvents)
             {
-                // Add current event
                 if (!addedItems.Contains(currentDialogueEvent))
                 {
                     sortedProjectItems.Add(currentDialogueEvent);
@@ -147,7 +126,6 @@ namespace Editors.Audio.BnkCompiler.ObjectGeneration
             }
 
             output.Reverse();
-
             return output;
         }
 

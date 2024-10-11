@@ -23,7 +23,6 @@ namespace Editors.Audio.Utility
             {
                 EnsureCreated();
             }
-
             catch (Exception e)
             {
                 _logger.Here().Error($"Unable to create VgStreamWrapper: {e.Message}");
@@ -94,7 +93,6 @@ namespace Editors.Audio.Utility
                 _logger.Here().Information("All bytes written to file");
                 return Result<bool>.FromOk(true);
             }
-
             catch (Exception e)
             {
                 _logger.Here().Error(e.Message);

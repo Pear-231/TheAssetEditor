@@ -43,7 +43,6 @@ namespace Editors.Audio.BnkCompiler
 
                 if (soundsCount == 1)
                     AddSingleSoundEvent(compilerData, currentMixer, projectEvent);
-
                 else if (soundsCount > 1)
                     AddMultipleSoundEvent(compilerData, currentMixer, projectEvent);
             }
@@ -91,7 +90,6 @@ namespace Editors.Audio.BnkCompiler
 
                     if (soundsCount == 1)
                         AddSingleSoundDialogueEvent(audioRepository, compilerData, rootNode, currentMixer, branch);
-
                     else if (soundsCount > 1)
                         AddMultipleSoundDialogueEvent(audioRepository, compilerData, rootNode, currentMixer, branch);
                 }
@@ -117,12 +115,11 @@ namespace Editors.Audio.BnkCompiler
                 var eventMixer = hircEvent.Mixer;
                 var mixerParent = VanillaObjectIds.EventMixerIds[eventMixer.ToLower()];
 
-                if (!EventMixers.ContainsKey(eventId))
+                if (EventMixers.TryAdd(eventId, mixerId))
                 {
                     var mixer = CreateMixer(mixerId, mixerParent);
                     mixers.Add(mixer);
                     compilerData.ActorMixers.Add(mixer);
-                    EventMixers.Add(eventId, mixerId);
                 }
             }
         }
@@ -137,12 +134,11 @@ namespace Editors.Audio.BnkCompiler
                 var dialogueEventBnk = audioRepository.GetOwnerFileFromDialogueEvent(dialogueEventId, true);
                 var mixerParent = VanillaObjectIds.DialogueEventMixerIds[dialogueEventBnk];
 
-                if (!DialogueEventMixers.ContainsKey(dialogueEventId))
+                if (DialogueEventMixers.TryAdd(dialogueEventId, mixerId))
                 {
                     var mixer = CreateMixer(mixerId, mixerParent, dialogueEventName);
                     mixers.Add(mixer);
                     compilerData.ActorMixers.Add(mixer);
-                    DialogueEventMixers.Add(dialogueEventId, mixerId);
                 }
             }
         }
@@ -300,7 +296,6 @@ namespace Editors.Audio.BnkCompiler
                 // If the parent node exists, update parentNode.
                 if (parentExists)
                     parentNode = existingParentNode;
-
                 else
                 {
                     var audioNodeId = currentStateIndex == statePathArray.Length ? containerId : 0; // If 0 this property is not initialised. If this is the last state in the path AudioNodeId is set to containerId, otherwise it's set to 0 which removes the property.
@@ -397,9 +392,8 @@ namespace Editors.Audio.BnkCompiler
         {
             var attenuationKey = $"{attenuationKeyPrefix}_attenuation";
 
-            if (VanillaObjectIds.AttenuationIds.ContainsKey(attenuationKey))
-                return VanillaObjectIds.AttenuationIds[attenuationKey];
-
+            if (VanillaObjectIds.AttenuationIds.TryGetValue(attenuationKey, out var value))
+                return value;
             else
                 return 0;
         }
