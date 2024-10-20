@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Editors.Audio.AudioEditor.Settings.Warhammer3;
 using Editors.Audio.AudioEditor.Views;
 using Editors.Audio.Storage;
 using Serilog;
@@ -12,7 +13,8 @@ using Shared.Core.Misc;
 using Shared.Core.PackFiles;
 using Shared.Core.PackFiles.Models;
 using Shared.Core.ToolCreation;
-using static Editors.Audio.AudioEditor.AudioEditorSettings;
+using static Editors.Audio.AudioEditor.AudioEditorHelpers;
+using static Editors.Audio.AudioEditor.Settings.Warhammer3.SoundBanks;
 
 // TODO:
 // Make some way of turning dialogue events into audio projects
@@ -44,31 +46,30 @@ namespace Editors.Audio.AudioEditor.ViewModels
         public object _selectedAudioProjectTreeItem;
         public object _previousSelectedAudioProjectTreeItem;
 
-        // Audio Project configuration properties.
-        [ObservableProperty] private string _selectedAudioType;
-        [ObservableProperty] private string _selectedAudioSubtype;
+        // Audio Project Explorer properties.
+        [ObservableProperty] private string _selectedDialogueEventSoundBank;
+        [ObservableProperty] private string _selectedDialogueEventPreset;
+        [ObservableProperty] private bool _showEditedSoundBanksOnly;
+        [ObservableProperty] private bool _showEditedDialogueEventsOnly;
 
-        // Audio Project Configuration collections.
-        [ObservableProperty] private ObservableCollection<Language> _languages = new(Enum.GetValues(typeof(Language)).Cast<Language>());
-        [ObservableProperty] private ObservableCollection<AudioType> _audioProjectEventTypes = new(Enum.GetValues(typeof(AudioType)).Cast<AudioType>());
-        [ObservableProperty] private ObservableCollection<AudioSubtype> _audioProjectSubtypes; // Determined according to what Event Type is selected
-        [ObservableProperty] private ObservableCollection<DialogueEventCheckBox> _dialogueEventCheckBoxes; // The Dialogue Event CheckBoxes that are displayed in the Dialogue Events ListBox.
-        
-        // Audio Project Configuration button enablement.
-        [ObservableProperty] private bool _isAnyAudioProjectItemChecked;
-        [ObservableProperty] private bool _isAddToAudioProjectButtonEnabled;
+        // Audio Project Explorer collections.
+        [ObservableProperty] private ObservableCollection<SoundBanks.SoundBank> _dialogueEventSoundBanks = new(Enum.GetValues<SoundBanks.SoundBank>().Where(soundBank => GetSoundBankType(soundBank) == SoundBankType.DialogueEventBnk));
+        [ObservableProperty] private ObservableCollection<string> _dialogueEventPresets;
 
-        // Audio Project Builder properties.
+        // Audio Project Editor properties.
         [ObservableProperty] private bool _showModdedStatesOnly;
 
         // UI visibility controls.
         [ObservableProperty] private bool _audioEditorVisibility = false;
 
         // UI enablement controls.
-        [ObservableProperty] private bool _isAudioSubtypeEnabled = false;
+        [ObservableProperty] private bool _isDialogueEventPresetFilterEnabled = false;
         [ObservableProperty] private bool _isPlayAudioButtonEnabled = false;
         [ObservableProperty] private bool _isPasteEnabled = true;
         [ObservableProperty] private bool _isShowModdedStatesCheckBoxEnabled = false;
+
+        public static Dictionary<string, Dictionary<string, string>> DialogueEventsWithStateGroupsWithQualifiersAndStateGroups { get; set; } = [];
+        public static Dictionary<string, string> DialogueEventSoundBankFiltering { get; set; } = [];
 
         public AudioEditorViewModel(IAudioRepository audioRepository, PackFileService packFileService, IAudioProjectService audioProjectService)
         {
@@ -109,9 +110,9 @@ namespace Editors.Audio.AudioEditor.ViewModels
             AudioProjectViewerDataGrid = null;
             SelectedDataGridRows = null;
             CopiedDataGridRows = null;
-            DialogueEventCheckBoxes = null;
             _selectedAudioProjectTreeItem = null;
             _previousSelectedAudioProjectTreeItem = null;
+            DialogueEventSoundBankFiltering.Clear();
         }
 
         public void InitialiseCollections()
@@ -120,21 +121,18 @@ namespace Editors.Audio.AudioEditor.ViewModels
             AudioProjectViewerDataGrid = [];
             SelectedDataGridRows = [];
             CopiedDataGridRows = [];
-            AudioProjectSubtypes = [];
-            DialogueEventCheckBoxes = [];
-
+            DialogueEventPresets = [];
             AudioProjectTreeViewItems = _audioProjectService.AudioProject.AudioProjectTreeViewItems;
         }
 
         public void Close()
         {
             // Reset and initialise data.
-            ResetAudioProjectConfiguration();
             ResetAudioEditorViewModelData();
             _audioProjectService.ResetAudioProject();
         }
 
-        public bool Save() => true;
+        public static bool Save() => true;
 
         public PackFile MainFile { get; set; }
 

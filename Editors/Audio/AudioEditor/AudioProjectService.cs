@@ -10,6 +10,7 @@ using Shared.Core.ErrorHandling;
 using Shared.Core.PackFiles;
 using Shared.Core.PackFiles.Models;
 using static Editors.Audio.AudioEditor.AudioEditorHelpers;
+using static Editors.Audio.AudioEditor.AudioProjectData;
 
 namespace Editors.Audio.AudioEditor
 {
@@ -19,7 +20,7 @@ namespace Editors.Audio.AudioEditor
         Dictionary<string, List<string>> StateGroupsWithCustomStates { get; set; }
         void SaveAudioProject(PackFileService packFileService);
         void LoadAudioProject(PackFileService packFileService, IAudioRepository audioRepository, AudioEditorViewModel audioEditorViewModel);
-        void InitialiseAudioProject(string fileName, string directory, string language);
+        void InitialiseAudioProject(AudioEditorViewModel audioEditorViewModel, string fileName, string directory, string language);
         void ResetAudioProject();
     }
 
@@ -60,7 +61,6 @@ namespace Editors.Audio.AudioEditor
                 var audioProjectJson = Encoding.UTF8.GetString(bytes);
 
                 // Reset and initialise data.
-                audioEditorViewModel.ResetAudioProjectConfiguration();
                 audioEditorViewModel.ResetAudioEditorViewModelData();
                 ResetAudioProject();
                 audioEditorViewModel.InitialiseCollections();
@@ -69,7 +69,7 @@ namespace Editors.Audio.AudioEditor
                 AudioProject = JsonSerializer.Deserialize<AudioProjectData>(audioProjectJson);
 
                 // Update AudioProjectTreeViewItems.
-                audioEditorViewModel.UpdateAudioProjectTreeViewItems();
+                audioEditorViewModel.AddAllSoundBanksToAudioProjectTreeViewItemsWrappers();
 
                 // Get the Modded States and prepare them for being added to the DataGrid ComboBoxes.
                 GetModdedStates(AudioProject.ModdedStates, StateGroupsWithCustomStates);
@@ -81,11 +81,22 @@ namespace Editors.Audio.AudioEditor
             }
         }
 
-        public void InitialiseAudioProject(string fileName, string directory, string language)
+        public void InitialiseAudioProject(AudioEditorViewModel audioEditorViewModel, string fileName, string directory, string language)
         {
             AudioProject.FileName = fileName;
             AudioProject.Directory = directory;
             AudioProject.Language = language;
+
+            InitialiseSoundBanks(AudioProject);
+
+            InitialiseModdedStatesGroups(AudioProject.ModdedStates);
+
+            AddAllDialogueEventsToSoundBankTreeViewItems(AudioProject, audioEditorViewModel.ShowEditedDialogueEventsOnly);
+
+            SortSoundBanksAlphabetically(AudioProject.SoundBanks);
+
+            // Update the TreeViewItems to display added items.
+            audioEditorViewModel.AddAllSoundBanksToAudioProjectTreeViewItemsWrappers();
         }
 
         public void ResetAudioProject()

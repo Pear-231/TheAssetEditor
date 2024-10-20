@@ -16,7 +16,6 @@ namespace Editors.Audio.AudioEditor
 
             AudioProjectViewerDataGrid.SelectionChanged += DataGrid_SelectionChanged;
         }
-
         
         private void DataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -44,7 +43,7 @@ namespace Editors.Audio.AudioEditor
         private void TreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
             if (e.NewValue != null)
-                ViewModel.OnSelectedAudioProjectEventChanged(e.NewValue);
+                ViewModel.OnSelectedAudioProjectTreeViewItemChanged(e.NewValue);
         }
     }
 }

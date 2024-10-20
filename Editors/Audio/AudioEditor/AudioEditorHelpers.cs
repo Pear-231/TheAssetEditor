@@ -6,28 +6,12 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using static Editors.Audio.AudioEditor.AudioEditorSettings;
+using static Editors.Audio.AudioEditor.ViewModels.AudioEditorViewModel;
 
 namespace Editors.Audio.AudioEditor
 {
     public static class AudioEditorHelpers
     {
-        public static SoundBank GetSoundBankFromSelectedAudioType(string selectedAudioType, ObservableCollection<SoundBank> soundBanks)
-        {
-            SoundBank soundBank = null;
-
-            foreach (var existingSoundBank in soundBanks)
-            {
-                if (existingSoundBank.Name == selectedAudioType)
-                {
-                    soundBank = existingSoundBank;
-                    break;
-                }
-            }
-
-            return soundBank;
-        }
-
         public static DecisionNode GetMatchingDecisionNode(StatePath comparisonStatePath, DialogueEvent selectedDialogueEvent)
         {
             foreach (var decisionNode in selectedDialogueEvent.DecisionTree)
@@ -69,7 +53,7 @@ namespace Editors.Audio.AudioEditor
             }
         }
 
-        public static void SortSoundBanksByName(ObservableCollection<SoundBank> audioProjectItems)
+        public static void SortSoundBanksAlphabetically(ObservableCollection<SoundBank> audioProjectItems)
         {
             var sortedSoundBanks = audioProjectItems.OrderBy(soundBank => soundBank.Name).ToList();
 
@@ -285,15 +269,47 @@ namespace Editors.Audio.AudioEditor
             return null;
         }
 
+        // Add qualifiers to State Groups so that dictionary keys are unique as some events have the same State Group twice e.g. VO_Actor
+        public static void AddQualifiersToStateGroups(Dictionary<string, List<string>> dialogueEventsWithStateGroups)
+        {
+            foreach (var dialogueEvent in dialogueEventsWithStateGroups)
+            {
+                var stateGroupsWithQualifiers = new Dictionary<string, string>();
+                var stateGroups = dialogueEvent.Value;
+
+                var voActorCount = 0;
+                var voCultureCount = 0;
+
+                foreach (var stateGroup in stateGroups)
+                {
+                    if (stateGroup == "VO_Actor")
+                    {
+                        voActorCount++;
+
+                        var qualifier = voActorCount > 1 ? "VO_Actor (Reference)" : "VO_Actor (Source)";
+                        stateGroupsWithQualifiers[qualifier] = "VO_Actor";
+                    }
+                    else if (stateGroup == "VO_Culture")
+                    {
+                        voCultureCount++;
+
+                        var qualifier = voCultureCount > 1 ? "VO_Culture (Reference)" : "VO_Culture (Source)";
+                        stateGroupsWithQualifiers[qualifier] = "VO_Culture";
+                    }
+                    else
+                    {
+                        // No qualifier needed, add the same state group as both original and qualified
+                        stateGroupsWithQualifiers[stateGroup] = stateGroup;
+                    }
+                }
+
+                DialogueEventsWithStateGroupsWithQualifiersAndStateGroups[dialogueEvent.Key] = stateGroupsWithQualifiers;
+            }
+        }
+
         public static void ClearDataGrid(ObservableCollection<Dictionary<string, object>> audioProjectViewerDataGrid)
         {
             audioProjectViewerDataGrid.Clear();
-        }
-
-        public static void ClearDataGridColumns(string dataGridName)
-        {
-            var dataGrid = GetDataGrid(dataGridName);
-            dataGrid.Columns.Clear();
         }
 
         public static T FindVisualChild<T>(DependencyObject parent, string name) where T : DependencyObject

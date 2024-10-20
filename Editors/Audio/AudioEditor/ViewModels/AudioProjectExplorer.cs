@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using CommunityToolkit.Mvvm.Input;
+using Editors.Audio.AudioEditor.Settings.Warhammer3;
 using Shared.Core.ErrorHandling;
 using static Editors.Audio.AudioEditor.AudioEditorHelpers;
-using static Editors.Audio.AudioEditor.AudioEditorSettings;
+using static Editors.Audio.AudioEditor.AudioProjectData;
+using static Editors.Audio.AudioEditor.Settings.Warhammer3.DialogueEvents;
+using static Editors.Audio.AudioEditor.Settings.Warhammer3.SoundBanks;
 
 namespace Editors.Audio.AudioEditor.ViewModels
 {
@@ -33,32 +37,143 @@ namespace Editors.Audio.AudioEditor.ViewModels
 
     public partial class AudioEditorViewModel
     {
-        public void UpdateAudioProjectTreeViewItems()
+        partial void OnSelectedDialogueEventPresetChanged(string value)
+        {
+            ApplyDialogueEventPresetFiltering();
+        }
+
+        partial void OnShowEditedSoundBanksOnlyChanged(bool value)
+        {
+            if (value == true)
+                AddEditedSoundBanksToAudioProjectTreeViewItemsWrappers();
+            else if (value == false)
+                AddAllSoundBanksToAudioProjectTreeViewItemsWrappers();
+        }
+
+        partial void OnShowEditedDialogueEventsOnlyChanged(bool value)
+        {
+            AddEditedDialogueEventsToSoundBankTreeViewItems(_audioProjectService.AudioProject, DialogueEventSoundBankFiltering, ShowEditedDialogueEventsOnly);
+        }
+
+        [RelayCommand] public void ResetFiltering()
+        {
+            DialogueEventSoundBankFiltering.Clear();
+            SelectedDialogueEventPreset = null;
+            foreach (var soundBank in _audioProjectService.AudioProject.SoundBanks)
+                soundBank.FilteredBy = null;
+
+            AddAllDialogueEventsToSoundBankTreeViewItems(_audioProjectService.AudioProject, ShowEditedDialogueEventsOnly);
+        }
+
+        private void ApplyDialogueEventPresetFiltering()
+        {
+            if (_selectedAudioProjectTreeItem is SoundBank selectedSoundBank)
+            {
+                if (selectedSoundBank.Type == SoundBankType.DialogueEventBnk.ToString())
+                {
+                    if (SelectedDialogueEventPreset != null)
+                    {
+                        StoreDialogueEventSoundBankFiltering(selectedSoundBank.Name);
+                        selectedSoundBank.FilteredBy = $" (Filtered by {SelectedDialogueEventPreset} preset)";
+
+                        var selectedDialogueEventPreset = GetDialogueEventPreset(SelectedDialogueEventPreset);
+                        AddPresetDialogueEventsToSoundBankTreeViewItems(_audioProjectService.AudioProject, selectedSoundBank.Name, selectedDialogueEventPreset, ShowEditedDialogueEventsOnly);
+                    }
+                }
+            }
+        }
+
+        private void AddEditedSoundBanksToAudioProjectTreeViewItemsWrappers()
         {
             _audioProjectService.AudioProject.AudioProjectTreeViewItems.Clear();
 
-            var actionEventSoundBanks = _audioProjectService.AudioProject.SoundBanks.Where(soundBank => soundBank.Type == SoundBankType.ActionEventBnk.ToString()).ToList();
+            var actionEventSoundBanks = _audioProjectService.AudioProject.SoundBanks
+                .Where(soundBank => soundBank.Type == SoundBankType.ActionEventBnk.ToString() 
+                && soundBank.ActionEvents.Count > 0)
+                .ToList();
+
             if (actionEventSoundBanks.Count != 0)
-                AudioProjectTreeViewItems.Add(new ActionEventSoundBanksTreeViewWrapper { ActionEventSoundBanks = new ObservableCollection<SoundBank>(actionEventSoundBanks) });
+                AudioProjectTreeViewItems.Add(new ActionEventSoundBanksTreeViewWrapper
+                {
+                    ActionEventSoundBanks = new ObservableCollection<SoundBank>(actionEventSoundBanks)
+                });
 
-            var dialogueEventSoundBanks = _audioProjectService.AudioProject.SoundBanks.Where(soundBank => soundBank.Type == SoundBankType.DialogueEventBnk.ToString()).ToList();
+            var dialogueEventSoundBanks = _audioProjectService.AudioProject.SoundBanks
+                .Where(soundBank => soundBank.Type == SoundBankType.DialogueEventBnk.ToString() 
+                && soundBank.DialogueEvents.Any(dialogueEvent => dialogueEvent.DecisionTree.Count > 0))
+                .ToList();
+
             if (dialogueEventSoundBanks.Count != 0)
-                AudioProjectTreeViewItems.Add(new DialogueEventSoundBanksTreeViewWrapper { DialogueEventSoundBanks = new ObservableCollection<SoundBank>(dialogueEventSoundBanks) });
+                AudioProjectTreeViewItems.Add(new DialogueEventSoundBanksTreeViewWrapper
+                {
+                    DialogueEventSoundBanks = new ObservableCollection<SoundBank>(dialogueEventSoundBanks)
+                });
 
-            var musicEventSoundBanks = _audioProjectService.AudioProject.SoundBanks.Where(soundBank => soundBank.Type == SoundBankType.MusicEventBnk.ToString()).ToList();
+            var musicEventSoundBanks = _audioProjectService.AudioProject.SoundBanks
+                .Where(soundBank => soundBank.Type == SoundBankType.MusicEventBnk.ToString() 
+                && soundBank.MusicEvents.Count > 0)
+                .ToList();
+
             if (musicEventSoundBanks.Count != 0)
-                AudioProjectTreeViewItems.Add(new MusicEventSoundBanksTreeViewWrapper { MusicEventSoundBanks = new ObservableCollection<SoundBank>(musicEventSoundBanks) });
+                AudioProjectTreeViewItems.Add(new MusicEventSoundBanksTreeViewWrapper
+                {
+                    MusicEventSoundBanks = new ObservableCollection<SoundBank>(musicEventSoundBanks)
+                });
 
             if (_audioProjectService.AudioProject.ModdedStates.Any())
-                AudioProjectTreeViewItems.Add(new ModdedStatesTreeViewWrapper { ModdedStates = _audioProjectService.AudioProject.ModdedStates });
+                AudioProjectTreeViewItems.Add(new ModdedStatesTreeViewWrapper
+                {
+                    ModdedStates = _audioProjectService.AudioProject.ModdedStates
+                });
         }
 
-        public void OnSelectedAudioProjectEventChanged(object selectedAudioProjectTreeViewItem)
+        public void AddAllSoundBanksToAudioProjectTreeViewItemsWrappers()
+        {
+            _audioProjectService.AudioProject.AudioProjectTreeViewItems.Clear();
+
+            var actionEventSoundBanks = _audioProjectService.AudioProject.SoundBanks
+                .Where(soundBank => soundBank.Type == SoundBankType.ActionEventBnk.ToString())
+                .ToList();
+            if (actionEventSoundBanks.Count != 0)
+                AudioProjectTreeViewItems.Add(new ActionEventSoundBanksTreeViewWrapper 
+                { 
+                    ActionEventSoundBanks = new ObservableCollection<SoundBank>(actionEventSoundBanks) 
+                });
+
+            var dialogueEventSoundBanks = _audioProjectService.AudioProject.SoundBanks
+                .Where(soundBank => soundBank.Type == SoundBankType.DialogueEventBnk.ToString())
+                .ToList();
+            if (dialogueEventSoundBanks.Count != 0)
+                AudioProjectTreeViewItems.Add(new DialogueEventSoundBanksTreeViewWrapper 
+                { 
+                    DialogueEventSoundBanks = new ObservableCollection<SoundBank>(dialogueEventSoundBanks) 
+                });
+
+            var musicEventSoundBanks = _audioProjectService.AudioProject.SoundBanks
+                .Where(soundBank => soundBank.Type == SoundBankType.MusicEventBnk.ToString())
+                .ToList();
+            if (musicEventSoundBanks.Count != 0)
+                AudioProjectTreeViewItems.Add(new MusicEventSoundBanksTreeViewWrapper 
+                { 
+                    MusicEventSoundBanks = new ObservableCollection<SoundBank>(musicEventSoundBanks) 
+                });
+
+            if (_audioProjectService.AudioProject.ModdedStates.Any())
+                AudioProjectTreeViewItems.Add(new ModdedStatesTreeViewWrapper 
+                { 
+                    ModdedStates = _audioProjectService.AudioProject.ModdedStates 
+                });
+        }
+
+        public void OnSelectedAudioProjectTreeViewItemChanged(object value)
         {
             if (_selectedAudioProjectTreeItem != null)
                 _previousSelectedAudioProjectTreeItem = _selectedAudioProjectTreeItem;
 
-            _selectedAudioProjectTreeItem = selectedAudioProjectTreeViewItem;
+            _selectedAudioProjectTreeItem = value;
+
+            IsDialogueEventPresetFilterEnabled = false;
+            SelectedDialogueEventPreset = null;
 
             if (_selectedAudioProjectTreeItem is SoundBank selectedSoundBank)
             {
@@ -68,6 +183,10 @@ namespace Editors.Audio.AudioEditor.ViewModels
                     LoadActionEventSoundBankForAudioProjectViewer(selectedSoundBank);
 
                     _logger.Here().Information($"Loaded Action Event SoundBank: {selectedSoundBank.Name}");
+                }
+                else if (selectedSoundBank.Type == SoundBankType.DialogueEventBnk.ToString())
+                {
+                    HandleDialogueEventsPresetFilter(selectedSoundBank.Name);
                 }
                 else if (selectedSoundBank.Type == SoundBankType.MusicEventBnk.ToString())
                 {
@@ -101,10 +220,34 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 LoadStateGroupForAudioProjectEditor(selectedStateGroup, stateGroupWithExtraUnderscores);
                 LoadStateGroupForAudioProjectViewer(selectedStateGroup, stateGroupWithExtraUnderscores);
 
-                _logger.Here().Information($"Loaded Events ModdedStateGroup>: {selectedStateGroup.Name}");
+                _logger.Here().Information($"Loaded StateGroup: {selectedStateGroup.Name}");
             }
 
             SetIsPasteEnabled();
+        }
+
+        private void HandleDialogueEventsPresetFilter(string soundBankDisplayString)
+        {
+            var soundBank = GetSoundBank(soundBankDisplayString);
+            DialogueEventPresets = new(DialogueEventData
+                .Where(dialogueEvent => dialogueEvent.SoundBank == soundBank)
+                .SelectMany(dialogueEvent => dialogueEvent.DialogueEventPreset)
+                .Select(dialogueEventPreset => GetDisplayString(dialogueEventPreset))
+                .Distinct()
+                .OrderBy(dialogueEventPreset => dialogueEventPreset == "Show All" ? string.Empty : dialogueEventPreset)
+            );
+
+            if (DialogueEventSoundBankFiltering.TryGetValue(soundBankDisplayString, out var storedDialogueEventPreset))
+                SelectedDialogueEventPreset = storedDialogueEventPreset.ToString();
+
+            IsDialogueEventPresetFilterEnabled = true;
+        }
+
+        private void StoreDialogueEventSoundBankFiltering(string soundBank)
+        {
+            var selectedDialogueEventPreset = SelectedDialogueEventPreset;
+            if (!DialogueEventSoundBankFiltering.TryAdd(soundBank, selectedDialogueEventPreset))
+                DialogueEventSoundBankFiltering[soundBank] = selectedDialogueEventPreset;
         }
     }
 }
