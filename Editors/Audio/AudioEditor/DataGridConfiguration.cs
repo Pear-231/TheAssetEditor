@@ -9,7 +9,6 @@ using System.Windows.Threading;
 using Editors.Audio.AudioEditor.ViewModels;
 using Editors.Audio.Storage;
 using static Editors.Audio.AudioEditor.AudioEditorHelpers;
-using static Editors.Audio.AudioEditor.AudioEditorSettings;
 using static Editors.Audio.AudioEditor.Converters.TooltipConverter;
 using static Editors.Audio.AudioEditor.ViewModels.AudioEditorViewModel;
 

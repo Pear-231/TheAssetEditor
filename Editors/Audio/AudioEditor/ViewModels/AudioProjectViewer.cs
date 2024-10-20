@@ -6,7 +6,6 @@ using System.Linq;
 using CommunityToolkit.Mvvm.Input;
 using Shared.Core.ErrorHandling;
 using static Editors.Audio.AudioEditor.AudioEditorHelpers;
-using static Editors.Audio.AudioEditor.AudioEditorSettings;
 using static Editors.Audio.AudioEditor.DataGridConfiguration;
 
 namespace Editors.Audio.AudioEditor.ViewModels
@@ -27,7 +26,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 ConfigureAudioProjectViewerDataGridForActionEventSoundBank(this, _audioRepository, selectedSoundBank, _dataGridNameName, AudioProjectViewerDataGrid);
             else if (_previousSelectedAudioProjectTreeItem is SoundBank previousSelectedSoundBank)
             {
-                if (previousSelectedSoundBank.Type != SoundBankType.ActionEventBnk.ToString())
+                if (previousSelectedSoundBank.Type != Settings.Warhammer3.SoundBanks.SoundBankType.ActionEventBnk.ToString())
                     ConfigureAudioProjectViewerDataGridForActionEventSoundBank(this, _audioRepository, selectedSoundBank, _dataGridNameName, AudioProjectViewerDataGrid);
             }
 

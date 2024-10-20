@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Globalization;
 using System.Windows.Data;
-using static Editors.Audio.AudioEditor.AudioEditorSettings;
+using Editors.Audio.AudioEditor.Settings.Warhammer3;
 
 namespace Editors.Audio.AudioEditor.Converters
 {
@@ -11,12 +11,12 @@ namespace Editors.Audio.AudioEditor.Converters
         {
             if (value == null)
                 return value;
-            else if (value is Language language)
-                return GetStringFromLanguage(language);
-            else if (value is AudioType EventType)
-                return GetStringFromAudioType(EventType);
-            else if (value is AudioSubtype dialogueEventSubtype)
-                return GetStringFromAudioSubtype(dialogueEventSubtype);
+            else if (value is Languages.Language language)
+                return Languages.GetGameString(language);
+            else if (value is SoundBanks.SoundBank soundbank)
+                return SoundBanks.GetDisplayString(soundbank);
+            else if (value is DialogueEvents.DialogueEventPreset dialogueEventSubtype)
+                return DialogueEvents.GetDisplayString(dialogueEventSubtype);
             else
                 return null;
         }

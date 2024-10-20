@@ -7,7 +7,6 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using Shared.Core.ErrorHandling;
 using static Editors.Audio.AudioEditor.AudioEditorHelpers;
-using static Editors.Audio.AudioEditor.AudioEditorSettings;
 using static Editors.Audio.AudioEditor.DataGridConfiguration;
 using static Editors.Audio.Utility.SoundPlayer;
 
@@ -34,7 +33,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 ConfigureAudioProjectEditorDataGridForActionEventSoundBank(this, _audioRepository, _dataGridBuilderName, AudioProjectEditorDataGrid);
             else if (_previousSelectedAudioProjectTreeItem is SoundBank previousSelectedSoundBank)
             {
-                if (previousSelectedSoundBank.Type != SoundBankType.ActionEventBnk.ToString())
+                if (previousSelectedSoundBank.Type != Settings.Warhammer3.SoundBanks.SoundBankType.ActionEventBnk.ToString())
                     ConfigureAudioProjectEditorDataGridForActionEventSoundBank(this, _audioRepository, _dataGridBuilderName, AudioProjectEditorDataGrid);
             }
 
