@@ -104,7 +104,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
             AudioProjectEditorDataGrid.Add(dataGridRow);
         }
 
-        [RelayCommand] public void AddDataGridRowFromAudioProjectEditorToAudioProjectViewer()
+        [RelayCommand] public void AddDataGridRowFromAudioProjectEditorToViewer()
         {
             if (AudioProjectEditorDataGrid.Count == 0)
                 return;
@@ -112,15 +112,25 @@ namespace Editors.Audio.AudioEditor.ViewModels
             var newRow = new Dictionary<string, object>();
             foreach (var kvp in AudioProjectEditorDataGrid[0])
             {
-                var column = kvp.Key;
+                var columnName = kvp.Key;
                 var cellValue = kvp.Value;
-                if (column == "AudioFiles" && cellValue is List<string> stringList)
+                if (columnName == "AudioFiles" && cellValue is List<string> stringList)
                 {
                     var newList = new List<string>(stringList);
-                    newRow[column] = newList;
+                    newRow[columnName] = newList;
                 }
                 else
-                    newRow[column] = cellValue.ToString();
+                {
+                    if (_selectedAudioProjectTreeItem is DialogueEvent)
+                    {
+                        if (cellValue.ToString() == string.Empty && columnName != "AudioFilesDisplay")
+                        {
+                            newRow[columnName] = "Any";
+                            continue;
+                        }
+                    }
+                    newRow[columnName] = cellValue.ToString();
+                }
             }
 
             InsertDataGridRowAlphabetically(AudioProjectViewerDataGrid, newRow);
