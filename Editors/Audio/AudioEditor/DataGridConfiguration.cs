@@ -9,19 +9,17 @@ using System.Windows.Threading;
 using Editors.Audio.AudioEditor.ViewModels;
 using Editors.Audio.Storage;
 using static Editors.Audio.AudioEditor.AudioEditorHelpers;
-using static Editors.Audio.AudioEditor.AudioEditorSettings;
 using static Editors.Audio.AudioEditor.Converters.TooltipConverter;
-using static Editors.Audio.AudioEditor.ViewModels.AudioEditorViewModel;
 
 namespace Editors.Audio.AudioEditor
 {
     public class DataGridConfiguration
     {
-        public static void ConfigureAudioProjectEditorDataGridForModdedStates(string dataGridName, ObservableCollection<Dictionary<string, object>> audioProjectEditorDataGrid, string stateGroupWithExtraUnderscores)
+        public static void ConfigureAudioProjectEditorSingleRowDataGridForModdedStates(AudioEditorViewModel audioEditorViewModel, string stateGroupWithExtraUnderscores)
         {
-            var dataGrid = GetDataGrid(dataGridName);
+            var dataGrid = GetDataGrid(audioEditorViewModel.AudioProjectEditorSingleRowDataGridTag);
             dataGrid.CanUserAddRows = false;
-            dataGrid.ItemsSource = audioProjectEditorDataGrid;
+            dataGrid.ItemsSource = audioEditorViewModel.AudioProjectEditorSingleRowDataGrid;
             dataGrid.Columns.Clear();
 
             // Column for the Modded States.
@@ -32,15 +30,14 @@ namespace Editors.Audio.AudioEditor
                 CellEditingTemplate = CreateEditableTextBoxTemplate(stateGroupWithExtraUnderscores),
                 Width = new DataGridLength(1, DataGridLengthUnitType.Star)
             };
-
             dataGrid.Columns.Add(stateGroupColumn);
         }
 
-        public static void ConfigureAudioProjectEditorDataGridForActionEventSoundBank(AudioEditorViewModel viewModel, IAudioRepository audioRepository, string dataGridName, ObservableCollection<Dictionary<string, object>> audioProjectEditorDataGrid)
+        public static void ConfigureAudioProjectEditorSingleRowDataGridForActionEventSoundBank(AudioEditorViewModel audioEditorViewModel, IAudioRepository audioRepository)
         {
-            var dataGrid = GetDataGrid(dataGridName);
+            var dataGrid = GetDataGrid(audioEditorViewModel.AudioProjectEditorSingleRowDataGridTag);
             dataGrid.CanUserAddRows = false;
-            dataGrid.ItemsSource = audioProjectEditorDataGrid;
+            dataGrid.ItemsSource = audioEditorViewModel.AudioProjectEditorSingleRowDataGrid;
             dataGrid.Columns.Clear();
 
             var columnsCount = 3;
@@ -55,7 +52,6 @@ namespace Editors.Audio.AudioEditor
                 CellEditingTemplate = CreateEditableTextBoxTemplate(columnHeader),
                 Width = new DataGridLength(columnWidth, DataGridLengthUnitType.Star)
             };
-
             dataGrid.Columns.Add(eventNameColumn);
 
             // Column for Audio files TextBox with Tooltip.
@@ -65,29 +61,27 @@ namespace Editors.Audio.AudioEditor
                 CellTemplate = CreateSoundsTextBoxTemplate(),
                 Width = new DataGridLength(columnWidth, DataGridLengthUnitType.Star),
             };
-
             dataGrid.Columns.Add(soundsTextBoxColumn);
 
             // Create and set the tooltip binding.
             var soundsButtonColumn = new DataGridTemplateColumn
             {
-                CellTemplate = CreateSoundsButtonTemplate(viewModel),
+                CellTemplate = CreateSoundsButtonTemplate(),
                 Width = 30.0,
                 CanUserResize = false
             };
-
             dataGrid.Columns.Add(soundsButtonColumn);
         }
 
-        public static void ConfigureAudioProjectEditorDataGridForDialogueEvent(AudioEditorViewModel viewModel, IAudioRepository audioRepository, DialogueEvent dialogueEvent, bool showModdedStatesOnly, string dataGridName, ObservableCollection<Dictionary<string, object>> audioProjectEditorDataGrid, Dictionary<string, List<string>> stateGroupsWithCustomStates)
+        public static void ConfigureAudioProjectEditorSingleRowDataGridForDialogueEvent(AudioEditorViewModel audioEditorViewModel, IAudioRepository audioRepository, DialogueEvent dialogueEvent, IAudioProjectService audioProjectService)
         {
-            var dataGrid = GetDataGrid(dataGridName);
+            var dataGrid = GetDataGrid(audioEditorViewModel.AudioProjectEditorSingleRowDataGridTag);
             dataGrid.CanUserAddRows = false;
-            dataGrid.ItemsSource = audioProjectEditorDataGrid;
+            dataGrid.ItemsSource = audioEditorViewModel.AudioProjectEditorSingleRowDataGrid;
             dataGrid.Columns.Clear();
 
             var stateGroups = audioRepository.DialogueEventsWithStateGroups[dialogueEvent.Name];
-            var stateGroupsWithQualifiers = DialogueEventsWithStateGroupsWithQualifiersAndStateGroups[dialogueEvent.Name];
+            var stateGroupsWithQualifiers = audioProjectService.DialogueEventsWithStateGroupsWithQualifiersAndStateGroupsRepository[dialogueEvent.Name];
 
             var stateGroupsCount = stateGroups.Count + 1;
             var columnWidth = stateGroupsCount > 0 ? 1.0 / stateGroupsCount : 1.0;
@@ -103,18 +97,17 @@ namespace Editors.Audio.AudioEditor
 
                 var vanillaStates = audioRepository.StateGroupsWithStates[stateGroup];
 
-                if (stateGroupsWithCustomStates != null && stateGroupsWithCustomStates.Count > 0)
+                if (audioProjectService.StateGroupsWithModdedStatesRepository != null && audioProjectService.StateGroupsWithModdedStatesRepository.Count > 0)
                 {
                     if (stateGroup == "VO_Actor" || stateGroup == "VO_Culture" || stateGroup == "VO_Battle_Selection" || stateGroup == "VO_Battle_Special_Ability" || stateGroup == "VO_Faction_Leader")
-                        customStates = stateGroupsWithCustomStates[stateGroup];
+                        customStates = audioProjectService.StateGroupsWithModdedStatesRepository[stateGroup];
                 }
 
-                if (showModdedStatesOnly && (stateGroup == "VO_Actor" || stateGroup == "VO_Culture" || stateGroup == "VO_Battle_Selection" || stateGroup == "VO_Battle_Special_Ability" || stateGroup == "VO_Faction_Leader"))
+                if (audioEditorViewModel.ShowModdedStatesOnly && (stateGroup == "VO_Actor" || stateGroup == "VO_Culture" || stateGroup == "VO_Battle_Selection" || stateGroup == "VO_Battle_Special_Ability" || stateGroup == "VO_Faction_Leader"))
                 {
                     states.Add("Any");
                     states.AddRange(customStates);
                 }
-
                 else
                 {
                     if (stateGroup == "VO_Actor" || stateGroup == "VO_Culture" || stateGroup == "VO_Battle_Selection" || stateGroup == "VO_Battle_Special_Ability" || stateGroup == "VO_Faction_Leader")
@@ -129,7 +122,6 @@ namespace Editors.Audio.AudioEditor
                     CellTemplate = CreateStatesComboBoxTemplate(states, stateGroupWithQualifierWithExtraUnderscores),
                     Width = new DataGridLength(columnWidth, DataGridLengthUnitType.Star),
                 };
-
                 dataGrid.Columns.Add(column);
             }           
 
@@ -139,24 +131,22 @@ namespace Editors.Audio.AudioEditor
                 CellTemplate = CreateSoundsTextBoxTemplate(),
                 Width = new DataGridLength(columnWidth, DataGridLengthUnitType.Star),
             };
-
             dataGrid.Columns.Add(soundsTextBoxColumn);
 
             var soundsButtonColumn = new DataGridTemplateColumn
             {
-                CellTemplate = CreateSoundsButtonTemplate(viewModel),
+                CellTemplate = CreateSoundsButtonTemplate(),
                 Width = 30.0,
                 CanUserResize = false
             };
-
             dataGrid.Columns.Add(soundsButtonColumn);
         }
 
-        public static void ConfigureAudioProjectViewerDataGridForModdedStates(string dataGridName, ObservableCollection<Dictionary<string, object>> audioProjectViewerDataGrid, string stateGroupWithExtraUnderscores)
+        public static void ConfigureAudioProjectEditorFullDataGridForModdedStates(AudioEditorViewModel audioEditorViewModel, string stateGroupWithExtraUnderscores)
         {
-            var dataGrid = GetDataGrid(dataGridName);
+            var dataGrid = GetDataGrid(audioEditorViewModel.AudioProjectEditorFullDataGridTag);
             dataGrid.CanUserAddRows = false; // Setting this bastard to false ensures that data won't go missing from the last row when a new row is added. Wtf WPF.
-            dataGrid.ItemsSource = audioProjectViewerDataGrid;
+            dataGrid.ItemsSource = audioEditorViewModel.AudioProjectEditorFullDataGrid;
             dataGrid.Columns.Clear();
 
             // Column for the ModdedStateGroup.
@@ -168,24 +158,20 @@ namespace Editors.Audio.AudioEditor
             };
 
             var textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
-
             textBlockFactory.SetBinding(TextBlock.TextProperty, new Binding($"[{stateGroupWithExtraUnderscores}]"));
             textBlockFactory.SetValue(TextBlock.PaddingProperty, new Thickness(5, 2.5, 2.5, 5));
 
             var cellTemplate = new DataTemplate();
-
             cellTemplate.VisualTree = textBlockFactory;
-
             stateGroupColumn.CellTemplate = cellTemplate;
-
             dataGrid.Columns.Add(stateGroupColumn);
         }
 
-        public static void ConfigureAudioProjectViewerDataGridForActionEventSoundBank(AudioEditorViewModel viewModel, IAudioRepository audioRepository, SoundBank soundBank, string dataGridName, ObservableCollection<Dictionary<string, object>> audioProjectViewerDataGrid)
+        public static void ConfigureAudioProjectEditorFullDataGridForActionEventSoundBank(AudioEditorViewModel audioEditorViewModel, IAudioRepository audioRepository, SoundBank soundBank)
         {
-            var dataGrid = GetDataGrid(dataGridName);
+            var dataGrid = GetDataGrid(audioEditorViewModel.AudioProjectEditorFullDataGridTag);
             dataGrid.CanUserAddRows = false; // Setting this bastard to false ensures that data won't go missing from the last row when a new row is added. Wtf WPF.
-            dataGrid.ItemsSource = audioProjectViewerDataGrid;
+            dataGrid.ItemsSource = audioEditorViewModel.AudioProjectEditorFullDataGrid;
             dataGrid.Columns.Clear();
 
             var columnsCount = 3;
@@ -201,16 +187,12 @@ namespace Editors.Audio.AudioEditor
             };
 
             var textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
-
             textBlockFactory.SetBinding(TextBlock.TextProperty, new Binding($"[{columnHeader}]"));
             textBlockFactory.SetValue(TextBlock.PaddingProperty, new Thickness(5, 2.5, 2.5, 5));
 
             var cellTemplate = new DataTemplate();
-
             cellTemplate.VisualTree = textBlockFactory;
-
             eventNameColumn.CellTemplate = cellTemplate;
-
             dataGrid.Columns.Add(eventNameColumn);
 
             // Column for Audio files TextBox with Tooltip.
@@ -234,22 +216,20 @@ namespace Editors.Audio.AudioEditor
 
             soundsTextBlockFactory.SetBinding(FrameworkElement.ToolTipProperty, tooltipBinding);
             soundsTextBlockFactory.SetValue(TextBlock.PaddingProperty, new Thickness(5, 2.5, 2.5, 5));
-
             soundsCellTemplate.VisualTree = soundsTextBlockFactory;
             soundsTextColumn.CellTemplate = soundsCellTemplate;
-
             dataGrid.Columns.Add(soundsTextColumn);
         }
 
-        public static void ConfigureAudioProjectViewerDataGridForDialogueEvent(AudioEditorViewModel viewModel, IAudioRepository audioRepository, DialogueEvent dialogueEvent, string dataGridName, ObservableCollection<Dictionary<string, object>> audioProjectViewerDataGrid)
+        public static void ConfigureAudioProjectEditorFullDataGridForDialogueEvent(AudioEditorViewModel audioEditorViewModel, IAudioRepository audioRepository, IAudioProjectService audioProjectService, DialogueEvent dialogueEvent)
         {
-            var dataGrid = GetDataGrid(dataGridName);
+            var dataGrid = GetDataGrid(audioEditorViewModel.AudioProjectEditorFullDataGridTag);
             dataGrid.CanUserAddRows = false; // Setting this bastard to false ensures that data won't go missing from the last row when a new row is added. Wtf WPF.
-            dataGrid.ItemsSource = audioProjectViewerDataGrid;
+            dataGrid.ItemsSource = audioEditorViewModel.AudioProjectEditorFullDataGrid;
             dataGrid.Columns.Clear();
 
             var stateGroups = audioRepository.DialogueEventsWithStateGroups[dialogueEvent.Name];
-            var stateGroupsWithQualifiers = DialogueEventsWithStateGroupsWithQualifiersAndStateGroups[dialogueEvent.Name];
+            var stateGroupsWithQualifiers = audioProjectService.DialogueEventsWithStateGroupsWithQualifiersAndStateGroupsRepository[dialogueEvent.Name];
 
             var stateGroupsCount = stateGroups.Count + 1; // e.g. + 1 is plus the number of columns in addition to the State Group columns e.g. plus 1 represents the Audio Files TextBox column
             var columnWidth = stateGroupsCount > 0 ? 1.0 / stateGroupsCount : 1.0;
@@ -268,16 +248,12 @@ namespace Editors.Audio.AudioEditor
                 };
 
                 var textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
-
                 textBlockFactory.SetBinding(TextBlock.TextProperty, new Binding($"[{stateGroupWithQualifierWithExtraUnderscores}]"));
                 textBlockFactory.SetValue(TextBlock.PaddingProperty, new Thickness(5, 2.5, 2.5, 5));
 
                 var cellTemplate = new DataTemplate();
-
                 cellTemplate.VisualTree = textBlockFactory;
-
                 stateGroupColumn.CellTemplate = cellTemplate;
-
                 dataGrid.Columns.Add(stateGroupColumn);
             }
 
@@ -302,10 +278,8 @@ namespace Editors.Audio.AudioEditor
 
             soundsTextBlockFactory.SetBinding(FrameworkElement.ToolTipProperty, tooltipBinding);
             soundsTextBlockFactory.SetValue(TextBlock.PaddingProperty, new Thickness(5, 2.5, 2.5, 5));
-
             soundsCellTemplate.VisualTree = soundsTextBlockFactory;
             soundsTextColumn.CellTemplate = soundsCellTemplate;
-
             dataGrid.Columns.Add(soundsTextColumn);
         }
 
@@ -447,18 +421,15 @@ namespace Editors.Audio.AudioEditor
             factory.SetBinding(TextBox.TextProperty, binding);
             factory.SetBinding(FrameworkElement.ToolTipProperty, tooltipBinding);
             factory.SetValue(System.Windows.Controls.Primitives.TextBoxBase.IsReadOnlyProperty, true);
-
             template.VisualTree = factory;
-
             return template;
         }
 
-        public static DataTemplate CreateSoundsButtonTemplate(AudioEditorViewModel viewModel)
+        public static DataTemplate CreateSoundsButtonTemplate()
         {
             var template = new DataTemplate();
             var factory = new FrameworkElementFactory(typeof(Button));
 
-            // Handle button click event
             factory.AddHandler(System.Windows.Controls.Primitives.ButtonBase.ClickEvent, new RoutedEventHandler((sender, e) =>
             {
                 var button = sender as Button;
@@ -473,16 +444,14 @@ namespace Editors.Audio.AudioEditor
                         var rowDataContext = dataGridRow.DataContext;
 
                         if (rowDataContext is Dictionary<string, object> dataGridRowContext)
-                            AddAudioFiles(dataGridRowContext, textBox);
+                            AddAudioFilesToAudioProjectEditorSingleRowDataGrid(dataGridRowContext, textBox);
                     }
                 }
             }));
 
             factory.SetValue(ContentControl.ContentProperty, "...");
             factory.SetValue(FrameworkElement.ToolTipProperty, "Browse wav files");
-
             template.VisualTree = factory;
-
             return template;
         }
 
@@ -498,9 +467,7 @@ namespace Editors.Audio.AudioEditor
             });
 
             factory.SetValue(TextBox.PaddingProperty, new Thickness(5, 2.5, 2.5, 5));
-
             template.VisualTree = factory;
-
             return template;
         }
 

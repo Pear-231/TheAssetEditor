@@ -92,12 +92,11 @@
         </Setter>
     </Style>
 
-    <DataTemplate 
-        x:Key="DefaultWatermarkTemplate">
-        <ContentControl 
-            Content="{Binding}"
-            Foreground="{DynamicResource ABrush.Foreground.Static}"
-            Focusable="False" />
+    <DataTemplate x:Key="DefaultWatermarkTemplate">
+        <TextBlock 
+        Text="{Binding}" 
+        Foreground="{DynamicResource ABrush.Foreground.Disabled}"
+        Focusable="False" />
     </DataTemplate>
 
     <Style 
@@ -189,9 +188,6 @@
 
     <Style TargetType="{x:Type extendedwpftoolkit:WatermarkTextBox}" BasedOn="{StaticResource WatermarkTextBox}" />
 
-    <!-- =============================================================================== -->
-    <!-- WatermarkTextBox Template                                                       -->
-    <!-- =============================================================================== -->
     <ControlTemplate x:Key="WatermarkComboBoxTemplate" TargetType="{x:Type extendedwpftoolkit:WatermarkComboBox}">
         <Grid x:Name="templateRoot" SnapsToDevicePixels="True">
             <Grid.ColumnDefinitions>
@@ -480,10 +476,6 @@
             </MultiTrigger>
         </ControlTemplate.Triggers>
     </ControlTemplate>
-
-    <!-- =============================================================================== -->
-    <!-- WatermarkTextBox Style                                                          -->
-    <!-- =============================================================================== -->
 
     <Style x:Key="WatermarkComboBox" TargetType="{x:Type extendedwpftoolkit:WatermarkComboBox}">
         <Setter Property="FocusVisualStyle">

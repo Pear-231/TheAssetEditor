@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.Linq;
 using CommonControls.PackFileBrowser;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -10,7 +9,7 @@ using Shared.Core.Misc;
 using Shared.Core.PackFiles;
 using Shared.Core.PackFiles.Models;
 using Shared.Core.ToolCreation;
-using static Editors.Audio.AudioEditor.AudioEditorSettings;
+using static Editors.Audio.AudioEditor.Settings.Warhammer3.Languages;
 
 namespace Editors.Audio.AudioEditor.ViewModels
 {
@@ -31,7 +30,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
         [ObservableProperty] private Language _selectedLanguage;
 
         // The data the ComboBoxes are populated with.
-        [ObservableProperty] private ObservableCollection<Language> _languages = new(Enum.GetValues(typeof(Language)).Cast<Language>());
+        [ObservableProperty] private ObservableCollection<Language> _languages = new(Enum.GetValues<Language>());
 
         // Properties to control whether OK button is enabled.
         [ObservableProperty] private bool _isAudioProjectFileNameSet;
@@ -88,13 +87,12 @@ namespace Editors.Audio.AudioEditor.ViewModels
         [RelayCommand] public void CreateAudioProject()
         {
             // Reset and initialise data.
-            _audioEditorViewModel.ResetAudioProjectConfiguration();
             _audioEditorViewModel.ResetAudioEditorViewModelData();
             _audioProjectService.ResetAudioProject();
             _audioEditorViewModel.InitialiseCollections();
 
             // Initialise AudioProject according to the Audio Project settings selected.
-            _audioProjectService.InitialiseAudioProject(AudioProjectFileName, AudioProjectDirectory, GetStringFromLanguage(SelectedLanguage));
+            _audioProjectService.InitialiseAudioProject(_audioEditorViewModel, AudioProjectFileName, AudioProjectDirectory, GetGameString(SelectedLanguage));
 
             // Add the Audio Project to the PackFile.
             _audioProjectService.SaveAudioProject(_packFileService);

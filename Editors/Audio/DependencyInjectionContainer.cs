@@ -1,5 +1,4 @@
-﻿using Audio.AudioExplorer;
-using Audio.Compiler;
+﻿using Audio.Compiler;
 using Editors.Audio.AudioEditor;
 using Editors.Audio.AudioEditor.ViewModels;
 using Editors.Audio.AudioEditor.Views;
@@ -14,7 +13,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Shared.Core.DependencyInjection;
 using Shared.Core.ToolCreation;
 using Shared.GameFormats.WWise;
-
 
 namespace Editors.Audio
 {

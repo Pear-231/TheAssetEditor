@@ -6,26 +6,21 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using static Editors.Audio.AudioEditor.AudioEditorSettings;
+using Microsoft.Win32;
 
 namespace Editors.Audio.AudioEditor
 {
     public static class AudioEditorHelpers
     {
-        public static SoundBank GetSoundBankFromSelectedAudioType(string selectedAudioType, ObservableCollection<SoundBank> soundBanks)
+        // Apparently WPF doesn't_like_underscores so double them up in order for them to be displayed in the UI.
+        public static string AddExtraUnderscoresToString(string wtfWPF)
         {
-            SoundBank soundBank = null;
+            return wtfWPF.Replace("_", "__");
+        }
 
-            foreach (var existingSoundBank in soundBanks)
-            {
-                if (existingSoundBank.Name == selectedAudioType)
-                {
-                    soundBank = existingSoundBank;
-                    break;
-                }
-            }
-
-            return soundBank;
+        public static string RemoveExtraUnderscoresFromString(string wtfWPF)
+        {
+            return wtfWPF.Replace("__", "_");
         }
 
         public static DecisionNode GetMatchingDecisionNode(StatePath comparisonStatePath, DialogueEvent selectedDialogueEvent)
@@ -46,238 +41,9 @@ namespace Editors.Audio.AudioEditor
             return null;
         }
 
-        public static void GetModdedStates(ObservableCollection<StateGroup> moddedStateGroups, Dictionary<string, List<string>> stateGroupsWithModdedtates)
+        public static string GetStateGroupFromStateGroupWithQualifier(string dialogueEvent, string stateGroupWithQualifier, Dictionary<string, Dictionary<string, string>> dialogueEventsWithStateGroupsWithQualifiersAndStateGroupsRepository)
         {
-            if (stateGroupsWithModdedtates == null)
-                stateGroupsWithModdedtates = new Dictionary<string, List<string>>();
-
-            else
-                stateGroupsWithModdedtates.Clear();
-
-            foreach (var stateGroup in moddedStateGroups)
-            {
-                if (stateGroup.States != null && stateGroup.States.Count > 0)
-                {
-                    foreach (var state in stateGroup.States)
-                    {
-                        if (!stateGroupsWithModdedtates.ContainsKey(stateGroup.Name))
-                            stateGroupsWithModdedtates[stateGroup.Name] = new List<string>();
-
-                        stateGroupsWithModdedtates[stateGroup.Name].Add(state.Name);
-                    }
-                }
-            }
-        }
-
-        public static void SortSoundBanksByName(ObservableCollection<SoundBank> audioProjectItems)
-        {
-            var sortedSoundBanks = audioProjectItems.OrderBy(soundBank => soundBank.Name).ToList();
-
-            audioProjectItems.Clear();
-
-            foreach (var soundBank in sortedSoundBanks)
-                audioProjectItems.Add(soundBank);
-        }
-
-
-        public static void InsertStatePathAlphabetically(DialogueEvent selectedDialogueEvent, DecisionNode decisionNode, StatePath newStatePath)
-        {
-            var newStateName = newStatePath.Nodes.First().State.Name;
-            var decisionTree = selectedDialogueEvent.DecisionTree;
-            var insertIndex = 0;
-
-            for (var i = 0; i < decisionTree.Count; i++)
-            {
-                var existingStateName = decisionTree[i].StatePath.Nodes.First().State.Name;
-                var comparison = string.Compare(newStateName, existingStateName, StringComparison.Ordinal);
-                if (comparison < 0)
-                {
-                    insertIndex = i;
-                    break;
-                }
-                else if (comparison == 0)
-                    insertIndex = i + 1;
-                else
-                    insertIndex = i + 1;
-            }
-
-            decisionTree.Insert(insertIndex, decisionNode);
-        }
-
-        public static void InsertActionEventAlphabetically(SoundBank selectedSoundBank, ActionEvent newEvent)
-        {
-            var events = selectedSoundBank.ActionEvents;
-            var newEventName = newEvent.Name;
-            var insertIndex = 0;
-
-            for (var i = 0; i < events.Count; i++)
-            {
-                var existingEventName = events[i].Name;
-                var comparison = string.Compare(newEventName, existingEventName, StringComparison.Ordinal);
-                if (comparison < 0)
-                {
-                    insertIndex = i;
-                    break;
-                }
-                else if (comparison == 0)
-                    insertIndex = i + 1;
-                else
-                    insertIndex = i + 1;
-            }
-
-            events.Insert(insertIndex, newEvent);
-        }
-
-        public static void InsertStateAlphabetically(StateGroup moddedStateGroup, State newState)
-        {
-            var states = moddedStateGroup.States;
-            var newStateName = newState.Name;
-            var insertIndex = 0;
-
-            for (var i = 0; i < states.Count; i++)
-            {
-                var existingStateName = states[i].Name;
-                var comparison = string.Compare(newStateName, existingStateName, StringComparison.Ordinal);
-
-                if (comparison < 0)
-                {
-                    insertIndex = i;
-                    break;
-                }
-                else if (comparison == 0)
-                    insertIndex = i + 1;
-                else
-                    insertIndex = i + 1;
-            }
-
-            states.Insert(insertIndex, newState);
-        }
-
-        public static void InsertDataGridRowAlphabetically(ObservableCollection<Dictionary<string, object>> audioProjectViewerDataGrid, Dictionary<string, object> newRow)
-        {
-            var insertIndex = 0;
-            var newValue = newRow.First().Value.ToString();
-
-            for (var i = 0; i < audioProjectViewerDataGrid.Count; i++)
-            {
-                var currentValue = audioProjectViewerDataGrid[i].First().Value.ToString();
-                var comparison = string.Compare(newValue, currentValue, StringComparison.Ordinal);
-                if (comparison < 0)
-                {
-                    insertIndex = i;
-                    break;
-                }
-                else if (comparison == 0)
-                    insertIndex = i + 1;
-                else
-                    insertIndex = i + 1;
-            }
-
-            audioProjectViewerDataGrid.Insert(insertIndex, newRow);
-        }
-
-        public static void AddDataGridRowToModdedStates(Dictionary<string, object> dataGridRow, StateGroup stateGroup)
-        {
-            var state = new State();
-
-            foreach (var kvp in dataGridRow)
-                state.Name = kvp.Value.ToString();
-
-            InsertStateAlphabetically(stateGroup, state);
-        }
-
-        public static void AddDataGridRowToActionEventSoundBank(Dictionary<string, object> dataGridRow, SoundBank selectedSoundBank)
-        {
-            var soundBankEvent = new ActionEvent();
-
-            foreach (var kvp in dataGridRow)
-            {
-                if (kvp.Key == "AudioFiles")
-                {
-                    var filePaths = kvp.Value as List<string>;
-                    var fileNames = filePaths.Select(Path.GetFileName);
-                    var fileNamesString = string.Join(", ", fileNames);
-
-                    soundBankEvent.AudioFiles = filePaths;
-                    soundBankEvent.AudioFilesDisplay = fileNamesString;
-                }
-                else if (kvp.Key != "AudioFiles" && kvp.Key != "AudioFilesDisplay")
-                    soundBankEvent.Name = kvp.Value.ToString();
-            }
-
-            InsertActionEventAlphabetically(selectedSoundBank, soundBankEvent);
-        }
-
-        public static void AddDataGridRowToDialogueEvent(Dictionary<string, object> dataGridRow, DialogueEvent selectedDialogueEvent)
-        {
-            var decisionNode = new DecisionNode();
-            var statePath = new StatePath();
-
-            foreach (var kvp in dataGridRow)
-            {
-                if (kvp.Key == "AudioFiles")
-                {
-                    var filePaths = kvp.Value as List<string>;
-                    var fileNames = filePaths.Select(Path.GetFileName);
-                    var fileNamesString = string.Join(", ", fileNames);
-
-                    decisionNode.AudioFiles = filePaths;
-                    decisionNode.AudioFilesDisplay = fileNamesString;
-                }
-                else if (kvp.Key != "AudioFiles" && kvp.Key != "AudioFilesDisplay")
-                {
-                    var stateGroupWithQualifierAndExtraUnderscores = kvp.Key;
-                    var stateGroupWithQualifier = RemoveExtraUnderscoresFromString(stateGroupWithQualifierAndExtraUnderscores);
-
-                    var statePathNode = new StatePathNode
-                    {
-                        StateGroup = new StateGroup(),
-                        State = new State()
-                    };
-
-                    statePathNode.StateGroup.Name = GetStateGroupFromStateGroupWithQualifier(selectedDialogueEvent.Name, stateGroupWithQualifier);
-                    statePathNode.State.Name = kvp.Value.ToString();
-
-                    statePath.Nodes.Add(statePathNode);
-                }
-            }
-
-            decisionNode.StatePath = statePath;
-
-            InsertStatePathAlphabetically(selectedDialogueEvent, decisionNode, statePath);
-        }
-
-        public static void RemoveDataGridRowFromDialogueEvent(ObservableCollection<Dictionary<string, object>> audioProjectViewerDataGrid, Dictionary<string, object> dataGridRow, DialogueEvent selectedDialogueEvent)
-        {
-            var statePath = new StatePath();
-
-            foreach (var kvp in dataGridRow)
-            {
-                if (kvp.Key != "AudioFiles" && kvp.Key != "AudioFilesDisplay")
-                {
-                    var stateGroupWithQualifierAndExtraUnderscores = kvp.Key;
-                    var stateGroupWithQualifier = RemoveExtraUnderscoresFromString(stateGroupWithQualifierAndExtraUnderscores);
-                    var state = kvp.Value;
-
-                    var statePathNode = new StatePathNode { };
-                    statePathNode.StateGroup.Name = GetStateGroupFromStateGroupWithQualifier(selectedDialogueEvent.Name, stateGroupWithQualifier);
-                    statePathNode.State.Name = state.ToString();
-
-                    statePath.Nodes.Add(statePathNode);
-                }
-            }
-
-            var matchingStatePath = GetMatchingDecisionNode(statePath, selectedDialogueEvent);
-            if (matchingStatePath != null)
-            {
-                selectedDialogueEvent.DecisionTree.Remove(matchingStatePath);
-                audioProjectViewerDataGrid.Remove(dataGridRow);
-            }
-        }
-
-        public static string GetStateGroupFromStateGroupWithQualifier(string dialogueEvent, string stateGroupWithQualifier)
-        {
-            if (DialogueEventsWithStateGroupsWithQualifiersAndStateGroups.TryGetValue(dialogueEvent, out var stateGroupDictionary))
+            if (dialogueEventsWithStateGroupsWithQualifiersAndStateGroupsRepository.TryGetValue(dialogueEvent, out var stateGroupDictionary))
             {
                 if (stateGroupDictionary.TryGetValue(stateGroupWithQualifier, out var stateGroup))
                     return stateGroup;
@@ -285,31 +51,57 @@ namespace Editors.Audio.AudioEditor
             return null;
         }
 
-        public static void ClearDataGrid(ObservableCollection<Dictionary<string, object>> audioProjectViewerDataGrid)
+        public static void AddAudioFilesToAudioProjectEditorSingleRowDataGrid(Dictionary<string, object> dataGridRow, TextBox textBox)
         {
-            audioProjectViewerDataGrid.Clear();
+            var dialog = new OpenFileDialog()
+            {
+                Multiselect = true,
+                Filter = "WAV files (*.wav)|*.wav"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                var filePaths = dialog.FileNames;
+                var fileNames = filePaths.Select(Path.GetFileName);
+                var fileNamesString = string.Join(", ", fileNames);
+                var filePathsString = string.Join(", ", filePaths.Select(filePath => $"\"{filePath}\""));
+
+                textBox.Text = fileNamesString;
+                textBox.ToolTip = filePathsString;
+
+                var audioFiles = new List<string>(filePaths);
+                dataGridRow["AudioFiles"] = audioFiles;
+                dataGridRow["AudioFilesDisplay"] = fileNamesString;
+            }
         }
 
-        public static void ClearDataGridColumns(string dataGridName)
+        public static DataGrid GetDataGrid(string dataGridTag)
         {
-            var dataGrid = GetDataGrid(dataGridName);
-            dataGrid.Columns.Clear();
+            var mainWindow = Application.Current.MainWindow;
+            return FindVisualChild<DataGrid>(mainWindow, dataGridTag);
         }
 
-        public static T FindVisualChild<T>(DependencyObject parent, string name) where T : DependencyObject
+        public static void ClearDataGrid(ObservableCollection<Dictionary<string, object>> audioProjectEditorFullDataGrid)
+        {
+            audioProjectEditorFullDataGrid.Clear();
+        }
+
+        public static T FindVisualChild<T>(DependencyObject parent, string identifier) where T : DependencyObject
         {
             for (var i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
             {
                 var child = VisualTreeHelper.GetChild(parent, i);
 
-                if (child is T typedChild && child is FrameworkElement element && element.Name == name)
-                    return typedChild;
-                else
+                if (child is T typedChild && child is FrameworkElement element)
                 {
-                    var foundChild = FindVisualChild<T>(child, name);
-                    if (foundChild != null)
-                        return foundChild;
+                    // Check both Name and Tag because DataGrids use Tag as Name can't be set via a binding for some reason...
+                    if (element.Name == identifier || element.Tag?.ToString() == identifier)
+                        return typedChild;
                 }
+
+                var foundChild = FindVisualChild<T>(child, identifier);
+                if (foundChild != null)
+                    return foundChild;
             }
             return null;
         }
@@ -322,23 +114,6 @@ namespace Editors.Audio.AudioEditor
                     return parent;
             }
             return null;
-        }
-
-        public static DataGrid GetDataGrid(string dataGridName)
-        {
-            var mainWindow = Application.Current.MainWindow;
-            return FindVisualChild<DataGrid>(mainWindow, dataGridName);
-        }
-
-        // Apparently WPF doesn't_like_underscores so double them up in order for them to be displayed in the UI.
-        public static string AddExtraUnderscoresToString(string wtfWPF)
-        {
-            return wtfWPF.Replace("_", "__");
-        }
-
-        public static string RemoveExtraUnderscoresFromString(string wtfWPF)
-        {
-            return wtfWPF.Replace("__", "_");
         }
     }
 }

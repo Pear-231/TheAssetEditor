@@ -1,38 +1,23 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
-using static Editors.Audio.AudioEditor.AudioEditorSettings;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Editors.Audio.AudioEditor
 {
-    public abstract class IAudioProjectItem
+    public abstract class IAudioProjectItem : ObservableObject
     {
         public string Name { get; set; }
     }
 
-    public class SoundBank : IAudioProjectItem
+    public partial class SoundBank : IAudioProjectItem
     {
+        [ObservableProperty] public string _filteredBy;
         public string Type { get; set; }
-        public ObservableCollection<ActionEvent> ActionEvents { get; set; }
-
-        public ObservableCollection<DialogueEvent> DialogueEvents { get; set; }
-
-        public ObservableCollection<MusicEvent> MusicEvents { get; set; }
-
-        [JsonIgnore] public ObservableCollection<object> SoundBankTreeViewItems
-        {
-            get
-            {
-                // Other SounBank objects e.g. ActionEvents and MusicEvents are not present as they don't currently need to be displayed in the TreeView, only their SoundBank does.
-                var treeViewItems = new ObservableCollection<object>();
-                if (DialogueEvents != null)
-                {
-                    foreach (var dialogueEvent in DialogueEvents)
-                        treeViewItems.Add(dialogueEvent);
-                }
-                return treeViewItems;
-            }
-        }
+        public ObservableCollection<ActionEvent> ActionEvents { get; set; } = [];
+        public ObservableCollection<DialogueEvent> DialogueEvents { get; set; } = [];
+        public ObservableCollection<MusicEvent> MusicEvents { get; set; } = [];
+        [JsonIgnore] public ObservableCollection<object> SoundBankTreeViewItems { get; set; } = [];
     }
 
     public class ActionEvent : IAudioProjectItem
@@ -79,20 +64,11 @@ namespace Editors.Audio.AudioEditor
 
     public class AudioProjectData
     {
-        public string FileName { get; set; }
-        public string Directory { get; set; }
+        [JsonIgnore] public string FileName { get; set; }
+        [JsonIgnore] public string Directory { get; set; }
         public string Language { get; set; }
         public ObservableCollection<SoundBank> SoundBanks { get; set; } = [];
         public ObservableCollection<StateGroup> ModdedStates { get; set; } = [];
         [JsonIgnore] public ObservableCollection<object> AudioProjectTreeViewItems { get; set; } = [];
-
-        public static void InitialiseModdedStatesGroups(ObservableCollection<StateGroup> moddedStates, ObservableCollection<object> treeViewItems)
-        {
-            foreach (var moddedStateGroup in ModdedStateGroups)
-            {
-                var stateGroup = new StateGroup { Name = moddedStateGroup };
-                moddedStates.Add(stateGroup);
-            }
-        }
     }        
 }
