@@ -18,10 +18,10 @@ namespace Shared.Ui.BaseDialogs.PackFileTree
             _contextMenuFactory = contextMenuFactory;
         }
 
-        public PackFileBrowserViewModel Create(ContextMenuType contextMenu, bool showCaFiles, bool showFoldersOnly, bool useEditablePackOnly)
+        public PackFileBrowserViewModel Create(ContextMenuType contextMenu, bool showCaFiles, bool showFoldersOnly, bool useEditablePackOnly, bool isMultiSelectEnabled)
         {
             var contextMenuBuilder = _contextMenuFactory.GetContextMenu(contextMenu);
-            var fileTree = new PackFileBrowserViewModel(contextMenuBuilder, _packFileService, _eventHub, showCaFiles, showFoldersOnly, useEditablePackOnly);
+            var fileTree = new PackFileBrowserViewModel(contextMenuBuilder, _packFileService, _eventHub, showCaFiles, showFoldersOnly, useEditablePackOnly, isMultiSelectEnabled);
             return fileTree;
         }
     }

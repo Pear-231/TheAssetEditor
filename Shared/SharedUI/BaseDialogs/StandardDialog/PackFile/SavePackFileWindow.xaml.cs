@@ -25,7 +25,7 @@ namespace Shared.Ui.BaseDialogs.StandardDialog.PackFile
         public SavePackFileWindow(IPackFileService packfileService, PackFileTreeViewFactory packFileBrowserBuilder)
         {
             _packfileService = packfileService;
-            ViewModel = packFileBrowserBuilder.Create(ContextMenuType.Simple, showCaFiles:false, showFoldersOnly:false, useEditablePackOnly:false);
+            ViewModel = packFileBrowserBuilder.Create(ContextMenuType.Simple, showCaFiles:false, showFoldersOnly:false, useEditablePackOnly:false, isMultiSelectEnabled: false);
             ViewModel.FileOpen += ViewModel_FileOpen;
             ViewModel.NodeSelected += ViewModel_NodeSelected;
             InitializeComponent();

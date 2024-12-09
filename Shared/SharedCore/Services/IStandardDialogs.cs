@@ -8,6 +8,7 @@ namespace Shared.Core.Services
     {
         SaveDialogResult DisplaySaveDialog(IPackFileService pfs, List<string> extensions);
         BrowseDialogResultFile DisplayBrowseDialog(List<string> extensions);
+        BrowseDialogResultFiles DisplayMultiSelectBrowseDialog(List<string> extensions);
         BrowseDialogResultFolder DisplayBrowseFoldersDialog();
 
         void ShowExceptionWindow(Exception e, string userInfo = "");
@@ -20,6 +21,7 @@ namespace Shared.Core.Services
 
     public record SaveDialogResult(bool Result, PackFile? SelectedPackFile, string? SelectedFilePath);
     public record BrowseDialogResultFile(bool Result, PackFile File);
+    public record BrowseDialogResultFiles(bool Result, List<PackFile> Files);
     public record BrowseDialogResultFolder(bool Result, string FolderName);
 
     public record TextInputDialogResult(bool Result, string Text);

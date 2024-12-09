@@ -11,15 +11,18 @@ namespace Shared.Ui.BaseDialogs.StandardDialog.PackFile
     {
         public PackFileBrowserViewModel ViewModel { get; set; }
 
-        public Shared.Core.PackFiles.Models.PackFile SelectedFile { get; set; }
         public TreeNode? SelectedNode { get; set; }
+        public Shared.Core.PackFiles.Models.PackFile SelectedFile { get; set; }
+        public List<Shared.Core.PackFiles.Models.PackFile> SelectedFiles { get; set; } = [];
         public string SelectedFolder { get; set; }
 
-        public PackFileBrowserWindow(PackFileTreeViewFactory packFileBrowserBuilder, List<string>? extensions, bool showCaFiles, bool showFoldersOnly, bool useEditablePackOnly)
+        public PackFileBrowserWindow(PackFileTreeViewFactory packFileBrowserBuilder, List<string>? extensions, bool showCaFiles, bool showFoldersOnly, bool useEditablePackOnly, bool isMultiSelectEnabled)
         {
-            ViewModel = packFileBrowserBuilder.Create(ContextMenuType.None, showCaFiles, showFoldersOnly, useEditablePackOnly);
+            ViewModel = packFileBrowserBuilder.Create(ContextMenuType.None, showCaFiles, showFoldersOnly, useEditablePackOnly, isMultiSelectEnabled);
             ViewModel.FileOpen += ViewModel_FileOpen;
-            ViewModel.NodeSelected += ViewModel_NodeSelected;
+
+            if (isMultiSelectEnabled == false)
+                ViewModel.NodeSelected += ViewModel_NodeSelected;
 
             InitializeComponent();
             DataContext = this;
@@ -29,7 +32,7 @@ namespace Shared.Ui.BaseDialogs.StandardDialog.PackFile
                 ViewModel.Filter.SetExtensions(extensions);
         }
 
-        public new bool ShowDialog() => (this as Window).ShowDialog() == true && (SelectedFile != null || SelectedFolder != null);
+        public new bool ShowDialog() => (this as Window).ShowDialog() == true && (SelectedFile != null || SelectedFolder != null || SelectedFiles != null);
 
         private void HandleEsc(object sender, KeyEventArgs e)
         {
@@ -56,9 +59,17 @@ namespace Shared.Ui.BaseDialogs.StandardDialog.PackFile
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            SelectedFile = ViewModel.SelectedItem?.Item;
             SelectedNode = ViewModel.SelectedItem?.NodeType == NodeType.Directory ? ViewModel.SelectedItem : null;
+            SelectedFile = ViewModel.SelectedItem?.Item;
+
+            SelectedFiles.Clear();
+
+            foreach (var node in ViewModel.SelectedItems)
+                if (node is TreeNode treeNode && treeNode.Item != null)
+                    SelectedFiles.Add(treeNode.Item);
+
             DialogResult = true;
+
             Close();
         }
 

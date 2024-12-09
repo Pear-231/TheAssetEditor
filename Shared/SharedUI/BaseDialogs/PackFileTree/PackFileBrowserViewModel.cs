@@ -30,18 +30,21 @@ namespace Shared.Ui.BaseDialogs.PackFileTree
         public ObservableCollection<TreeNode> Files { get; set; } = [];
         public SearchFilter Filter { get; private set; }
 
+        [ObservableProperty] private bool _isMultiSelectEnabled = false;
         [ObservableProperty] TreeNode _selectedItem;
+        [ObservableProperty] private ObservableCollection<TreeNode> _selectedItems = [];
         [ObservableProperty] ObservableCollection<ContextMenuItem2> _contextMenu = [];
 
         public bool ShowFoldersOnly { get; }
 
-        public PackFileBrowserViewModel(IContextMenuBuilder contextMenuBuilder, IPackFileService packFileService, IEventHub? eventHub, bool showCaFiles, bool showFoldersOnly, bool useEditablePackOnly)
+        public PackFileBrowserViewModel(IContextMenuBuilder contextMenuBuilder, IPackFileService packFileService, IEventHub? eventHub, bool showCaFiles, bool showFoldersOnly, bool useEditablePackOnly, bool isMultiSelectEnabled)
         {
             _packFileService = packFileService;
             _eventHub = eventHub;
             _contextMenuBuilder = contextMenuBuilder;
 
             ShowFoldersOnly = showFoldersOnly;
+            IsMultiSelectEnabled = isMultiSelectEnabled;
 
             _eventHub?.Register<PackFileContainerSetAsMainEditableEvent>(this, ContainerUpdated);
             _eventHub?.Register<PackFileContainerRemovedEvent>(this, PackFileContainerRemoved);

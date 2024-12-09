@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Linq;
 using System.Windows.Controls;
-using Microsoft.Win32;
+using Shared.Core.PackFiles;
+using Shared.Core.Services;
 using static Editors.Audio.AudioEditor.AudioEditorHelpers;
 
 namespace Editors.Audio.AudioEditor.AudioProject
@@ -117,18 +117,13 @@ namespace Editors.Audio.AudioEditor.AudioProject
             return null;
         }
 
-        public static void AddAudioFilesToAudioProjectEditorSingleRowDataGrid(Dictionary<string, object> dataGridRow, TextBox textBox)
+        public static void AddAudioFilesToAudioProjectEditorSingleRowDataGrid(IPackFileService packFileService, IStandardDialogs packFileUiProvider, Dictionary<string, object> dataGridRow, TextBox textBox)
         {
-            var dialog = new OpenFileDialog()
+            var result = packFileUiProvider.DisplayMultiSelectBrowseDialog([".wav"]);
+            if (result.Result)
             {
-                Multiselect = true,
-                Filter = "WAV files (*.wav)|*.wav"
-            };
-
-            if (dialog.ShowDialog() == true)
-            {
-                var filePaths = dialog.FileNames;
-                var fileNames = filePaths.Select(Path.GetFileName);
+                var filePaths = result.Files.Select(file => packFileService.GetFullPath(file));
+                var fileNames = result.Files.Select(file => file.Name);
                 var fileNamesString = string.Join(", ", fileNames);
                 var filePathsString = string.Join(", ", filePaths.Select(filePath => $"\"{filePath}\""));
 

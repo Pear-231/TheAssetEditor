@@ -11,7 +11,6 @@ using Editors.Audio.Storage;
 using Shared.Core.PackFiles;
 using Shared.Core.Services;
 using Shared.Core.ToolCreation;
-using Shared.Ui.BaseDialogs.PackFileTree;
 using static Editors.Audio.AudioEditor.AudioEditorHelpers;
 using static Editors.Audio.AudioEditor.AudioProject.AudioProjectManager;
 using static Editors.Audio.AudioEditor.ButtonEnablement;
@@ -32,7 +31,6 @@ namespace Editors.Audio.AudioEditor.ViewModels
         private readonly IAudioRepository _audioRepository;
         private readonly IPackFileService _packFileService;
         private readonly IAudioProjectService _audioProjectService;
-        private readonly PackFileTreeViewFactory _packFileBrowserBuilder;
         private readonly IStandardDialogs _packFileUiProvider;
 
         public string DisplayName { get; set; } = "Audio Editor";
@@ -69,12 +67,11 @@ namespace Editors.Audio.AudioEditor.ViewModels
         [ObservableProperty] private bool _isShowModdedStatesCheckBoxEnabled = false;
         [ObservableProperty] private bool _isPasteEnabled = true;
 
-        public AudioEditorViewModel(IAudioRepository audioRepository, IPackFileService packFileService, IAudioProjectService audioProjectService, PackFileTreeViewFactory packFileBrowserBuilder, IStandardDialogs packFileUiProvider)
+        public AudioEditorViewModel(IAudioRepository audioRepository, IPackFileService packFileService, IAudioProjectService audioProjectService, IStandardDialogs packFileUiProvider)
         {
             _audioRepository = audioRepository;
             _packFileService = packFileService;
             _audioProjectService = audioProjectService;
-            _packFileBrowserBuilder = packFileBrowserBuilder;
             _packFileUiProvider = packFileUiProvider;
 
             InitialiseCollections();
@@ -135,7 +132,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 // Clear the previous DataGrid Data.
                 ClearDataGrid(AudioProjectEditorSingleRowDataGrid);
 
-                ConfigureAudioProjectEditorSingleRowDataGridForDialogueEvent(this, _audioRepository, selectedDialogueEvent, _audioProjectService);
+                ConfigureAudioProjectEditorSingleRowDataGridForDialogueEvent(this, _audioRepository, selectedDialogueEvent, _audioProjectService, _packFileUiProvider, _packFileService);
                 SetAudioProjectEditorSingleRowDataGridToDialogueEvent(AudioProjectEditorSingleRowDataGrid, _audioProjectService.DialogueEventsWithStateGroupsWithQualifiersAndStateGroupsRepository, selectedDialogueEvent);
             }
         }
@@ -147,7 +144,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
                 _previousSelectedAudioProjectTreeItem = _selectedAudioProjectTreeItem;
             _selectedAudioProjectTreeItem = value;
 
-            HandleSelectedTreeViewItem(this, _audioProjectService, _audioRepository);
+            HandleSelectedTreeViewItem(this, _audioProjectService, _audioRepository, _packFileUiProvider, _packFileService);
         }
 
         [RelayCommand] public void NewAudioProject()

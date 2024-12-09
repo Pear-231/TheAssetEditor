@@ -7,6 +7,8 @@ using Editors.Audio.AudioEditor.ViewModels;
 using Editors.Audio.Storage;
 using Serilog;
 using Shared.Core.ErrorHandling;
+using Shared.Core.PackFiles;
+using Shared.Core.Services;
 using static Editors.Audio.AudioEditor.AudioEditorHelpers;
 using static Editors.Audio.AudioEditor.ButtonEnablement;
 using static Editors.Audio.AudioEditor.CopyPasteHandler;
@@ -21,7 +23,7 @@ namespace Editors.Audio.AudioEditor
     {
         private static readonly ILogger s_logger = Logging.Create<TreeViewItemLoader>();
 
-        public static void HandleSelectedTreeViewItem(AudioEditorViewModel audioEditorViewModel, IAudioProjectService audioProjectService, IAudioRepository audioRepository)
+        public static void HandleSelectedTreeViewItem(AudioEditorViewModel audioEditorViewModel, IAudioProjectService audioProjectService, IAudioRepository audioRepository, IStandardDialogs packFileUiProvider, IPackFileService packFileService)
         {
             audioEditorViewModel.AudioProjectEditorLabel = $"Audio Project Editor";
 
@@ -48,7 +50,7 @@ namespace Editors.Audio.AudioEditor
                 {
                     audioEditorViewModel.AudioProjectEditorLabel = $"Audio Project Editor - {selectedSoundBank.Name}";
 
-                    ConfigureAudioProjectEditorSingleRowDataGridForActionEventSoundBank(audioEditorViewModel, audioProjectService, audioRepository);
+                    ConfigureAudioProjectEditorSingleRowDataGridForActionEventSoundBank(audioEditorViewModel, audioProjectService, audioRepository, packFileUiProvider, packFileService);
                     SetAudioProjectEditorSingleRowDataGridToActionEventSoundBank(audioEditorViewModel.AudioProjectEditorSingleRowDataGrid);
 
                     ConfigureAudioProjectEditorFullDataGridForActionEventSoundBank(audioEditorViewModel, audioRepository, selectedSoundBank);
@@ -80,7 +82,7 @@ namespace Editors.Audio.AudioEditor
                 if (audioProjectService.StateGroupsWithModdedStatesRepository.Count > 0)
                     audioEditorViewModel.IsShowModdedStatesCheckBoxEnabled = true;
 
-                ConfigureAudioProjectEditorSingleRowDataGridForDialogueEvent(audioEditorViewModel, audioRepository, selectedDialogueEvent, audioProjectService);
+                ConfigureAudioProjectEditorSingleRowDataGridForDialogueEvent(audioEditorViewModel, audioRepository, selectedDialogueEvent, audioProjectService, packFileUiProvider, packFileService);
                 SetAudioProjectEditorSingleRowDataGridToDialogueEvent(audioEditorViewModel.AudioProjectEditorSingleRowDataGrid, audioProjectService.DialogueEventsWithStateGroupsWithQualifiersAndStateGroupsRepository, selectedDialogueEvent);
 
                 ConfigureAudioProjectEditorFullDataGridForDialogueEvent(audioEditorViewModel, audioRepository, audioProjectService, selectedDialogueEvent);

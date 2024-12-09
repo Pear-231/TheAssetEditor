@@ -49,7 +49,7 @@ namespace AssetEditor.ViewModels
 
             eventHub.Register<PackFileContainerSetAsMainEditableEvent>(this, SetStatusBarEditablePackFile);
 
-            FileTree = packFileBrowserBuilder.Create(ContextMenuType.MainApplication, showCaFiles: true, showFoldersOnly: false, useEditablePackOnly: false);
+            FileTree = packFileBrowserBuilder.Create(ContextMenuType.MainApplication, showCaFiles: true, showFoldersOnly: false, useEditablePackOnly: false, isMultiSelectEnabled:false);
             FileTree.FileOpen += OpenFile;
 
             ToolsFactory = toolFactory;

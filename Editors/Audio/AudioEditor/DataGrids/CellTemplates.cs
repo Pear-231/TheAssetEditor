@@ -9,6 +9,8 @@ using System.Windows.Threading;
 using Editors.Audio.AudioEditor.AudioProject;
 using Editors.Audio.AudioEditor.ViewModels;
 using Editors.Audio.Storage;
+using Shared.Core.PackFiles;
+using Shared.Core.Services;
 using static Editors.Audio.AudioEditor.AudioEditorHelpers;
 using static Editors.Audio.AudioEditor.AudioProject.AudioProjectManagerHelpers;
 using static Editors.Audio.AudioEditor.ButtonEnablement;
@@ -158,7 +160,7 @@ namespace Editors.Audio.AudioEditor.DataGrids
             return template;
         }
 
-        public static DataTemplate CreateSoundsButtonTemplate(AudioEditorViewModel audioEditorViewModel, IAudioProjectService audioProjectService, IAudioRepository audioRepository)
+        public static DataTemplate CreateSoundsButtonTemplate(AudioEditorViewModel audioEditorViewModel, IAudioProjectService audioProjectService, IAudioRepository audioRepository, IStandardDialogs packFileUiProvider, IPackFileService packFileService)
         {
             var template = new DataTemplate();
             var factory = new FrameworkElementFactory(typeof(Button));
@@ -178,7 +180,7 @@ namespace Editors.Audio.AudioEditor.DataGrids
 
                         if (rowDataContext is Dictionary<string, object> dataGridRowContext)
                         {
-                            AddAudioFilesToAudioProjectEditorSingleRowDataGrid(dataGridRowContext, textBox);
+                            AddAudioFilesToAudioProjectEditorSingleRowDataGrid(packFileService, packFileUiProvider, dataGridRowContext, textBox);
                             SetIsAddRowButtonEnabled(audioEditorViewModel, audioProjectService, audioRepository);
                         }
                     }

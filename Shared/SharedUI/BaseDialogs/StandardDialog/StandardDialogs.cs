@@ -39,16 +39,25 @@ namespace Shared.Ui.BaseDialogs.StandardDialog
 
         public BrowseDialogResultFile DisplayBrowseDialog(List<string> extensions)
         {
-            using var browser = new PackFileBrowserWindow(_packFileBrowserBuilder, extensions, showCaFiles: true, showFoldersOnly: false, useEditablePackOnly: false);
+            using var browser = new PackFileBrowserWindow(_packFileBrowserBuilder, extensions, showCaFiles: true, showFoldersOnly: false, useEditablePackOnly: false, isMultiSelectEnabled:false);
 
             var saveResult = browser.ShowDialog();
             var output = new BrowseDialogResultFile(saveResult, browser.SelectedFile);
             return output;
         }
 
+        public BrowseDialogResultFiles DisplayMultiSelectBrowseDialog(List<string> extensions)
+        {
+            using var browser = new PackFileBrowserWindow(_packFileBrowserBuilder, extensions, showCaFiles: false, showFoldersOnly: false, useEditablePackOnly: true, isMultiSelectEnabled: true);
+
+            var saveResult = browser.ShowDialog();
+            var output = new BrowseDialogResultFiles(saveResult, browser.SelectedFiles);
+            return output;
+        }
+
         public BrowseDialogResultFolder DisplayBrowseFoldersDialog()
         {
-            using var browser = new PackFileBrowserWindow(_packFileBrowserBuilder, null, showCaFiles: false, showFoldersOnly: true, useEditablePackOnly: true);
+            using var browser = new PackFileBrowserWindow(_packFileBrowserBuilder, null, showCaFiles: false, showFoldersOnly: true, useEditablePackOnly: true, isMultiSelectEnabled:false);
 
             var saveResult = browser.ShowDialog();
             var output = new BrowseDialogResultFolder(saveResult, browser.SelectedFolder);

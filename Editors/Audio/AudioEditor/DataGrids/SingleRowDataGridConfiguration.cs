@@ -3,6 +3,8 @@ using System.Windows.Controls;
 using Editors.Audio.AudioEditor.AudioProject;
 using Editors.Audio.AudioEditor.ViewModels;
 using Editors.Audio.Storage;
+using Shared.Core.PackFiles;
+using Shared.Core.Services;
 using static Editors.Audio.AudioEditor.AudioEditorHelpers;
 using static Editors.Audio.AudioEditor.DataGrids.CellTemplates;
 using static Editors.Audio.AudioEditor.GameSettings.Warhammer3.StateGroups;
@@ -26,7 +28,7 @@ namespace Editors.Audio.AudioEditor.DataGrids
             dataGrid.Columns.Add(stateGroupColumn);
         }
 
-        public static void ConfigureAudioProjectEditorSingleRowDataGridForActionEventSoundBank(AudioEditorViewModel audioEditorViewModel, IAudioProjectService audioProjectService, IAudioRepository audioRepository)
+        public static void ConfigureAudioProjectEditorSingleRowDataGridForActionEventSoundBank(AudioEditorViewModel audioEditorViewModel, IAudioProjectService audioProjectService, IAudioRepository audioRepository, IStandardDialogs packFileUiProvider, IPackFileService packFileService)
         {
             var dataGrid = GetDataGridByTag(audioEditorViewModel.AudioProjectEditorSingleRowDataGridTag);
             ClearDataGridColumns(audioEditorViewModel.AudioProjectEditorSingleRowDataGridTag);
@@ -56,14 +58,14 @@ namespace Editors.Audio.AudioEditor.DataGrids
             // Create and set the tooltip binding.
             var soundsButtonColumn = new DataGridTemplateColumn
             {
-                CellTemplate = CreateSoundsButtonTemplate(audioEditorViewModel, audioProjectService, audioRepository),
+                CellTemplate = CreateSoundsButtonTemplate(audioEditorViewModel, audioProjectService, audioRepository, packFileUiProvider, packFileService),
                 Width = 30.0,
                 CanUserResize = false
             };
             dataGrid.Columns.Add(soundsButtonColumn);
         }
 
-        public static void ConfigureAudioProjectEditorSingleRowDataGridForDialogueEvent(AudioEditorViewModel audioEditorViewModel, IAudioRepository audioRepository, DialogueEvent dialogueEvent, IAudioProjectService audioProjectService)
+        public static void ConfigureAudioProjectEditorSingleRowDataGridForDialogueEvent(AudioEditorViewModel audioEditorViewModel, IAudioRepository audioRepository, DialogueEvent dialogueEvent, IAudioProjectService audioProjectService, IStandardDialogs packFileUiProvider, IPackFileService packFileService)
         {
             var dataGrid = GetDataGridByTag(audioEditorViewModel.AudioProjectEditorSingleRowDataGridTag);
             ClearDataGridColumns(audioEditorViewModel.AudioProjectEditorSingleRowDataGridTag);
@@ -123,7 +125,7 @@ namespace Editors.Audio.AudioEditor.DataGrids
 
             var soundsButtonColumn = new DataGridTemplateColumn
             {
-                CellTemplate = CreateSoundsButtonTemplate(audioEditorViewModel, audioProjectService, audioRepository),
+                CellTemplate = CreateSoundsButtonTemplate(audioEditorViewModel, audioProjectService, audioRepository, packFileUiProvider, packFileService),
                 Width = 30.0,
                 CanUserResize = false
             };

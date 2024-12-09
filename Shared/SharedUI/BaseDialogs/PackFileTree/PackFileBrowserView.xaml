@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:behaviors="clr-namespace:Shared.Ui.Common.Behaviors"
              xmlns:e1="http://schemas.microsoft.com/xaml/behaviors" 
-             xmlns:packfilebrowser="clr-namespace:Shared.Ui.BaseDialogs.PackFileTree" 
+             xmlns:packfiletree="clr-namespace:Shared.Ui.BaseDialogs.PackFileTree" 
              xmlns:valueconverters="clr-namespace:Shared.Ui.BaseDialogs.PackFileTree.ValueConverters"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800"
@@ -68,12 +68,12 @@
         </Grid>
 
         <!-- TreeView -->
-        <TreeView x:Name="tvParameters" AllowDrop="True" Grid.Row="2" Margin="0, 2.5, 0, 5" behaviors:TreeViewExtension.SelectItemOnRightClick="True" 
+        <packfiletree:MultiSelectTreeView x:Name="tvParameters" AllowDrop="True" Grid.Row="2" Margin="0, 2.5, 0, 5" behaviors:TreeViewExtension.SelectItemOnRightClick="True" 
                   ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemsSource="{Binding Path=Files, UpdateSourceTrigger=PropertyChanged}" 
                   VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" VirtualizingPanel.IsVirtualizingWhenGrouping="True"
-                  BorderBrush="Transparent" Background="Transparent">
+                  BorderBrush="Transparent" Background="Transparent" SelectedItems="{Binding SelectedItems, Mode=TwoWay}" EnableMultiSelect="{Binding IsMultiSelectEnabled, Mode=TwoWay}">
 
-            <TreeView.Resources>
+            <packfiletree:MultiSelectTreeView.Resources>
                 <ContextMenu x:Key="NodeContextMenu" ItemsSource="{Binding DataContext.ContextMenu, UpdateSourceTrigger=PropertyChanged,  RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl}}" DisplayMemberPath="Name">
                     <ContextMenu.Resources>
                         <ControlTemplate x:Key="MenuSeparatorTemplate">
@@ -98,13 +98,13 @@
                         </Style>
                     </ContextMenu.ItemContainerStyle>
                 </ContextMenu>
-            </TreeView.Resources>
+            </packfiletree:MultiSelectTreeView.Resources>
 
             <e1:Interaction.Behaviors>
                 <behaviors:BindableSelectedItemBehavior SelectedItem="{Binding SelectedItem, Mode=TwoWay}" />
             </e1:Interaction.Behaviors>
 
-            <TreeView.ItemContainerStyle>
+            <packfiletree:MultiSelectTreeView.ItemContainerStyle>
                 <Style TargetType="{x:Type TreeViewItem}" BasedOn="{StaticResource {x:Type TreeViewItem}}">
                     <EventSetter Event="TreeViewItem.MouseMove" Handler="TreeView_MouseMove"/>
                     <EventSetter Event="TreeViewItem.Drop" Handler="TreeView_Drop"/>
@@ -128,9 +128,9 @@
                     </Style.Triggers>
 
                 </Style>
-            </TreeView.ItemContainerStyle>
+            </packfiletree:MultiSelectTreeView.ItemContainerStyle>
 
-            <TreeView.ItemTemplate >
+            <packfiletree:MultiSelectTreeView.ItemTemplate >
                 <HierarchicalDataTemplate ItemsSource="{Binding Children, Converter={StaticResource SortedCollectionViewSource}}">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -169,7 +169,7 @@
                         </TextBlock>
                     </Grid>
                 </HierarchicalDataTemplate>
-            </TreeView.ItemTemplate>
-        </TreeView>
+            </packfiletree:MultiSelectTreeView.ItemTemplate>
+        </packfiletree:MultiSelectTreeView>
     </Grid>
 </UserControl>
