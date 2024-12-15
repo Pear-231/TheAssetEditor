@@ -78,7 +78,7 @@ namespace Editors.Audio.BnkCompiler.ObjectGeneration
                 }
             }
 
-            var sortedEvents = project.Events.OrderBy(x => x).ToList();
+            var sortedEvents = project.Events.OrderBy(x => x.Id).ToList();
             foreach (var currentEvent in sortedEvents)
             {
                 var actions = currentEvent.Actions.Select(x => project.Actions.First(action => action.Id == x)).ToList();

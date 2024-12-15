@@ -17,8 +17,8 @@ namespace Editors.Audio.BnkCompiler
     {
         public CompilerData Project { get; set; }
         public PackFile OutputBnkFile { get; set; }
-        public PackFile OutputDatFile { get; set; }
-        public PackFile OutputStatesDatFile { get; set; }
+        public PackFile OutputEventDatFile { get; set; }
+        public PackFile OutputStateDatFile { get; set; }
     }
 
     public class Compiler
@@ -49,15 +49,15 @@ namespace Editors.Audio.BnkCompiler
             Guard.IsEqualTo(originalCount, uniqueCount);
 
             // Build the dat files.
-            var eventDat = audioProject.Events.Count == 0 ? null : BuildDat(audioProject);
-            var statesDat = audioProject.DialogueEvents.Count == 0 ? null : BuildStatesDat(audioProject);
+            var eventDat = audioProject.Events.Count == 0 ? null : BuildEventDataDat(audioProject);
+            var statesDat = audioProject.DialogueEvents.Count == 0 ? null : BuildStateDataDat(audioProject);
 
             var compileResult = new CompileResult()
             {
                 Project = audioProject,
                 OutputBnkFile = ConvertToPackFile(header, hircChunk, audioProject.ProjectSettings.BnkName),
-                OutputDatFile = eventDat,
-                OutputStatesDatFile = statesDat,
+                OutputEventDatFile = eventDat,
+                OutputStateDatFile = statesDat,
             };
 
             return Result<CompileResult>.FromOk(compileResult);
@@ -82,7 +82,7 @@ namespace Editors.Audio.BnkCompiler
             return bnkPackFile;
         }
 
-        private static PackFile BuildDat(CompilerData projectFile)
+        private static PackFile BuildEventDataDat(CompilerData projectFile)
         {
             var outputName = $"event_data__{projectFile.ProjectSettings.BnkName}.dat";
             var datFile = new SoundDatFile();
@@ -96,9 +96,9 @@ namespace Editors.Audio.BnkCompiler
             return packFile;
         }
 
-        private static PackFile BuildStatesDat(CompilerData projectFile)
+        private static PackFile BuildStateDataDat(CompilerData projectFile)
         {
-            var outputName = $"states_data__{projectFile.ProjectSettings.BnkName}.dat";
+            var outputName = $"state_data__{projectFile.ProjectSettings.BnkName}.dat";
             var datFile = new SoundDatFile();
 
             foreach (var state in projectFile.StatesDat)
