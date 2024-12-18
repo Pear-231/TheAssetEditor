@@ -127,7 +127,7 @@ namespace Editors.Audio.BnkCompiler
                 var dialogueEventName = hircDialogueEvent.DialogueEvent;
                 var dialogueEventId = WwiseHash.Compute(dialogueEventName);
                 var mixerId = GenerateRandomNumber(UsableWwiseId);
-                var dialogueEventBnk = audioRepository.GetOwnerFileFromDialogueEvent(dialogueEventId, true);
+                var dialogueEventBnk = audioRepository.GetOwnerFileFromDialogueEvent(dialogueEventId);
                 var mixerParent = VanillaObjectIds.DialogueEventMixerIds[dialogueEventBnk];
 
                 if (DialogueEventMixers.TryAdd(dialogueEventId, mixerId))
@@ -210,7 +210,7 @@ namespace Editors.Audio.BnkCompiler
             var soundId = GenerateRandomNumber(UsableWwiseId);
             var dialogueEventName = currentMixer.DialogueEvent;
             var dialogueEventId = WwiseHash.Compute(dialogueEventName);
-            var dialogueEventBnk = audioRepository.GetOwnerFileFromDialogueEvent(dialogueEventId, true);
+            var dialogueEventBnk = audioRepository.GetOwnerFileFromDialogueEvent(dialogueEventId);
 
             var soundFilePath = branch.Sounds[0];
             var hircSound = CreateSound(soundId, mixerId, dialogueEventBnk, soundFilePath, dialogueEventName);
@@ -238,7 +238,7 @@ namespace Editors.Audio.BnkCompiler
                 var soundId = GenerateRandomNumber(UsableWwiseId);
                 var dialogueEventName = currentMixer.DialogueEvent;
                 var dialogueEventId = WwiseHash.Compute(dialogueEventName);
-                var dialogueEventBnk = audioRepository.GetOwnerFileFromDialogueEvent(dialogueEventId, true);
+                var dialogueEventBnk = audioRepository.GetOwnerFileFromDialogueEvent(dialogueEventId);
 
                 var hircSound = CreateSound(soundId, containerId, dialogueEventBnk, sound, dialogueEventName);
 

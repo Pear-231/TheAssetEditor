@@ -23,7 +23,7 @@ namespace Editors.Audio.Storage
         string GetNameFromHash(uint value);
         string GetNameFromHash(uint value, out bool found);
         string GetNameFromHash(uint? key);
-        string GetOwnerFileFromDialogueEvent(uint id, bool removeFileType = false);
+        string GetOwnerFileFromDialogueEvent(uint id);
     }
 
     public class AudioRepository : IAudioRepository
@@ -107,23 +107,22 @@ namespace Editors.Audio.Storage
                 throw new System.NotImplementedException();
         }
 
-        public string GetOwnerFileFromDialogueEvent(uint id, bool removeFileTypeAndCore = false)
+        public string GetOwnerFileFromDialogueEvent(uint id)
         {
-            // Check if the dictionary contains the key first
             if (HircObjects.TryGetValue(id, out var hircItemList))
+            {
                 foreach (var hircItem in hircItemList)
-                    if (hircItem.Type == HircType.Dialogue_Event && hircItem.Id == id)
+                {
+                    if (hircItem.Type == HircType.Dialogue_Event && hircItem.Id == id && hircItem.IsCaHircItem)
                     {
                         var file = Path.GetFileName(hircItem.OwnerFile);
-
-                        if (removeFileTypeAndCore)
-                        {
-                            file = Path.GetFileNameWithoutExtension(file);
-                            file = file.Replace("__core", string.Empty);
-                        }
+                        file = Path.GetFileNameWithoutExtension(file);
+                        file = file.Replace("__core", string.Empty);
 
                         return file;
                     }
+                }
+            }
             return null;
         }
 

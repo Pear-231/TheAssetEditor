@@ -21,19 +21,19 @@ namespace Editors.Audio.Storage
             public Dictionary<uint, List<DidxAudio>> DidxAudioList { get; internal set; } = new();
         }
 
-        private readonly IPackFileService _pfs;
+        private readonly IPackFileService _packFileService;
         private readonly BnkParser _bnkParser;
         readonly ILogger _logger = Logging.Create<BnkLoader>();
 
-        public BnkLoader(IPackFileService pfs, BnkParser bnkParser)
+        public BnkLoader(IPackFileService packFileService, BnkParser bnkParser)
         {
-            _pfs = pfs;
+            _packFileService = packFileService;
             _bnkParser = bnkParser;
         }
 
-        public ParsedBnkFile LoadBnkFile(PackFile bnkFile, string bnkFileName, bool printData = false)
+        public ParsedBnkFile LoadBnkFile(PackFile bnkFile, string bnkFileName, bool isCaHircItem, bool printData = false)
         {
-            var soundDb = _bnkParser.Parse(bnkFile, bnkFileName);
+            var soundDb = _bnkParser.Parse(bnkFile, bnkFileName, isCaHircItem);
             if (printData)
                 PrintHircList(soundDb.HircChuck.Hircs, bnkFileName);
             return soundDb;
@@ -41,7 +41,7 @@ namespace Editors.Audio.Storage
 
         public LoadResult LoadBnkFiles(bool onlyEnglish = true)
         {
-            var bankFiles = PackFileServiceUtility.FindAllWithExtentionIncludePaths(_pfs, ".bnk");
+            var bankFiles = PackFileServiceUtility.FindAllWithExtentionIncludePaths(_packFileService, ".bnk");
             var bankFilesAsDictionary = bankFiles.GroupBy(f => f.FileName).ToDictionary(g => g.Key, g => g.Last().Pack);
             var removeFilter = new List<string>() { "media", "init.bnk", "animation_blood_data.bnk" };
             if (onlyEnglish)
@@ -60,11 +60,12 @@ namespace Editors.Audio.Storage
             {
                 var name = bnkFile.Key;
                 var file = bnkFile.Value;
+                var filePack = _packFileService.GetPackFileContainer(file);
                 _logger.Here().Information($"{counter++}/{wantedBnkFiles.Count} - {name}");
 
                 try
                 {
-                    var parsedBnk = LoadBnkFile(file, name);
+                    var parsedBnk = LoadBnkFile(file, name, filePack.IsCaPackFile);
                     if (parsedBnk.HircChuck.Hircs.Any(y => y is CAkUnknown == true || y.HasError))
                         banksWithUnknowns.Add(name);
 
