@@ -1,13 +1,15 @@
-﻿using E2EVerification.Shared;
+﻿using Editor.VisualSkeletonEditor.SkeletonEditor;
 using Editors.KitbasherEditor.UiCommands;
 using GameWorld.Core.Services.SceneSaving;
 using GameWorld.Core.Services.SceneSaving.Lod;
 using Microsoft.Extensions.DependencyInjection;
 using Shared.Core.Events;
 using Shared.Core.Settings;
+using Shared.Core.ToolCreation;
 using Shared.GameFormats.RigidModel;
-using Shared.TestUtility;
 using Shared.Ui.Events.UiCommands;
+using Test.TestingUtility.Shared;
+using Test.TestingUtility.TestUtility;
 
 namespace E2EVerification
 {
@@ -21,6 +23,38 @@ namespace E2EVerification
         public void Setup()
         {
         }
+
+        [Test]
+        public void SkeletonToolTets()
+        {
+            var runner = new AssetEditorTestRunner();
+            var outputPackFile = runner.LoadPackFile(_inputPackFileKarl, true);
+
+            // Load the a rmv2 and open the kitbash editor
+            var originalRmv2File = runner.PackFileService.FindFile("animations\\skeletons\\humanoid01.anim");
+            runner.CommandFactory.Create<OpenEditorCommand>().Execute(originalRmv2File, EditorEnums.VisualSkeletonEditor);
+
+            // Get the scope of the newly created kitbash editor
+            var kitbashScope = runner.ScopeRepository.Scopes.First().Value.ServiceProvider;
+
+            var toolCommandFactory = kitbashScope.GetRequiredService<SkeletonEditorViewModel>();
+
+            // Load a reference mesh
+            // Select a bone
+            // Rename
+            // Get pos
+            // Enable worldpos
+            // Move up in worldspace
+            // Select a new shoulder (finger)
+            // Delete bone 
+            // Save
+            //toolCommandFactory.LoadRefMeshAction()
+
+
+        }
+
+
+
 
         [Test]
         public void Warhammer3_SaveKarl_Default()
@@ -123,7 +157,7 @@ namespace E2EVerification
         public void Rome2_LoadAndSaveDirtHelmet()
         {
             var runner = new AssetEditorTestRunner(GameTypeEnum.Rome_2);
-            var outputPackFile = runner.LoadFolderPackFile(PathHelper.GetDataFolder("Rome_Man_And_Shield_Pack"), true);
+            var outputPackFile = runner.LoadFolderPackFile(PathHelper.GetDataFolder("Data\\Rome_Man_And_Shield_Pack"), true);
 
             // Load the a rmv2 and open the kitbash editor
             var meshPath = "variantmeshes/_variantmodels/man/helmets/carthaginian_pylos.rigid_model_v2";
@@ -157,7 +191,7 @@ namespace E2EVerification
         public void Rome2_LoadAndSaveDirtAndDecalShield()
         {
             var runner = new AssetEditorTestRunner(GameTypeEnum.Rome_2);
-            var outputPackFile = runner.LoadFolderPackFile(PathHelper.GetDataFolder(("Rome_Man_And_Shield_Pack")));
+            var outputPackFile = runner.LoadFolderPackFile(PathHelper.GetDataFolder(("Data\\Rome_Man_And_Shield_Pack")));
 
             // Load the a rmv2 and open the kitbash editor
             var meshPath = "variantmeshes/_variantmodels/man/shield/celtic_oval_shield_a.rigid_model_v2";
