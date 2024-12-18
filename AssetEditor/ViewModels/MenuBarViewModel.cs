@@ -5,10 +5,10 @@ using System.IO;
 using System.Linq;
 using AssetEditor.UiCommands;
 using CommonControls.BaseDialogs;
-using CommonControls.Editors.AnimationBatchExporter;
 using CommonControls.Editors.AnimationPack;
 using CommunityToolkit.Mvvm.Input;
 using Editors.Reports.Animation;
+using Editors.Reports.Audio;
 using Editors.Reports.DeepSearch;
 using Editors.Reports.Files;
 using Editors.Reports.Geometry;
@@ -82,6 +82,8 @@ namespace AssetEditor.ViewModels
         [RelayCommand] private void GenerateFileListReport() => _uiCommandFactory.Create<FileListReportCommand>().Execute();
         [RelayCommand] private void GenerateMetaDataJsonsReport() => _uiCommandFactory.Create<GenerateMetaJsonDataReportCommand>().Execute();
         [RelayCommand] private void GenerateMaterialReport() => _uiCommandFactory.Create<MaterialReportCommand>().Execute();
+        [RelayCommand] private void GenerateDialogueEventInfoReport() => _uiCommandFactory.Create<GenerateDialogueEventInfoReportCommand>().Execute();
+
 
         [RelayCommand] private void TouchedFileRecorderStart() => _touchedFilesRecorder.Start();
         [RelayCommand] private void TouchedFileRecorderPrint() => _touchedFilesRecorder.Print();
