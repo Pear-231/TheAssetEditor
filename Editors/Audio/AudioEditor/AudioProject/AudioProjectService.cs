@@ -15,9 +15,9 @@ using Shared.Core.Services;
 using static Editors.Audio.AudioEditor.AudioEditorHelpers;
 using static Editors.Audio.AudioEditor.AudioProject.AudioProjectManagerHelpers;
 using static Editors.Audio.AudioEditor.DialogueEventFilter;
-using static Editors.Audio.AudioEditor.GameSettings.Warhammer3.DialogueEvents;
-using static Editors.Audio.AudioEditor.GameSettings.Warhammer3.SoundBanks;
-using static Editors.Audio.AudioEditor.GameSettings.Warhammer3.StateGroups;
+using static Editors.Audio.GameSettings.Warhammer3.DialogueEvents;
+using static Editors.Audio.GameSettings.Warhammer3.SoundBanks;
+using static Editors.Audio.GameSettings.Warhammer3.StateGroups;
 using static Editors.Audio.AudioEditor.IntegrityChecker;
 using static Editors.Audio.AudioEditor.TreeViewWrapper;
 

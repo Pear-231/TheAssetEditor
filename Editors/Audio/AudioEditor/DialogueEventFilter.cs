@@ -3,8 +3,8 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using Editors.Audio.AudioEditor.AudioProject;
 using Editors.Audio.AudioEditor.ViewModels;
-using static Editors.Audio.AudioEditor.GameSettings.Warhammer3.DialogueEvents;
-using static Editors.Audio.AudioEditor.GameSettings.Warhammer3.SoundBanks;
+using static Editors.Audio.GameSettings.Warhammer3.DialogueEvents;
+using static Editors.Audio.GameSettings.Warhammer3.SoundBanks;
 
 namespace Editors.Audio.AudioEditor
 {

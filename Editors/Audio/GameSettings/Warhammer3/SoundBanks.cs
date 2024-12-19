@@ -1,4 +1,4 @@
-﻿namespace Editors.Audio.AudioEditor.GameSettings.Warhammer3
+﻿namespace Editors.Audio.GameSettings.Warhammer3
 {
     public class SoundBanks
     {

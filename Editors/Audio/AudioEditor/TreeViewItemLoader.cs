@@ -13,7 +13,7 @@ using static Editors.Audio.AudioEditor.CopyPasteHandler;
 using static Editors.Audio.AudioEditor.DataGrids.FullDataGridConfiguration;
 using static Editors.Audio.AudioEditor.DataGrids.SingleRowDataGridConfiguration;
 using static Editors.Audio.AudioEditor.DialogueEventFilter;
-using static Editors.Audio.AudioEditor.GameSettings.Warhammer3.SoundBanks;
+using static Editors.Audio.GameSettings.Warhammer3.SoundBanks;
 
 namespace Editors.Audio.AudioEditor
 {

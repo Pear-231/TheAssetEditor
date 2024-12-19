@@ -9,7 +9,7 @@ using Shared.Core.PackFiles;
 using Shared.Core.PackFiles.Models;
 using Shared.Core.Services;
 using Shared.Core.ToolCreation;
-using static Editors.Audio.AudioEditor.GameSettings.Warhammer3.Languages;
+using static Editors.Audio.GameSettings.Warhammer3.Languages;
 
 namespace Editors.Audio.AudioEditor.ViewModels
 {
@@ -91,7 +91,7 @@ namespace Editors.Audio.AudioEditor.ViewModels
             _audioEditorViewModel.InitialiseCollections();
 
             // Initialise AudioProject according to the Audio Project settings selected.
-            _audioProjectService.InitialiseAudioProject(_audioEditorViewModel, AudioProjectFileName, AudioProjectDirectory, GetGameString(SelectedLanguage));
+            _audioProjectService.InitialiseAudioProject(_audioEditorViewModel, AudioProjectFileName, AudioProjectDirectory, GameLanguageToStringMap[SelectedLanguage]);
 
             // Add the Audio Project to the PackFile.
             _audioProjectService.SaveAudioProject(_packFileService);

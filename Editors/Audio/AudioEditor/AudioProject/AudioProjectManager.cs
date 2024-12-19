@@ -8,7 +8,7 @@ using Editors.Audio.Storage;
 using static Editors.Audio.AudioEditor.AudioEditorHelpers;
 using static Editors.Audio.AudioEditor.AudioProject.AudioProjectManagerHelpers;
 using static Editors.Audio.AudioEditor.ButtonEnablement;
-using static Editors.Audio.AudioEditor.GameSettings.Warhammer3.SoundBanks;
+using static Editors.Audio.GameSettings.Warhammer3.SoundBanks;
 using static Editors.Audio.AudioEditor.TreeViewItemLoader;
 
 namespace Editors.Audio.AudioEditor.AudioProject

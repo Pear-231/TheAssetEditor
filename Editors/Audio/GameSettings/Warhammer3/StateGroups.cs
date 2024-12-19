@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Editors.Audio.AudioEditor.GameSettings.Warhammer3
+namespace Editors.Audio.GameSettings.Warhammer3
 {
     public static class StateGroups
     {

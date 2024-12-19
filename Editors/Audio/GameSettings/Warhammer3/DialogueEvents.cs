@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
-using static Editors.Audio.AudioEditor.GameSettings.Warhammer3.DialogueEvents.DialogueEventPreset;
-using static Editors.Audio.AudioEditor.GameSettings.Warhammer3.SoundBanks.GameSoundBank;
+using static Editors.Audio.GameSettings.Warhammer3.DialogueEvents.DialogueEventPreset;
+using static Editors.Audio.GameSettings.Warhammer3.SoundBanks.GameSoundBank;
 
-namespace Editors.Audio.AudioEditor.GameSettings.Warhammer3
+namespace Editors.Audio.GameSettings.Warhammer3
 {
     public class DialogueEvents
     {

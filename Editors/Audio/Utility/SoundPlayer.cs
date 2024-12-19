@@ -5,7 +5,7 @@ using Serilog;
 using Shared.Core.ErrorHandling;
 using Shared.Core.PackFiles;
 using Shared.Core.PackFiles.Models;
-using static Editors.Audio.AudioEditor.GameSettings.Warhammer3.Languages;
+using static Editors.Audio.GameSettings.Warhammer3.Languages;
 
 namespace Editors.Audio.Utility
 {
@@ -64,9 +64,9 @@ namespace Editors.Audio.Utility
         {
             var audioFile = pfs.FindFile($"audio\\wwise\\{soundId}.wem");
 
-            foreach (var languageEnum in Enum.GetValues(typeof(GameLanguage)).Cast<GameLanguage>())
+            foreach (var languageEnum in Enum.GetValues<GameLanguage>().Cast<GameLanguage>())
             {
-                var language = GetGameString(languageEnum);
+                var language = GameLanguageToStringMap[languageEnum];
 
                 if (audioFile == null)
                     audioFile = pfs.FindFile($"audio\\wwise\\{language}\\{soundId}.wem");

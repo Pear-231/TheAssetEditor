@@ -5,7 +5,7 @@ using Editors.Audio.AudioEditor.ViewModels;
 using Editors.Audio.Storage;
 using static Editors.Audio.AudioEditor.AudioEditorHelpers;
 using static Editors.Audio.AudioEditor.DataGrids.CellTemplates;
-using static Editors.Audio.AudioEditor.GameSettings.Warhammer3.StateGroups;
+using static Editors.Audio.GameSettings.Warhammer3.StateGroups;
 
 namespace Editors.Audio.AudioEditor.DataGrids
 {
