@@ -11,7 +11,7 @@ using Editors.Audio.Storage;
 using Shared.Core.PackFiles;
 using Shared.Core.Services;
 using Shared.Core.ToolCreation;
-using Shared.Ui.BaseDialogs.PackFileBrowser;
+using Shared.Ui.BaseDialogs.PackFileTree;
 using static Editors.Audio.AudioEditor.AudioEditorHelpers;
 using static Editors.Audio.AudioEditor.AudioProject.AudioProjectManager;
 using static Editors.Audio.AudioEditor.ButtonEnablement;

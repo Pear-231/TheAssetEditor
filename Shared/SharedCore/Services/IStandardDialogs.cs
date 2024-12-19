@@ -16,7 +16,6 @@ namespace Shared.Core.Services
         TextInputDialogResult ShowTextInputDialog(string title, string initialText = "");
         void ShowDialogBox(string message, string title);
         ShowMessageBoxResult ShowYesNoBox(string message, string title);
-        object DisplayBrowseFoldersDialog();
     }
 
     public record SaveDialogResult(bool Result, PackFile? SelectedPackFile, string? SelectedFilePath);

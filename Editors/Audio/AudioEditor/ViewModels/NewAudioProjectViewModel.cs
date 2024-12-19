@@ -74,10 +74,10 @@ namespace Editors.Audio.AudioEditor.ViewModels
 
         [RelayCommand] public void SetNewFileLocation()
         {
-            var result = _packFileUiProvider.DisplayBrowseFoldersDialog();
+            var result = _packFileUiProvider.DisplayBrowseFolderDialog();
             if (result.Result)
             {
-                var filePath = result.FolderName;
+                var filePath = result.Folder;
                 AudioProjectDirectory = filePath;
                 _logger.Here().Information($"Audio Project directory set to: {filePath}");
             }
