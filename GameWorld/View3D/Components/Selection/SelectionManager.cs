@@ -115,7 +115,7 @@ namespace GameWorld.Core.Components.Selection
                 foreach (var item in objectSelectionState.CurrentSelection())
                 {
                     if (item is Rmv2MeshNode mesh)
-                        _renderEngine.AddRenderLines(LineHelper.AddBoundingBox(item.Geometry.BoundingBox, Color.Black));
+                        _renderEngine.AddRenderLines(LineHelper.AddBoundingBox(item.Geometry.BoundingBox, Color.Black, mesh.PivotPoint));
                 }
             }
 
@@ -161,6 +161,11 @@ namespace GameWorld.Core.Components.Selection
 
         public void Dispose()
         {
+            _eventHub?.UnRegister(this);
+
+            if(_currentState != null)
+                _currentState.SelectionChanged -= SelectionManager_SelectionChanged;
+
             if (_wireframeEffect != null)
             {
                 _wireframeEffect.Dispose();

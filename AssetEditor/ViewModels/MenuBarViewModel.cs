@@ -32,6 +32,7 @@ namespace AssetEditor.ViewModels
         private readonly TouchedFilesRecorder _touchedFilesRecorder;
         private readonly IFileSaveService _packFileSaveService;
         private readonly IPackFileContainerLoader _packFileContainerLoader;
+        private readonly IStandardDialogs _standardDialogs;
 
         public ObservableCollection<RecentPackFileItem> RecentPackFiles { get; set; } = [];
         public ObservableCollection<EditorShortcutViewModel> Editors { get; set; } = [];
@@ -42,7 +43,8 @@ namespace AssetEditor.ViewModels
             IUiCommandFactory uiCommandFactory,
             TouchedFilesRecorder touchedFilesRecorder, 
             IFileSaveService packFileSaveService,
-            IPackFileContainerLoader packFileContainerLoader)
+            IPackFileContainerLoader packFileContainerLoader,
+            IStandardDialogs standardDialogs)
         {
             _packfileService = packfileService;
             _settingsService = settingsService;
@@ -51,6 +53,7 @@ namespace AssetEditor.ViewModels
             _touchedFilesRecorder = touchedFilesRecorder;
             _packFileSaveService = packFileSaveService;
             _packFileContainerLoader = packFileContainerLoader;
+            _standardDialogs = standardDialogs;
             var settings = settingsService.CurrentSettings;
             settings.RecentPackFilePaths.CollectionChanged += (sender, args) => CreateRecentPackFilesItems();
             CreateRecentPackFilesItems();
@@ -64,7 +67,13 @@ namespace AssetEditor.ViewModels
             var window = new TextInputWindow("New Pack Name", "");
             if (window.ShowDialog() == true)
             {
-                var newPackFile = _packfileService.CreateNewPackFileContainer(window.TextValue, PackFileCAType.MOD);
+                if (string.IsNullOrWhiteSpace(window.TextValue))
+                {
+                    _standardDialogs.ShowDialogBox($"'{window.TextValue}' is not a valid packfile name", "Error");
+                    return;
+                }
+
+                var newPackFile = _packfileService.CreateNewPackFileContainer(window.TextValue.Trim(), PackFileCAType.MOD);
                 _packfileService.SetEditablePack(newPackFile);
             }
         }
@@ -86,9 +95,8 @@ namespace AssetEditor.ViewModels
         [RelayCommand] private void TouchedFileRecorderStop() => _touchedFilesRecorder.Stop();
 
         [RelayCommand] private void ClearConsole() => Console.Clear();
-        
+        [RelayCommand] private void PrintScope() => _uiCommandFactory.Create<PrintScopesCommand>().Execute();
         [RelayCommand] private void Search() => _uiCommandFactory.Create<DeepSearchCommand>().Execute();
-
         [RelayCommand] private void OpenAttilaPacks() => _uiCommandFactory.Create<OpenGamePackCommand>().Execute(GameTypeEnum.Attila);
         [RelayCommand] private void OpenRomeRemasteredPacks() => _uiCommandFactory.Create<OpenGamePackCommand>().Execute(GameTypeEnum.RomeRemastered);
         [RelayCommand] private void OpenThreeKingdomsPacks() => _uiCommandFactory.Create<OpenGamePackCommand>().Execute(GameTypeEnum.ThreeKingdoms);

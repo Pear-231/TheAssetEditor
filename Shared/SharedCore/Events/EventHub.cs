@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Serilog;
+﻿using Serilog;
 using Shared.Core.DependencyInjection;
 using Shared.Core.ErrorHandling;
 
@@ -99,7 +98,6 @@ namespace Shared.Core.Events
                     {
                         var action = (Action<T>)subscriber.Callback;
                         action(instance);
-
                     }
                 }
 

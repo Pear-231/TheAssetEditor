@@ -1,4 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Collections;
+using System.Reflection;
+using System.Text;
+using Microsoft.Extensions.DependencyInjection;
+using Shared.Core.ErrorHandling;
 using Shared.Core.ToolCreation;
 
 namespace Shared.Core.DependencyInjection
@@ -12,12 +16,14 @@ namespace Shared.Core.DependencyInjection
 
         T GetRequiredServiceRootScope<T>();
         T GetRequiredService<T>(IEditorInterface editorHandle);
-   
-    }
 
+        void Print();
+    }
 
     public class ScopeRepository : IScopeRepository
     {
+        private readonly ILogger _logger = Logging.Create<ScopeRepository>();
+
         private readonly Dictionary<IEditorInterface, IServiceScope> _scopes = [];
         private readonly IServiceProvider _rootProvider;
 
@@ -51,11 +57,13 @@ namespace Shared.Core.DependencyInjection
             if (_scopes.ContainsKey(owner))
                 throw new ArgumentException("Owner already added!");
 
+            _logger.Here().Information($"Adding scope for {owner.DisplayName} of type {owner.GetType()}");
             _scopes.Add(owner, scope);
         }
 
         public void RemoveScope(IEditorInterface owner)
         {
+            _logger.Here().Information($"Removing scope for {owner.DisplayName} of type {owner.GetType()}");
             _scopes[owner].Dispose();
             _scopes.Remove(owner);
         }
@@ -75,6 +83,68 @@ namespace Shared.Core.DependencyInjection
         {
             var instance = _rootProvider.GetRequiredService<T>();
             return instance;
+        }
+
+        public void Print()
+        {
+            var builder = new StringBuilder();
+            builder.AppendLine($"ScopeTable info - Num Scopes:{_scopes.Count}");
+            GenerateDebugString(_rootProvider, "RootScope", builder);
+            foreach (var scope in _scopes)
+                GenerateDebugString(scope.Value.ServiceProvider, $"{scope.Key.GetType()}-'{scope.Key.DisplayName}'", builder);
+
+            _logger.Here().Information(builder.ToString()); 
+        }
+
+        void GenerateDebugString(IServiceProvider provider, string scopeName, StringBuilder stringBuilder)
+        {
+            try
+            {
+                stringBuilder.AppendLine($"ScopeTable for {scopeName}");
+
+                // Get resolved services
+                var serviceProviderType = provider.GetType();
+                var resolvedServicesProperty = serviceProviderType.GetProperty("ResolvedServices", BindingFlags.NonPublic | BindingFlags.Instance);
+                var resolved = resolvedServicesProperty.GetValue(provider);
+                var resolveList = CastToObjectDictionary(resolved);
+
+                stringBuilder.AppendLine($"\tResolvedServices[{resolveList.Count}]");
+                foreach (var service in resolveList)
+                    stringBuilder.AppendLine($"\t\t{ service.Value.GetType().FullName}");
+
+                var disposablesServicesProperty = serviceProviderType.GetProperty("Disposables", BindingFlags.NonPublic | BindingFlags.Instance);
+                var disposables = disposablesServicesProperty.GetValue(provider) as IList;
+                
+                stringBuilder.AppendLine($"\tDisposables[{disposables.Count}]");
+                foreach (var service in disposables)
+                    stringBuilder.AppendLine($"\t\t{service.GetType().FullName}");
+
+                stringBuilder.AppendLine();
+            }
+            catch (Exception ex)
+            {
+                stringBuilder.AppendLine($"Failed to generate ScopeTable for {scopeName} due to {ex.Message}");
+            }
+        }
+
+        static Dictionary<object, object> CastToObjectDictionary(object input)
+        {
+            // Check if the input is an IDictionary
+             if (input is not IDictionary dictionary)
+            {
+                throw new ArgumentException("Input object is not a dictionary.", nameof(input));
+            }
+
+            var objectDictionary = new Dictionary<object, object>();
+
+            // Use reflection to iterate over the dictionary entries
+            foreach (var key in dictionary.Keys)
+            {
+                var value = dictionary[key];
+                objectDictionary[key] = value;
+            }
+
+            return objectDictionary;
         }
 
     }
