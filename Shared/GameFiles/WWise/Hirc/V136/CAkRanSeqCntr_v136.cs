@@ -4,7 +4,6 @@ namespace Shared.GameFormats.WWise.Hirc.V136
     public class CAkRanSeqCntr_v136 : CAkRanSeqCnt, INodeBaseParamsAccessor
     {
         public NodeBaseParams NodeBaseParams { get; set; }
-
         public ushort sLoopCount { get; set; }
         public ushort sLoopModMin { get; set; }
         public ushort sLoopModMax { get; set; }
@@ -16,9 +15,8 @@ namespace Shared.GameFormats.WWise.Hirc.V136
         public byte eRandomMode { get; set; }
         public byte eMode { get; set; }
         public byte byBitVector { get; set; }
-
         public Children Children { get; set; }
-        public List<AkPlaylistItem> AkPlaylist { get; set; } = new List<AkPlaylistItem>();
+        public List<AkPlaylistItem> AkPlaylist { get; set; } = [];
 
         protected override void CreateSpecificData(ByteChunk chunk)
         {
@@ -53,7 +51,7 @@ namespace Shared.GameFormats.WWise.Hirc.V136
         {
             var nodeBaseParams = NodeBaseParams.GetSize();
             var children = Children.GetSize();
-            var akPlaylistCount = Convert.ToUInt32(AkPlaylist.Count());
+            var akPlaylistCount = Convert.ToUInt32(AkPlaylist.Count);
 
             Size = BnkChunkHeader.HeaderByteSize + nodeBaseParams + 2 + 2 + 2 + 4 + 4 + 4 + 2 + 1 + 1 + 1 + 1 + children + 2 + akPlaylistCount * 8 - 4;
         }

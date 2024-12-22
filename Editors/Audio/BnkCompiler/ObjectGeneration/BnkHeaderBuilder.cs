@@ -19,7 +19,7 @@ namespace Editors.Audio.BnkCompiler.ObjectGeneration
                 dwSoundBankId = soundBankId,
                 dwLanguageId = language,
                 bFeedbackInBank = 0x10,
-                dwProjectID = 2361,
+                dwProjectId = 2361,
                 padding = BitConverter.GetBytes(0x04)
             };
 

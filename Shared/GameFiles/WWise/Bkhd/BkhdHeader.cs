@@ -10,7 +10,7 @@
         public uint dwSoundBankId { get; set; }     // Name of the file
         public uint dwLanguageId { get; set; }      // Enum 11 - English
         public uint bFeedbackInBank { get; set; }
-        public uint dwProjectID { get; set; }
+        public uint dwProjectId { get; set; }
         public byte[] padding { get; set; }
     }
 

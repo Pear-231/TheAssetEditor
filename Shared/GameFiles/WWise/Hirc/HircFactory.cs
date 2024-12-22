@@ -2,7 +2,8 @@
 {
     public class HircFactory
     {
-        Dictionary<HircType, Func<HircItem>> _itemList = new Dictionary<HircType, Func<HircItem>>();
+        private readonly Dictionary<HircType, Func<HircItem>> _itemList = [];
+
         public void RegisterHirc(HircType type, Func<HircItem> creator)
         {
             _itemList[type] = creator;
@@ -25,9 +26,9 @@
         {
             switch (version)
             {
-                case 112: return CreateFactory_v112();  // Atilla
+                case 112: return CreateFactory_v112();
                 case 122: return CreateFactory_v122();
-                case 136: return CreateFactory_v136();  // Wh3
+                case 136: return CreateFactory_v136();
             }
 
             throw new Exception($"Unknown Version {version}");

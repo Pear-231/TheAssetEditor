@@ -49,7 +49,7 @@
         public GameTypeEnum Type { get; set; }
         public string DisplayName { get; set; }
         public string DefaultPackType { get; set; }
-        public string ShortID { get; set; }
+        public string ShortId { get; set; }
     }
 
     public class GameInformationFactory
@@ -66,14 +66,14 @@
 
         public GameInformationFactory()
         {
-            Warhammer = new GameInformation() { Type = GameTypeEnum.Warhammer, DisplayName = "Warhammer", DefaultPackType = "PFH4", ShortID = "Warhammer" };
-            Warhammer2 = new GameInformation() { Type = GameTypeEnum.Warhammer2, DisplayName = "Warhammer II", DefaultPackType = "PFH5", ShortID = "WarhammerII" };
-            Warhammer3 = new GameInformation() { Type = GameTypeEnum.Warhammer3, DisplayName = "Warhammer III", DefaultPackType = "PFH5", ShortID = "WarhammerIII" };
-            Troy = new GameInformation() { Type = GameTypeEnum.Troy, DisplayName = "Troy", DefaultPackType = "PFH5", ShortID = "troy" };
-            ThreeKingdoms = new GameInformation() { Type = GameTypeEnum.ThreeKingdoms, DisplayName = "Three Kingdoms", DefaultPackType = "PFH5", ShortID = "ThreeKingdoms" };
-            Rome_2 = new GameInformation() { Type = GameTypeEnum.Rome_2, DisplayName = "Rome II", DefaultPackType = "PFH5", ShortID = "Rome_2" };
-            Attila = new GameInformation() { Type = GameTypeEnum.Attila, DisplayName = "Attila", DefaultPackType = "PFH5", ShortID = "Attila" };
-            Pharaoh = new GameInformation() { Type = GameTypeEnum.Pharaoh, DisplayName = "Pharaoh", DefaultPackType = "PFH5", ShortID = "Pharaoh" };
+            Warhammer = new GameInformation() { Type = GameTypeEnum.Warhammer, DisplayName = "Warhammer", DefaultPackType = "PFH4", ShortId = "Warhammer" };
+            Warhammer2 = new GameInformation() { Type = GameTypeEnum.Warhammer2, DisplayName = "Warhammer II", DefaultPackType = "PFH5", ShortId = "WarhammerII" };
+            Warhammer3 = new GameInformation() { Type = GameTypeEnum.Warhammer3, DisplayName = "Warhammer III", DefaultPackType = "PFH5", ShortId = "WarhammerIII" };
+            Troy = new GameInformation() { Type = GameTypeEnum.Troy, DisplayName = "Troy", DefaultPackType = "PFH5", ShortId = "troy" };
+            ThreeKingdoms = new GameInformation() { Type = GameTypeEnum.ThreeKingdoms, DisplayName = "Three Kingdoms", DefaultPackType = "PFH5", ShortId = "ThreeKingdoms" };
+            Rome_2 = new GameInformation() { Type = GameTypeEnum.Rome_2, DisplayName = "Rome II", DefaultPackType = "PFH5", ShortId = "Rome_2" };
+            Attila = new GameInformation() { Type = GameTypeEnum.Attila, DisplayName = "Attila", DefaultPackType = "PFH5", ShortId = "Attila" };
+            Pharaoh = new GameInformation() { Type = GameTypeEnum.Pharaoh, DisplayName = "Pharaoh", DefaultPackType = "PFH5", ShortId = "Pharaoh" };
             Games = [Warhammer, Warhammer2, Warhammer3, Troy, ThreeKingdoms, Rome_2, Attila, Pharaoh];
         }
 

@@ -15,7 +15,7 @@ namespace Shared.GameFormats.WWise.Bkhd
                 dwSoundBankId = chunk.ReadUInt32(),
                 dwLanguageId = chunk.ReadUInt32(),
                 bFeedbackInBank = chunk.ReadUInt32(),
-                dwProjectID = chunk.ReadUInt32(),
+                dwProjectId = chunk.ReadUInt32(),
             };
 
             // Read the padding
@@ -43,7 +43,7 @@ namespace Shared.GameFormats.WWise.Bkhd
             memStream.Write(ByteParsers.UInt32.EncodeValue(header.dwSoundBankId, out _));
             memStream.Write(ByteParsers.UInt32.EncodeValue(header.dwLanguageId, out _));
             memStream.Write(ByteParsers.UInt32.EncodeValue(header.bFeedbackInBank, out _));
-            memStream.Write(ByteParsers.UInt32.EncodeValue(header.dwProjectID, out _));
+            memStream.Write(ByteParsers.UInt32.EncodeValue(header.dwProjectId, out _));
             memStream.Write(header.padding);
             var byteArray = memStream.ToArray();
 

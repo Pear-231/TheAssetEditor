@@ -73,7 +73,7 @@ namespace Shared.GameFormats.WWise
 
         DidxChunk LoadDidx(string fullName, ByteChunk chunk) => _didxParser.Parse(fullName, chunk, null);
         ByteChunk LoadData(string fullName, ByteChunk chunk) => _dataParser.Parse(fullName, chunk, null);
-        void LoadStid(string fullName, ByteChunk chunk) => _stidParser.Parse(fullName, chunk, null);
+        void LoadStid(string fullName, ByteChunk chunk) => StidParser.Parse(fullName, chunk, null);
     }
 }
 

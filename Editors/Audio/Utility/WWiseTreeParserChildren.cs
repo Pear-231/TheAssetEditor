@@ -99,7 +99,7 @@ namespace Editors.Audio.Utility
                    .ToList();
 
                 foreach (var normalSwitch in normalSwitches)
-                    if (normalSwitch.ulGroupID == stateGroupId)
+                    if (normalSwitch.UlGroupId == stateGroupId)
                         ProcessNext(normalSwitch.Id, actionTreeNode);
             }
             else ProcessNext(childId, actionTreeNode);
@@ -204,8 +204,8 @@ namespace Editors.Audio.Utility
             parent.Children.Add(node);
 
             if (hirc.pPlayList.Count != 0)
-                foreach (var playList in hirc.pPlayList.First().pPlayList)
-                    ProcessNext(playList.SegmentID, node);
+                foreach (var playList in hirc.pPlayList.First().PPlayList)
+                    ProcessNext(playList.SegmentId, node);
         }
     }
 }
