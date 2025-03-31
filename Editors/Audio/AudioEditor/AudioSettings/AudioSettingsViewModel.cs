@@ -374,12 +374,7 @@ namespace Editors.Audio.AudioEditor.AudioSettings
 
                 IsLoopingTypeEnabled = true;
                 if (LoopingType == LoopingType.FiniteLooping)
-                {
                     IsNumberOfLoopsEnabled = true;
-
-                    if (NumberOfLoops == null)
-                        NumberOfLoops = 1;
-                }
                 else
                     IsNumberOfLoopsEnabled = false;
             }
@@ -394,7 +389,6 @@ namespace Editors.Audio.AudioEditor.AudioSettings
                 RepetitionInterval = (uint)Math.Ceiling(AudioFiles.Count / 2.0);
                 EndBehaviour = EndBehaviour.Restart;
                 AlwaysResetPlaylist = true;
-
                 PlaylistMode = PlaylistMode.Step;
                 LoopingType = LoopingType.Disabled;
                 NumberOfLoops = 1;

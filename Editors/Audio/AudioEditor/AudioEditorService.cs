@@ -137,11 +137,7 @@ namespace Editors.Audio.AudioEditor
             AudioProjectDirectory = directory;
             AudioProject.Language = language;
 
-            InitialiseSoundBanks();
-
-            InitialiseModdedStatesGroups();
-
-            SortSoundBanksAlphabetically();
+            AudioProject = AudioProject.CreateAudioProject();
 
             AudioEditorViewModel.AudioProjectExplorerViewModel.CreateAudioProjectTree();
         }
@@ -186,71 +182,6 @@ namespace Editors.Audio.AudioEditor
             _datGenerator.GenerateDatFiles(audioProject, audioProjectFileName);
 
             SaveCompiledAudioProjectToPack(audioProject);
-        }
-
-        private void InitialiseSoundBanks()
-        {
-            var soundBanks = Enum.GetValues<SoundBanks.Wh3SoundBankSubtype>()
-                .Select(soundBankSubtype => new SoundBank
-                {
-                    Name = SoundBanks.GetSoundBankSubTypeString(soundBankSubtype),
-                    SoundBankType = SoundBanks.GetSoundBankSubType(soundBankSubtype)
-                })
-                .ToList();
-
-            AudioProject.SoundBanks = [];
-
-            foreach (var soundBankSubtype in Enum.GetValues<SoundBanks.Wh3SoundBankSubtype>())
-            {
-                var soundBank = new SoundBank
-                {
-                    Name = SoundBanks.GetSoundBankSubTypeString(soundBankSubtype),
-                    SoundBankType = SoundBanks.GetSoundBankSubType(soundBankSubtype)
-                };
-
-                if (soundBank.SoundBankType == SoundBanks.Wh3SoundBankType.ActionEventSoundBank)
-                    soundBank.ActionEvents = [];
-                else
-                {
-                    soundBank.DialogueEvents = [];
-
-                    var filteredDialogueEvents = DialogueEventData
-                        .Where(dialogueEvent => dialogueEvent.SoundBank == SoundBanks.GetSoundBankSubtype(soundBank.Name));
-
-                    foreach (var dialogueData in filteredDialogueEvents)
-                    {
-                        var dialogueEvent = new DialogueEvent
-                        {
-                            Name = dialogueData.Name,
-                            StatePaths = []
-                        };
-                        soundBank.DialogueEvents.Add(dialogueEvent);
-                    }
-                }
-
-                AudioProject.SoundBanks.Add(soundBank);
-            }
-        }
-
-        private void InitialiseModdedStatesGroups()
-        {
-            AudioProject.StateGroups = [];
-
-            foreach (var moddedStateGroup in ModdedStateGroups)
-            {
-                var stateGroup = new StateGroup { Name = moddedStateGroup, States = [] };
-                AudioProject.StateGroups.Add(stateGroup);
-            }
-        }
-
-        public void SortSoundBanksAlphabetically()
-        {
-            var sortedSoundBanks = AudioProject.SoundBanks.OrderBy(soundBank => soundBank.Name).ToList();
-
-            AudioProject.SoundBanks.Clear();
-
-            foreach (var soundBank in sortedSoundBanks)
-                AudioProject.SoundBanks.Add(soundBank);
         }
 
         public void BuildModdedStatesByStateGroupLookup(List<StateGroup> moddedStateGroups, Dictionary<string, List<string>> moddedStatesByStateGroupLookup)

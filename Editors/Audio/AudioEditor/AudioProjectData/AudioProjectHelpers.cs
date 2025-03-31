@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Controls;
 using Editors.Audio.AudioEditor.AudioSettings;
 using Editors.Audio.AudioEditor.DataGrids;
 using Editors.Audio.GameSettings.Warhammer3;
 using Editors.Audio.Storage;
+using Microsoft.Xna.Framework.Media;
 using static Editors.Audio.AudioEditor.AudioSettings.AudioSettings;
 
 namespace Editors.Audio.AudioEditor.AudioProjectData
@@ -60,7 +62,10 @@ namespace Editors.Audio.AudioEditor.AudioProjectData
 
             var audioFiles = audioSettingsViewModel.AudioFiles;
             if (audioFiles.Count == 1)
-                actionEvent.Sound = CreateSound(audioSettingsViewModel, audioFiles[0], isInContainer: false);
+            {
+                actionEvent.Sound = CreateSound(audioFiles[0]);
+                actionEvent.Sound.AudioSettings = BuildSoundSettings(audioSettingsViewModel);
+            }
             else
             {
                 actionEvent.RandomSequenceContainer = new RandomSequenceContainer
@@ -71,7 +76,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectData
 
                 foreach (var audioFile in audioFiles)
                 {
-                    var sound = CreateSound(audioSettingsViewModel, audioFile);
+                    var sound = CreateSound(audioFile);
                     actionEvent.RandomSequenceContainer.Sounds.Add(sound);
                 }
             }
@@ -124,7 +129,10 @@ namespace Editors.Audio.AudioEditor.AudioProjectData
 
                 var audioFiles = audioSettingsViewModel.AudioFiles;
                 if (audioFiles.Count == 1)
-                    statePath.Sound = CreateSound(audioSettingsViewModel, audioFiles[0], isInContainer: false);
+                {
+                    statePath.Sound = CreateSound(audioFiles[0]);
+                    statePath.Sound.AudioSettings = BuildSoundSettings(audioSettingsViewModel);
+                }
                 else
                 {
                     statePath.RandomSequenceContainer = new RandomSequenceContainer
@@ -135,7 +143,43 @@ namespace Editors.Audio.AudioEditor.AudioProjectData
 
                     foreach (var audioFile in audioFiles)
                     {
-                        var sound = CreateSound(audioSettingsViewModel, audioFile);
+                        var sound = CreateSound(audioFile);
+                        statePath.RandomSequenceContainer.Sounds.Add(sound);
+                    }
+                }
+            }
+
+            return statePath;
+        }
+
+        public static StatePath CreateStatePathFromDialogueEvent(IAudioRepository audioRepository, List<StatePathNode> statePathNodes, List<AudioFile> audioFiles)
+        {
+            var statePath = new StatePath();
+
+            foreach (var statePathNode in statePathNodes)
+            {
+                statePath.Nodes.Add(new StatePathNode
+                {
+                    StateGroup = new StateGroup { Name = statePathNode.StateGroup.Name },
+                    State = new State { Name = statePathNode.State.Name }
+                });
+
+                if (audioFiles.Count == 1)
+                {
+                    statePath.Sound = CreateSound(audioFiles[0]);
+                    statePath.Sound.AudioSettings = new SoundSettings();
+                }    
+                else
+                {
+                    statePath.RandomSequenceContainer = new RandomSequenceContainer
+                    {
+                        Sounds = [],
+                        AudioSettings = BuildRecommendedRanSeqContainerSettings(audioFiles)
+                    };
+
+                    foreach (var audioFile in audioFiles)
+                    {
+                        var sound = CreateSound(audioFile);
                         statePath.RandomSequenceContainer.Sounds.Add(sound);
                     }
                 }
@@ -163,16 +207,13 @@ namespace Editors.Audio.AudioEditor.AudioProjectData
             }
         }
 
-        private static Sound CreateSound(AudioSettingsViewModel audioSettingsViewModel, AudioFile audioFile, bool isInContainer = true)
+        private static Sound CreateSound(AudioFile audioFile)
         {
             var sound = new Sound()
             {
                 WavFileName = audioFile.FileName,
                 WavFilePath = audioFile.FilePath,
             };
-
-            if (!isInContainer)
-                sound.AudioSettings = BuildSoundSettings(audioSettingsViewModel);
 
             return sound;
         }
@@ -329,6 +370,22 @@ namespace Editors.Audio.AudioEditor.AudioProjectData
                 }
             }
 
+            return audioSettings;
+        }
+
+        public static RanSeqContainerSettings BuildRecommendedRanSeqContainerSettings(List<AudioFile> audioFiles)
+        {
+            var audioSettings = new RanSeqContainerSettings();
+            audioSettings.PlaylistType = PlaylistType.RandomExhaustive;
+            audioSettings.EnableRepetitionInterval = true;
+            audioSettings.RepetitionInterval = (uint)Math.Ceiling(audioFiles.Count / 2.0);
+            audioSettings.EndBehaviour = EndBehaviour.Restart;
+            audioSettings.AlwaysResetPlaylist = true;
+            audioSettings.PlaylistMode = PlaylistMode.Step;
+            audioSettings.LoopingType = LoopingType.Disabled;
+            audioSettings.NumberOfLoops = 1;
+            audioSettings.TransitionType = TransitionType.Disabled;
+            audioSettings.TransitionDuration = 1;
             return audioSettings;
         }
 

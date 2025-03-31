@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Windows;
 using CommonControls.BaseDialogs;
+using Editors.Audio.AudioEditor;
 using Editors.Audio.Storage;
 using Editors.Audio.Utility;
 using Shared.Core.Misc;
@@ -38,10 +39,12 @@ namespace Editors.Audio.AudioExplorer
         public string DisplayName { get; set; } = "Audio Explorer";
         public NotifyAttr<string> SelectedNodeText { get; set; } = new NotifyAttr<string>("");
 
-        public AudioExplorerViewModel(IAudioRepository audioRepository, SoundPlayer soundPlayer)
+        public AudioExplorerViewModel(IAudioRepository audioRepository, SoundPlayer soundPlayer, IAudioEditorService audioEditorService)
         {
             _audioRepository = audioRepository;
             _soundPlayer = soundPlayer;
+
+            var test = new SoundBankToAudioProjectConverter(_audioRepository, audioEditorService);
 
             ShowIds = new NotifyAttr<bool>(false, RefreshList);
             ShowBnkName = new NotifyAttr<bool>(false, RefreshList);
