@@ -340,3 +340,4 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 
+/GameWorld/ContentProject/Content/bin/Windows/Content/Fonts/DefaultFont.xnb
