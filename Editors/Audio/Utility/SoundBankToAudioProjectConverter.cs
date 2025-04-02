@@ -20,6 +20,8 @@ namespace Editors.Audio.Utility
             _audioRepository = audioRepository;
             _audioEditorService = audioEditorService;
 
+            return;
+
             // In the audio editor have a button for the user to select some soundbanks and make an audio project out of them.
 
             var wavNameLookupByWemID = new Dictionary<uint, string>();
@@ -34,7 +36,7 @@ namespace Editors.Audio.Utility
                     continue;
 
                 Console.WriteLine($"Dialogue Event - {dialogueEventName}");
-                ProcessDialogueEventV136(dialogueEvent);
+                ProcessDialogueEventV136(dialogueEvent, wavNameLookupByWemID);
             }
         }
 
@@ -50,9 +52,10 @@ namespace Editors.Audio.Utility
             }
         }
 
-        private void ProcessDialogueEventV136(ICAkDialogueEvent dialogueEvent)
+        private void ProcessDialogueEventV136(ICAkDialogueEvent dialogueEvent, Dictionary<uint, string> wavNameLookupByWemID)
         {
             var audioProject = AudioProject.CreateAudioProject();
+            var audioFiles = new List<AudioFile>();
 
             var dialogueEventHirc = dialogueEvent as HircItem;
             var dialogueEventName = _audioRepository.GetNameFromID(dialogueEventHirc.ID);
@@ -60,12 +63,6 @@ namespace Editors.Audio.Utility
             var audioProjectDialogueEvent = audioProject.SoundBanks
                 .SelectMany(soundBank => soundBank.DialogueEvents)
                 .FirstOrDefault(dialogueEvent => dialogueEvent.Name == dialogueEventName);
-
-            var audioFiles = new List<AudioFile>();
-            audioFiles.Add(new AudioFile {  FileName ="test", FilePath = "test" });
-            audioFiles.Add(new AudioFile { FileName = "test1", FilePath = "test1" });
-            audioFiles.Add(new AudioFile { FileName = "test2", FilePath = "test2" });
-            audioFiles.Add(new AudioFile { FileName = "test3", FilePath = "test3" });
 
             var decisionPathHelper = new DecisionPathHelper(_audioRepository);
             var decisionPathCollection = decisionPathHelper.GetDecisionPaths(dialogueEvent);
@@ -90,13 +87,8 @@ namespace Editors.Audio.Utility
 
                     stateGroupIndex++;
                 }
-
-                var audioProjectStatePath = AudioProjectHelpers.CreateStatePathFromDialogueEvent(_audioRepository, statePathNodes, audioFiles);
-                AudioProjectHelpers.InsertStatePathAlphabetically(audioProjectDialogueEvent, audioProjectStatePath);
-                Console.WriteLine($"Processed State Path: {dialogueEventName}");
-
-                /*
-                if (!_audioRepository.HircLookupByID.TryGetValue(path.ChildNodeID, out var dialogueEventChildHirc) || path.ChildNodeID == 0)
+                
+                if (!_audioRepository.HircLookupByID.TryGetValue(statePath.ChildNodeID, out var dialogueEventChildHirc) || statePath.ChildNodeID == 0)
                     continue;
 
                 if (dialogueEventChildHirc.FirstOrDefault() is ICAkRanSeqCntr ranSeqCntrV136)
@@ -106,12 +98,40 @@ namespace Editors.Audio.Utility
                         var ranSeqCntrChildHirc = _audioRepository.HircLookupByID[child].FirstOrDefault();
                         if (ranSeqCntrChildHirc is ICAkSound soundHirc)
                         {
-                            var wemName = _audioRepository.GetNameFromID(soundHirc.GetSourceID());
-                            Console.WriteLine($"Source: {wemName}.wem");
+                            var originalWavName = wavNameLookupByWemID[soundHirc.GetSourceID()];
+                            
+                            var newWavName = "";
+
+                            // Skarr_Battle_vo_order_move-01
+                            // campaign_vo_move_garrisoning
+                            // campaign_vo_move
+                            // campaign_vo_move_next_turn
+                            // campaign_vo_stance_default
+                            // campaign_vo_stance_double_time
+                            // campaign_vo_stance_march
+                            // battle_vo_order_move
+                            // battle_vo_order_move_alternative
+
+                            // VO_Khorne_Skarr_Bat_Move
+
+
+
+
+                            var audioFile = new AudioFile()
+                            {
+                                FileName = originalWavName,
+                                FilePath = $"D:\\{originalWavName}"
+                            };
+
+                            audioFiles.Add(audioFile);
                         }
                     }
                 }
-                */
+
+
+                var audioProjectStatePath = AudioProjectHelpers.CreateStatePathFromDialogueEvent(_audioRepository, statePathNodes, audioFiles);
+                AudioProjectHelpers.InsertStatePathAlphabetically(audioProjectDialogueEvent, audioProjectStatePath);
+                Console.WriteLine($"Processed State Path: {dialogueEventName}");
             }
         }
     }
