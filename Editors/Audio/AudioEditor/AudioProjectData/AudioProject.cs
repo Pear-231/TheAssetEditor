@@ -1,7 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Shared.GameFormats.Wwise.Enums;
 using static Editors.Audio.AudioEditor.AudioSettings.AudioSettings;
+using static Editors.Audio.GameSettings.Warhammer3.DialogueEvents;
 using static Editors.Audio.GameSettings.Warhammer3.SoundBanks;
+using static Editors.Audio.GameSettings.Warhammer3.StateGroups;
 
 namespace Editors.Audio.AudioEditor.AudioProjectData
 {
@@ -10,6 +14,139 @@ namespace Editors.Audio.AudioEditor.AudioProjectData
         public string Language { get; set; }
         public List<SoundBank> SoundBanks { get; set; }
         public List<StateGroup> StateGroups { get; set; }
+
+        public static AudioProject CreateAudioProject()
+        {
+            // TODO: Add abstraction for other games
+            var audioProject = new AudioProject();
+            InitialiseSoundBanks(audioProject);
+            InitialiseModdedStatesGroups(audioProject);
+            return audioProject;
+        }
+
+        private static void InitialiseSoundBanks(AudioProject audioProject)
+        {
+            var soundBanks = Enum.GetValues<Wh3SoundBankSubtype>()
+                .Select(soundBankSubtype => new SoundBank
+                {
+                    Name = GetSoundBankSubTypeString(soundBankSubtype),
+                    SoundBankType = GetSoundBankSubType(soundBankSubtype)
+                })
+                .ToList();
+
+            audioProject.SoundBanks = [];
+
+            foreach (var soundBankSubtype in Enum.GetValues<Wh3SoundBankSubtype>())
+            {
+                var soundBank = new SoundBank
+                {
+                    Name = GetSoundBankSubTypeString(soundBankSubtype),
+                    SoundBankType = GetSoundBankSubType(soundBankSubtype)
+                };
+
+                if (soundBank.SoundBankType == Wh3SoundBankType.ActionEventSoundBank)
+                    soundBank.ActionEvents = [];
+                else
+                {
+                    soundBank.DialogueEvents = [];
+
+                    var filteredDialogueEvents = DialogueEventData
+                        .Where(dialogueEvent => dialogueEvent.SoundBank == GetSoundBankSubtype(soundBank.Name));
+
+                    foreach (var dialogueData in filteredDialogueEvents)
+                    {
+                        var dialogueEvent = new DialogueEvent
+                        {
+                            Name = dialogueData.Name,
+                            StatePaths = []
+                        };
+                        soundBank.DialogueEvents.Add(dialogueEvent);
+                    }
+                }
+
+                audioProject.SoundBanks.Add(soundBank);
+            }
+
+            SortSoundBanksAlphabetically(audioProject);
+        }
+
+        private static void InitialiseModdedStatesGroups(AudioProject audioProject)
+        {
+            audioProject.StateGroups = [];
+
+            foreach (var moddedStateGroup in ModdedStateGroups)
+            {
+                var stateGroup = new StateGroup { Name = moddedStateGroup, States = [] };
+                audioProject.StateGroups.Add(stateGroup);
+            }
+        }
+
+        private static void SortSoundBanksAlphabetically(AudioProject audioProject)
+        {
+            var sortedSoundBanks = audioProject.SoundBanks.OrderBy(soundBank => soundBank.Name).ToList();
+
+            audioProject.SoundBanks.Clear();
+
+            foreach (var soundBank in sortedSoundBanks)
+                audioProject.SoundBanks.Add(soundBank);
+        }
+
+        public static AudioProject GetAudioProject(AudioProject audioProject)
+        {
+            return new AudioProject
+            {
+                Language = audioProject.Language,
+                SoundBanks = FilterSoundBanks(audioProject.SoundBanks),
+                StateGroups = FilterStateGroups(audioProject.StateGroups)
+            };
+        }
+
+        private static List<SoundBank> FilterSoundBanks(IEnumerable<SoundBank> soundBanks)
+        {
+            if (soundBanks == null)
+                return null;
+
+            var processedBanks = soundBanks
+                .Where(soundBank => soundBank != null)
+                .Select(ProcessSoundBank)
+                .Where(soundBank => 
+                    (soundBank.DialogueEvents != null && soundBank.DialogueEvents.Count != 0) || 
+                    (soundBank.ActionEvents != null && soundBank.ActionEvents.Count != 0))
+                .ToList();
+
+            return processedBanks.Count != 0 ? processedBanks : null;
+        }
+
+        private static SoundBank ProcessSoundBank(SoundBank soundBank)
+        {
+            var dialogueEvents = (soundBank.DialogueEvents ?? [])
+                .Where(dialogueEvent => dialogueEvent.StatePaths != null && dialogueEvent.StatePaths.Count != 0)
+                .ToList();
+
+            var actionEvents = (soundBank.ActionEvents ?? [])
+                .Where(actionEvent => actionEvent.Sound != null || actionEvent.RandomSequenceContainer != null)
+                .ToList();
+
+            return new SoundBank
+            {
+                Name = soundBank.Name,
+                SoundBankType = soundBank.SoundBankType,
+                DialogueEvents = dialogueEvents.Count != 0 ? dialogueEvents : null,
+                ActionEvents = actionEvents.Count != 0 ? actionEvents : null
+            };
+        }
+
+        private static List<StateGroup> FilterStateGroups(List<StateGroup> stateGroups)
+        {
+            if (stateGroups == null)
+                return null;
+
+            var filteredStateGroups = stateGroups
+                .Where(stateGroup => stateGroup.States != null && stateGroup.States.Count != 0)
+                .ToList();
+
+            return filteredStateGroups.Count != 0 ? filteredStateGroups : null;
+        }
     }
 
     public abstract class AudioProjectItem

@@ -60,7 +60,10 @@ namespace Editors.Audio.AudioEditor.AudioProjectData
 
             var audioFiles = audioSettingsViewModel.AudioFiles;
             if (audioFiles.Count == 1)
-                actionEvent.Sound = CreateSound(audioSettingsViewModel, audioFiles[0], isInContainer: false);
+            {
+                actionEvent.Sound = CreateSound(audioFiles[0]);
+                actionEvent.Sound.AudioSettings = BuildSoundSettings(audioSettingsViewModel);
+            }
             else
             {
                 actionEvent.RandomSequenceContainer = new RandomSequenceContainer
@@ -71,7 +74,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectData
 
                 foreach (var audioFile in audioFiles)
                 {
-                    var sound = CreateSound(audioSettingsViewModel, audioFile);
+                    var sound = CreateSound(audioFile);
                     actionEvent.RandomSequenceContainer.Sounds.Add(sound);
                 }
             }
@@ -124,7 +127,10 @@ namespace Editors.Audio.AudioEditor.AudioProjectData
 
                 var audioFiles = audioSettingsViewModel.AudioFiles;
                 if (audioFiles.Count == 1)
-                    statePath.Sound = CreateSound(audioSettingsViewModel, audioFiles[0], isInContainer: false);
+                {
+                    statePath.Sound = CreateSound(audioFiles[0]);
+                    statePath.Sound.AudioSettings = BuildSoundSettings(audioSettingsViewModel);
+                }
                 else
                 {
                     statePath.RandomSequenceContainer = new RandomSequenceContainer
@@ -135,7 +141,14 @@ namespace Editors.Audio.AudioEditor.AudioProjectData
 
                     foreach (var audioFile in audioFiles)
                     {
-                        var sound = CreateSound(audioSettingsViewModel, audioFile);
+                        var sound = CreateSound(audioFile);
+                        statePath.RandomSequenceContainer.Sounds.Add(sound);
+                    }
+                }
+            }
+
+            return statePath;
+        }
                         statePath.RandomSequenceContainer.Sounds.Add(sound);
                     }
                 }
@@ -163,7 +176,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectData
             }
         }
 
-        private static Sound CreateSound(AudioSettingsViewModel audioSettingsViewModel, AudioFile audioFile, bool isInContainer = true)
+        private static Sound CreateSound(AudioFile audioFile)
         {
             var sound = new Sound()
             {
@@ -327,6 +340,9 @@ namespace Editors.Audio.AudioEditor.AudioProjectData
                     audioSettings.TransitionType = audioSettingsViewModel.TransitionType;
                     audioSettings.TransitionDuration = audioSettingsViewModel.TransitionDuration;
                 }
+            }
+
+            return audioSettings;
             }
 
             return audioSettings;
