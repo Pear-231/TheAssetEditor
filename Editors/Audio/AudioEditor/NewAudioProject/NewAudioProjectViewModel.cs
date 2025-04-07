@@ -41,7 +41,7 @@ namespace Editors.Audio.AudioEditor.NewAudioProject
             _audioEditorService = audioEditorService;
             _standardDialogs = standardDialogs;
 
-            AudioProjectDirectory = "AudioProjects";
+            AudioProjectDirectory = "audio_projects";
             SelectedLanguage = GameLanguage.EnglishUK;
         }
 

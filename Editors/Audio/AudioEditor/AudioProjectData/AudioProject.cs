@@ -147,6 +147,98 @@ namespace Editors.Audio.AudioEditor.AudioProjectData
 
             return filteredStateGroups.Count != 0 ? filteredStateGroups : null;
         }
+
+        public static AudioProject MergeAudioProjects(List<AudioProject> audioProjectsToMerge)
+        {
+            var mergedAudioProject = CreateAudioProject();
+
+            foreach (var audioProjectToMerge in audioProjectsToMerge)
+                mergedAudioProject = MergeAudioProject(mergedAudioProject, audioProjectToMerge);
+
+            mergedAudioProject = GetAudioProject(mergedAudioProject);
+            return mergedAudioProject;
+        }
+
+        private static AudioProject MergeAudioProject(AudioProject mergedAudioProject, AudioProject audioProjectToMerge)
+        {
+            if (string.IsNullOrEmpty(mergedAudioProject.Language))
+                mergedAudioProject.Language = audioProjectToMerge.Language;
+
+            MergeSoundBanks(mergedAudioProject, audioProjectToMerge);
+            MergeStateGroups(mergedAudioProject, audioProjectToMerge);
+
+            return mergedAudioProject;
+        }
+
+        private static void MergeSoundBanks(AudioProject mergedAudioProject, AudioProject audioProjectToMerge)
+        {
+            if (audioProjectToMerge.SoundBanks == null)
+                return;
+
+            foreach (var soundBankToMerge in audioProjectToMerge.SoundBanks)
+            {
+                var mergedSoundBank = mergedAudioProject.SoundBanks.FirstOrDefault(mergedSoundBank => mergedSoundBank.Name == soundBankToMerge.Name);
+                if (mergedSoundBank != null)
+                {
+                    MergeDialogueEvents(mergedSoundBank, soundBankToMerge);
+                    MergeActionEvents(mergedSoundBank, soundBankToMerge);
+                }
+                else
+                {
+                    mergedAudioProject.SoundBanks.Add(soundBankToMerge);
+                    mergedAudioProject.SoundBanks = mergedAudioProject.SoundBanks.OrderBy(sb => sb.Name).ToList();
+                }
+            }
+        }
+
+        private static void MergeDialogueEvents(SoundBank mergedSoundBank, SoundBank soundBankToMerge)
+        {
+            if (soundBankToMerge.DialogueEvents == null)
+                return;
+
+            foreach (var newDialogue in soundBankToMerge.DialogueEvents)
+            {
+                var mergedDialogueEvent = mergedSoundBank.DialogueEvents?.FirstOrDefault(mergedDialogueEvent => mergedDialogueEvent.Name == newDialogue.Name);
+                if (mergedDialogueEvent != null)
+                {
+                    foreach (var statePathToMerge in newDialogue.StatePaths)
+                        AudioProjectHelpers.InsertStatePathAlphabetically(mergedDialogueEvent, statePathToMerge);
+                }
+                else
+                {
+                    mergedSoundBank.DialogueEvents ??= [];
+                    mergedSoundBank.DialogueEvents.Add(newDialogue);
+                    mergedSoundBank.DialogueEvents = mergedSoundBank.DialogueEvents.OrderBy(mergedDialogueEvent => mergedDialogueEvent.Name).ToList();
+                }
+            }
+        }
+
+        private static void MergeActionEvents(SoundBank baseBank, SoundBank newBank)
+        {
+            if (newBank.ActionEvents == null)
+                return;
+
+            foreach (var newAction in newBank.ActionEvents)
+                AudioProjectHelpers.InsertActionEventAlphabetically(baseBank, newAction);
+        }
+
+        private static void MergeStateGroups(AudioProject mergedAudioProject, AudioProject audioProjectToMerge)
+        {
+            if (audioProjectToMerge.StateGroups == null)
+                return;
+
+            foreach (var stateGroupToMerge in audioProjectToMerge.StateGroups)
+            {
+                var baseGroup = mergedAudioProject.StateGroups.FirstOrDefault(mergedStateGroup => mergedStateGroup.Name == stateGroupToMerge.Name);
+                if (baseGroup != null)
+                {
+                    foreach (var newState in stateGroupToMerge.States)
+                        AudioProjectHelpers.InsertStateAlphabetically(baseGroup, newState);
+                }
+                else
+                    mergedAudioProject.StateGroups.Add(stateGroupToMerge);
+            }
+        }
     }
 
     public abstract class AudioProjectItem

@@ -115,6 +115,8 @@ namespace Editors.Audio.AudioEditor.AudioProjectEditor
 
             var dataGridService = _audioProjectEditorDataGridServiceFactory.GetService(selectedNode.NodeType);
             dataGridService.SetDataGridData();
+
+            SetAddRowButtonEnablement();
         }
 
         partial void OnShowModdedStatesOnlyChanged(bool value)

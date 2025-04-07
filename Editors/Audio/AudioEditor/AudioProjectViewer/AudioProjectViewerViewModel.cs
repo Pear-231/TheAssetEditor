@@ -221,6 +221,8 @@ namespace Editors.Audio.AudioEditor.AudioProjectViewer
         {
             var actionEventDataService = _audioProjectDataServiceFactory.GetService(nodeType);
             actionEventDataService.RemoveFromAudioProject();
+
+            // TODO: Need to add an event to fire off the SetAddRowButtonEnablement(); function in editor when things are removed as currently if you remove something and want to add it again you can't
         }
 
         [RelayCommand] public void CopyRows()

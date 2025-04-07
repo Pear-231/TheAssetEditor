@@ -84,6 +84,13 @@ namespace Editors.Audio.AudioEditor.AudioProjectData
 
         public static StatePath GetStatePathFromDataGridRow(IAudioRepository audioRepository, Dictionary<string, string> dataGridRow, DialogueEvent selectedDialogueEvent)
         {
+            // Remove any rows with empty values due to a new CA state group being added to still allow the user to edit the out of date state path
+            foreach (var key in dataGridRow.Keys.ToList())
+            {
+                if (dataGridRow[key] == string.Empty)
+                    dataGridRow.Remove(key);
+            }
+
             var dataGridRowStatePathNodes = GetStatePathNodes(audioRepository, dataGridRow, selectedDialogueEvent);
 
             foreach (var statePath in selectedDialogueEvent.StatePaths)
