@@ -91,6 +91,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectData
                 audioProject.SoundBanks.Add(soundBank);
         }
 
+        // Gets the audio project with only the used data, unused data is removed
         public static AudioProject GetAudioProject(AudioProject audioProject)
         {
             return new AudioProject

@@ -10,6 +10,7 @@ using Editors.Audio.AudioEditor.DataGrids;
 using Editors.Audio.AudioEditor.Events;
 using Editors.Audio.Utility;
 using Shared.Core.Events;
+using Shared.Core.Events.Global;
 using Shared.Core.Misc;
 using Shared.Core.PackFiles;
 using Shared.Core.PackFiles.Models;
@@ -19,6 +20,7 @@ namespace Editors.Audio.AudioEditor.AudioFilesExplorer
 {
     public partial class AudioFilesExplorerViewModel : ObservableObject, IEditorInterface
     {
+        private readonly IGlobalEventHub _globalEventHub;
         private readonly IEventHub _eventHub;
         private readonly IPackFileService _packFileService;
         private readonly IAudioEditorService _audioEditorService;
@@ -33,10 +35,11 @@ namespace Editors.Audio.AudioEditor.AudioFilesExplorer
         [ObservableProperty] private ObservableCollection<TreeNode> _audioFilesTree;
         private ObservableCollection<TreeNode> _unfilteredTree;
 
-        public ObservableCollection<TreeNode> SelectedTreeNodes { get; set; } = new ObservableCollection<TreeNode>();
+        public ObservableCollection<TreeNode> SelectedTreeNodes { get; set; } = [];
 
-        public AudioFilesExplorerViewModel(IEventHub eventHub, IPackFileService packFileService, IAudioEditorService audioEditorService, SoundPlayer soundPlayer)
+        public AudioFilesExplorerViewModel(IGlobalEventHub globalEventHub, IEventHub eventHub, IPackFileService packFileService, IAudioEditorService audioEditorService, SoundPlayer soundPlayer)
         {
+            _globalEventHub = globalEventHub;
             _eventHub = eventHub;
             _packFileService = packFileService;
             _audioEditorService = audioEditorService;
@@ -44,11 +47,7 @@ namespace Editors.Audio.AudioEditor.AudioFilesExplorer
 
             SelectedTreeNodes.CollectionChanged += OnSelectedTreeNodesChanged;
 
-            AudioFilesExplorerLabel = $"{DisplayName}";
-
             Initialise();
-
-            _eventHub.Register<NodeSelectedEvent>(this, OnSelectedNodeChanged);
         }
 
         private void Initialise()
@@ -61,12 +60,24 @@ namespace Editors.Audio.AudioEditor.AudioFilesExplorer
             AudioFilesExplorerLabel = $"{DisplayName} - {DataGridHelpers.AddExtraUnderscoresToString(editablePack.Name)}";
 
             CreateAudioFilesTree(editablePack);
+
+            _eventHub.Register<NodeSelectedEvent>(this, OnSelectedNodeChanged);
+            _globalEventHub.Register<PackFileContainerFilesAddedEvent>(this, x => AudioFilesRefresh(x.Container));
+            _globalEventHub.Register<PackFileContainerFilesRemovedEvent>(this, x => AudioFilesRefresh(x.Container));
+            _globalEventHub.Register<PackFileContainerFolderRemovedEvent>(this, x => AudioFilesRefresh(x.Container));
         }
 
-        public void OnSelectedNodeChanged(NodeSelectedEvent nodeSelectedEvent)
+        private void OnSelectedNodeChanged(NodeSelectedEvent nodeSelectedEvent)
         {
             ResetButtonEnablement();
             SetButtonEnablement();
+        }
+
+        private void AudioFilesRefresh(PackFileContainer packFileContainer)
+        {
+            AudioFilesTree.Clear();
+            var editablePack = _packFileService.GetEditablePack();
+            CreateAudioFilesTree(editablePack);
         }
 
         private void OnSelectedTreeNodesChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -100,7 +111,7 @@ namespace Editors.Audio.AudioEditor.AudioFilesExplorer
 
             var uniqueDirectoryPaths = wavFilePaths
                 .Select(parts => string.Join("\\", parts.Take(parts.Length - 1)))
-                .Where(path => !string.IsNullOrWhiteSpace(path)) // remove the empty (pack) directory
+                .Where(path => !string.IsNullOrWhiteSpace(path))
                 .ToHashSet();
 
             var nodeDictionary = new Dictionary<string, TreeNode>();
@@ -112,8 +123,23 @@ namespace Editors.Audio.AudioEditor.AudioFilesExplorer
             foreach (var filePathParts in wavFilePaths)
                 AddFileToTree(filePathParts, nodeDictionary, rootNodes);
 
+            SortNodes(rootNodes);
+
             AudioFilesTree = rootNodes;
             _unfilteredTree = new ObservableCollection<TreeNode>(AudioFilesTree);
+        }
+
+        private static void SortNodes(ObservableCollection<TreeNode> nodes)
+        {
+            var sortedNodes = nodes.OrderBy(node => node.Name).ToList();
+            nodes.Clear();
+
+            foreach (var node in sortedNodes)
+            {
+                nodes.Add(node);
+                if (node.Children != null && node.Children.Count > 0)
+                    SortNodes(node.Children);
+            }
         }
 
         private static void AddDirectoryToTree(ObservableCollection<TreeNode> rootNodes, string directoryPath, Dictionary<string, TreeNode> nodeDictionary)

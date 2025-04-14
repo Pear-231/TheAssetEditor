@@ -69,22 +69,21 @@ namespace Editors.Audio.AudioEditor
         public Dictionary<string, List<string>> DialogueEventsWithStateGroupsWithIntegrityError { get; set; } = [];
         public Dictionary<string, DialogueEventPreset?> DialogueEventSoundBankFiltering { get; set; } = []; // TODO: Check if unused? Also check for other unused functions.
 
-        public void SaveAudioProject()
+        public void SaveAudioProject(AudioProject audioProject, string audioProjectFileName, string audioProjectDirectoryPath)
         {
-            var audioProject = AudioProject.GetAudioProject(AudioProject);
-
             var options = new JsonSerializerOptions
             {
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
                 WriteIndented = true
             };
             var audioProjectJson = JsonSerializer.Serialize(audioProject, options);
-            var audioProjectFileName = $"{AudioProjectFileName}.aproj";
-            var audioProjectFilePath = $"{AudioProjectDirectory}\\{audioProjectFileName}";
+
+            audioProjectFileName = $"{audioProjectFileName}.aproj";
+            var audioProjectFilePath = $"{audioProjectDirectoryPath}\\{audioProjectFileName}";
             var packFile = PackFile.CreateFromASCII(audioProjectFileName, audioProjectJson);
             _fileSaveService.Save(audioProjectFilePath, packFile.DataSource.ReadData(), true);
 
-            _logger.Here().Information($"Saved Audio Project file: {AudioProjectDirectory}\\{AudioProjectFileName}.aproj");
+            _logger.Here().Information($"Saved Audio Project file: {audioProjectFilePath}");
         }
 
         public void LoadAudioProject(AudioEditorViewModel audioEditorViewModel)
@@ -143,7 +142,7 @@ namespace Editors.Audio.AudioEditor
         {
             var audioProject = AudioProject.GetAudioProject(AudioProject);
 
-            SaveAudioProject();
+            SaveAudioProject(audioProject, AudioProjectFileName, AudioProjectDirectory);
 
             if (audioProject.SoundBanks == null)
                 return;

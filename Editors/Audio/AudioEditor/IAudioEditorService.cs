@@ -25,7 +25,7 @@ namespace Editors.Audio.AudioEditor
         public Dictionary<string, List<string>> ModdedStatesByStateGroupLookup { get; set; }
         public Dictionary<string, List<string>> DialogueEventsWithStateGroupsWithIntegrityError { get; set; }
         public Dictionary<string, DialogueEventPreset?> DialogueEventSoundBankFiltering { get; set; }
-        public void SaveAudioProject();
+        public void SaveAudioProject(AudioProject audioProject, string audioProjectFileName, string audioProjectDirectoryPath);
         public void LoadAudioProject(AudioEditorViewModel audioEditorViewModel);
         public void InitialiseAudioProject(string fileName, string directory, string language);
         public void CompileAudioProject();

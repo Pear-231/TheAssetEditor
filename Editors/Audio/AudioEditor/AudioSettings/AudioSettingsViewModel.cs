@@ -13,8 +13,6 @@ using static Editors.Audio.AudioEditor.AudioSettings.AudioSettings;
 
 namespace Editors.Audio.AudioEditor.AudioSettings
 {
-    // TODO: Add visibility to all settings to hide or show them according to the type of thing.
-    // TODO: Add a way for single sounds to loop.
     public partial class AudioSettingsViewModel : ObservableObject, IEditorInterface
     {
         private readonly IEventHub _eventHub;
@@ -262,7 +260,7 @@ namespace Editors.Audio.AudioEditor.AudioSettings
         public void SetAudioSettingsEnablementAndVisibility()
         {
             var selectedNode = _audioEditorService.GetSelectedExplorerNode();
-            if (selectedNode.NodeType != NodeType.ActionEventSoundBank && selectedNode.NodeType != NodeType.DialogueEvent)
+            if (selectedNode == null || selectedNode.NodeType != NodeType.ActionEventSoundBank && selectedNode.NodeType != NodeType.DialogueEvent)
                 return;
 
             IsAudioSettingsVisible = true;

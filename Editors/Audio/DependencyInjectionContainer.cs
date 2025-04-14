@@ -35,8 +35,9 @@ namespace Editors.Audio
             serviceCollection.AddScoped<AudioProjectEditorViewModel>();
             serviceCollection.AddScoped<AudioProjectViewerViewModel>();
             serviceCollection.AddScoped<AudioSettingsViewModel>();
-            serviceCollection.AddScoped<NewAudioProjectViewModel>();
-            serviceCollection.AddScoped<NewAudioProjectWindow>();
+
+            serviceCollection.AddTransient<NewAudioProjectViewModel>();
+            serviceCollection.AddTransient<NewAudioProjectWindow>();
 
             serviceCollection.AddScoped<IAudioEditorService, AudioEditorService>();
             serviceCollection.AddScoped<IntegrityChecker>();

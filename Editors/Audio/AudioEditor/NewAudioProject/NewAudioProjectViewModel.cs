@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Editors.Audio.AudioEditor.AudioProjectData;
 using Serilog;
 using Shared.Core.ErrorHandling;
 using Shared.Core.PackFiles;
@@ -19,7 +20,7 @@ namespace Editors.Audio.AudioEditor.NewAudioProject
         private readonly IAudioEditorService _audioEditorService;
         private readonly IStandardDialogs _standardDialogs;
 
-        private Action _closeAction;
+        private System.Action _closeAction;
 
         public string DisplayName { get; set; } = "New Audio Project";
 
@@ -96,28 +97,18 @@ namespace Editors.Audio.AudioEditor.NewAudioProject
             _audioEditorService.InitialiseAudioProject(AudioProjectFileName, AudioProjectDirectory, GameLanguageStringLookup[SelectedLanguage]);
 
             // Add the Audio Project to the PackFile
-            _audioEditorService.SaveAudioProject();
+            var audioProject = AudioProject.GetAudioProject(_audioEditorService.AudioProject);
+            _audioEditorService.SaveAudioProject(audioProject, _audioEditorService.AudioProjectFileName, _audioEditorService.AudioProjectDirectory);
 
             CloseWindowAction();
-        }
-
-        public void ResetNewAudioProjectViewModelData()
-        {
-            AudioProjectFileName = null;
-            AudioProjectDirectory = null;
-            IsAudioProjectFileNameSet = false;
-            IsAudioProjectDirectorySet = false;
-            IsLanguageSelected = false;
-            IsOkButtonEnabled = false;
         }
 
         [RelayCommand] public void CloseWindowAction()
         {
             _closeAction?.Invoke();
-            ResetNewAudioProjectViewModelData();
         }
 
-        public void SetCloseAction(Action closeAction)
+        public void SetCloseAction(System.Action closeAction)
         {
             _closeAction = closeAction;
         }
