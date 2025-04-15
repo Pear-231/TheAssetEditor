@@ -12,7 +12,9 @@ using Editors.Audio.AudioEditor.AudioSettings;
 using Editors.Audio.AudioEditor.NewAudioProject;
 using Editors.Audio.AudioExplorer;
 using Editors.Audio.AudioProjectCompiler;
+using Editors.Audio.AudioProjectConverter;
 using Editors.Audio.Storage;
+using Editors.Audio.UICommands;
 using Editors.Audio.Utility;
 using Microsoft.Extensions.DependencyInjection;
 using Shared.Core.DependencyInjection;
@@ -39,6 +41,9 @@ namespace Editors.Audio
             serviceCollection.AddTransient<NewAudioProjectViewModel>();
             serviceCollection.AddTransient<NewAudioProjectWindow>();
 
+            serviceCollection.AddTransient<AudioProjectConverterViewModel>();
+            serviceCollection.AddTransient<AudioProjectConverterWindow>();
+
             serviceCollection.AddScoped<IAudioEditorService, AudioEditorService>();
             serviceCollection.AddScoped<IntegrityChecker>();
             serviceCollection.AddScoped<AudioProjectEditorDataGridServiceFactory>();
@@ -58,6 +63,8 @@ namespace Editors.Audio
             serviceCollection.AddScoped<DatLoader>();
             serviceCollection.AddScoped<BnkParser>();
             serviceCollection.AddScoped<SoundPlayer>();
+
+            serviceCollection.AddScoped<OpenAudioProjectConverterCommand>();
 
             RegisterAllAsInterface<IDeveloperConfiguration>(serviceCollection, ServiceLifetime.Transient);
         }

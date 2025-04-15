@@ -55,7 +55,7 @@ namespace Editors.Audio.Utility
                 var doesFileExist = File.Exists(outputSoundFilePath);
                 _logger.Here().Information($"File readback result for converted file {outputSoundFilePath} is : {doesFileExist}");
                 if (doesFileExist == false)
-                    return Result<string>.FromError("VgSteam", $"Failed to convert file - File {outputSoundFilePath} no found on disk");
+                    return Result<string>.FromError("VgSteam", $"Failed to convert file - File {outputSoundFilePath} not found on disk");
                 return Result<string>.FromOk(outputSoundFilePath);
             }
 

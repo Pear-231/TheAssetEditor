@@ -1,11 +1,14 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Editors.Audio.AudioEditor.AudioFilesExplorer;
+using Editors.Audio.AudioEditor.AudioProjectData;
 using Editors.Audio.AudioEditor.AudioProjectEditor;
 using Editors.Audio.AudioEditor.AudioProjectExplorer;
 using Editors.Audio.AudioEditor.AudioProjectViewer;
 using Editors.Audio.AudioEditor.AudioSettings;
 using Editors.Audio.AudioEditor.NewAudioProject;
+using Editors.Audio.UICommands;
+using Shared.Core.Events;
 using Shared.Core.PackFiles;
 using Shared.Core.Services;
 using Shared.Core.ToolCreation;
@@ -13,6 +16,7 @@ using static Editors.Audio.GameSettings.Warhammer3.DialogueEvents;
 
 namespace Editors.Audio.AudioEditor
 {
+    // TODO: Resolve TOOLTIP PLACEHOLDER instances
     public partial class AudioEditorViewModel : ObservableObject, IEditorInterface
     {
         public AudioProjectExplorerViewModel AudioProjectExplorerViewModel { get; }
@@ -21,6 +25,7 @@ namespace Editors.Audio.AudioEditor
         public AudioProjectViewerViewModel AudioProjectViewerViewModel { get; }
         public AudioSettingsViewModel AudioSettingsViewModel { get; }
 
+        private readonly IUiCommandFactory _uiCommandFactory;
         private readonly IPackFileService _packFileService;
         private readonly IStandardDialogs _standardDialogs;
         private readonly IAudioEditorService _audioEditorService;
@@ -29,6 +34,7 @@ namespace Editors.Audio.AudioEditor
         public string DisplayName { get; set; } = "Audio Editor";
 
         public AudioEditorViewModel(
+            IUiCommandFactory uiCommandFactory,
             AudioProjectExplorerViewModel audioProjectExplorerViewModel,
             AudioFilesExplorerViewModel audioFilesExplorerViewModel,
             AudioProjectEditorViewModel audioProjectEditorViewModel,
@@ -39,6 +45,7 @@ namespace Editors.Audio.AudioEditor
             IAudioEditorService audioEditorService,
             IntegrityChecker integrityChecker)
         {
+            _uiCommandFactory = uiCommandFactory;
             _packFileService = packFileService;
             _standardDialogs = standardDialogs;
             _audioEditorService = audioEditorService;
@@ -64,7 +71,8 @@ namespace Editors.Audio.AudioEditor
 
         [RelayCommand] public void SaveAudioProject()
         {
-            _audioEditorService.SaveAudioProject();
+            var audioProject = AudioProject.GetAudioProject(_audioEditorService.AudioProject);
+            _audioEditorService.SaveAudioProject(audioProject, _audioEditorService.AudioProjectFileName, _audioEditorService.AudioProjectDirectory);
         }
 
         [RelayCommand] public void LoadAudioProject()
@@ -75,6 +83,11 @@ namespace Editors.Audio.AudioEditor
         [RelayCommand] public void CompileAudioProject()
         {
             _audioEditorService.CompileAudioProject();
+        }
+
+        [RelayCommand] public void OpenAudioProjectConverter()
+        {
+            _uiCommandFactory.Create<OpenAudioProjectConverterCommand>().Execute();
         }
 
         public void InitialiseAudioEditorData()

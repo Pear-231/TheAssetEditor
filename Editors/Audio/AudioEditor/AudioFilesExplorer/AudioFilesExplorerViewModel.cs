@@ -76,8 +76,7 @@ namespace Editors.Audio.AudioEditor.AudioFilesExplorer
         private void AudioFilesRefresh(PackFileContainer packFileContainer)
         {
             AudioFilesTree.Clear();
-            var editablePack = _packFileService.GetEditablePack();
-            CreateAudioFilesTree(editablePack);
+            CreateAudioFilesTree(packFileContainer);
         }
 
         private void OnSelectedTreeNodesChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -267,7 +266,7 @@ namespace Editors.Audio.AudioEditor.AudioFilesExplorer
                 ToggleNodeExpansion(child, shouldExpand);
         }
 
-        [RelayCommand] public void AddAudioFilesToAudioProjectEditor()
+        [RelayCommand] public void SetAudioFiles()
         {
             _audioEditorService.AudioSettingsViewModel.AudioFiles.Clear();
 
