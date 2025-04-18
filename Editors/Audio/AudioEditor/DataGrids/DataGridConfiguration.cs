@@ -355,7 +355,6 @@ namespace Editors.Audio.AudioEditor.DataGrids
             return template;
         }
 
-
         public static DataTemplate CreateReadOnlyTextBlockTemplate(string columnHeader)
         {
             var template = new DataTemplate();

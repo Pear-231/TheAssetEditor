@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -292,19 +293,19 @@ namespace Editors.Audio.AudioEditor
             return AudioProjectExplorerViewModel._selectedAudioProjectTreeNode;
         }
 
-        public ObservableCollection<Dictionary<string, string>> GetEditorDataGrid()
+        public DataTable GetEditorDataGrid()
         {
             return AudioProjectEditorViewModel.AudioProjectEditorDataGrid;
         }
 
-        public ObservableCollection<Dictionary<string, string>> GetViewerDataGrid()
+        public DataTable GetViewerDataGrid()
         {
             return AudioProjectViewerViewModel.AudioProjectViewerDataGrid;
         }
 
-        public ObservableCollection<Dictionary<string, string>> GetSelectedViewerRows()
+        public List<DataRow> GetSelectedViewerRows()
         {
-            return AudioProjectViewerViewModel.SelectedDataGridRows;
+            return AudioProjectViewerViewModel._selectedDataGridRows;
         }
     }
 }

@@ -14,19 +14,16 @@ using Shared.Core.Events.Global;
 using Shared.Core.Misc;
 using Shared.Core.PackFiles;
 using Shared.Core.PackFiles.Models;
-using Shared.Core.ToolCreation;
 
 namespace Editors.Audio.AudioEditor.AudioFilesExplorer
 {
-    public partial class AudioFilesExplorerViewModel : ObservableObject, IEditorInterface
+    public partial class AudioFilesExplorerViewModel : ObservableObject
     {
         private readonly IGlobalEventHub _globalEventHub;
         private readonly IEventHub _eventHub;
         private readonly IPackFileService _packFileService;
         private readonly IAudioEditorService _audioEditorService;
         private readonly SoundPlayer _soundPlayer;
-
-        public string DisplayName { get; set; } = "Audio Files Explorer";
 
         [ObservableProperty] private string _audioFilesExplorerLabel;
         [ObservableProperty] private bool _isAddAudioFilesButtonEnabled = false;
@@ -57,7 +54,7 @@ namespace Editors.Audio.AudioEditor.AudioFilesExplorer
             if (editablePack == null)
                 return;
 
-            AudioFilesExplorerLabel = $"{DisplayName} - {DataGridHelpers.AddExtraUnderscoresToString(editablePack.Name)}";
+            AudioFilesExplorerLabel = $"Audio Files Explorer - {DataGridHelpers.AddExtraUnderscoresToString(editablePack.Name)}";
 
             CreateAudioFilesTree(editablePack);
 
@@ -282,6 +279,8 @@ namespace Editors.Audio.AudioEditor.AudioFilesExplorer
             _audioEditorService.AudioSettingsViewModel.SetAudioSettingsEnablementAndVisibility();
             _audioEditorService.AudioSettingsViewModel.ResetShowSettingsFromAudioProjectViewer();
             _audioEditorService.AudioProjectEditorViewModel.SetAddRowButtonEnablement();
+
+            _eventHub.Publish(new AudioFilesSetEvent(SelectedTreeNodes.ToList()));
         }
 
         [RelayCommand] public void PlayWavFile()
@@ -327,7 +326,5 @@ namespace Editors.Audio.AudioEditor.AudioFilesExplorer
         {
             IsAddAudioFilesButtonEnabled = false;
         }
-
-        public void Close() {}
     }
 }

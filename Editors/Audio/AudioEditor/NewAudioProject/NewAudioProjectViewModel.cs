@@ -7,12 +7,11 @@ using Serilog;
 using Shared.Core.ErrorHandling;
 using Shared.Core.PackFiles;
 using Shared.Core.Services;
-using Shared.Core.ToolCreation;
 using static Editors.Audio.GameSettings.Warhammer3.Languages;
 
 namespace Editors.Audio.AudioEditor.NewAudioProject
 {
-    public partial class NewAudioProjectViewModel : ObservableObject, IEditorInterface
+    public partial class NewAudioProjectViewModel : ObservableObject
     {
         readonly ILogger _logger = Logging.Create<NewAudioProjectViewModel>();
 
@@ -21,8 +20,6 @@ namespace Editors.Audio.AudioEditor.NewAudioProject
         private readonly IStandardDialogs _standardDialogs;
 
         private System.Action _closeAction;
-
-        public string DisplayName { get; set; } = "New Audio Project";
 
         // Settings properties
         [ObservableProperty] private string _audioProjectFileName;
@@ -112,7 +109,5 @@ namespace Editors.Audio.AudioEditor.NewAudioProject
         {
             _closeAction = closeAction;
         }
-
-        public void Close() { }
     }
 }

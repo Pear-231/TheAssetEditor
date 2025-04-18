@@ -8,18 +8,15 @@ using Editors.Audio.AudioEditor.AudioProjectExplorer;
 using Editors.Audio.AudioEditor.Events;
 using Editors.Audio.Storage;
 using Shared.Core.Events;
-using Shared.Core.ToolCreation;
 using static Editors.Audio.AudioEditor.AudioSettings.AudioSettings;
 
 namespace Editors.Audio.AudioEditor.AudioSettings
 {
-    public partial class AudioSettingsViewModel : ObservableObject, IEditorInterface
+    public partial class AudioSettingsViewModel : ObservableObject
     {
         private readonly IEventHub _eventHub;
         private readonly IAudioEditorService _audioEditorService;
         private readonly IAudioRepository _audioRepository;
-
-        public string DisplayName { get; set; } = "Audio Settings";
 
         // Playlist Type
         [ObservableProperty] private bool _isPlaylistTypeSectionVisible = false;
@@ -448,7 +445,5 @@ namespace Editors.Audio.AudioEditor.AudioSettings
         {
             ShowSettingsFromAudioProjectViewer = false;
         }
-
-        public void Close() {}
     }
 }

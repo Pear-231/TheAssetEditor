@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Data;
 using Editors.Audio.AudioEditor.AudioFilesExplorer;
 using Editors.Audio.AudioEditor.AudioProjectData;
 using Editors.Audio.AudioEditor.AudioProjectEditor;
@@ -32,8 +33,8 @@ namespace Editors.Audio.AudioEditor
         public void BuildModdedStatesByStateGroupLookup(List<StateGroup> moddedStateGroups, Dictionary<string, List<string>> moddedStatesByStateGroupLookup);
         public void ResetAudioProject();
         public TreeNode GetSelectedExplorerNode();
-        public ObservableCollection<Dictionary<string, string>> GetEditorDataGrid();
-        public ObservableCollection<Dictionary<string, string>> GetViewerDataGrid();
-        public ObservableCollection<Dictionary<string, string>> GetSelectedViewerRows();
+        public DataTable GetEditorDataGrid();
+        public DataTable GetViewerDataGrid();
+        public List<DataRow> GetSelectedViewerRows();
     }
 }

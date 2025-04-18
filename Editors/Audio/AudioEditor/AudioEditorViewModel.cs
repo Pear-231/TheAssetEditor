@@ -92,10 +92,10 @@ namespace Editors.Audio.AudioEditor
 
         public void InitialiseAudioEditorData()
         {
-            AudioProjectEditorViewModel.AudioProjectEditorDataGrid = [];
-            AudioProjectViewerViewModel.AudioProjectViewerDataGrid = [];
-            AudioProjectViewerViewModel.SelectedDataGridRows = [];
-            AudioProjectViewerViewModel.CopiedDataGridRows = [];
+            AudioProjectEditorViewModel.AudioProjectEditorDataGrid = new();
+            AudioProjectViewerViewModel.AudioProjectViewerDataGrid = new();
+            AudioProjectViewerViewModel._selectedDataGridRows = [];
+            AudioProjectViewerViewModel._copiedRows = [];
             AudioProjectExplorerViewModel.DialogueEventPresets = [];
         }
         private void InitialiseAudioEditorService()
@@ -111,8 +111,8 @@ namespace Editors.Audio.AudioEditor
         {
             AudioProjectEditorViewModel.AudioProjectEditorDataGrid = null;
             AudioProjectViewerViewModel.AudioProjectViewerDataGrid = null;
-            AudioProjectViewerViewModel.SelectedDataGridRows = null;
-            AudioProjectViewerViewModel.CopiedDataGridRows = null;
+            AudioProjectViewerViewModel._selectedDataGridRows = null;
+            AudioProjectViewerViewModel._copiedRows = null;
             AudioProjectExplorerViewModel._selectedAudioProjectTreeNode = null;
             AudioProjectExplorerViewModel.AudioProjectTree.Clear();
         }
