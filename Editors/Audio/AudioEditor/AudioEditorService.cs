@@ -32,7 +32,7 @@ namespace Editors.Audio.AudioEditor
 
         string AudioProjectEditorDataGridTag { get; set; }
         bool ShowModdedStatesOnly { get; set; }
-        ISettings Settings { get; set; }
+        AudioSettingsStore AudioSettings { get; set; }
         ObservableCollection<AudioFile> AudioFiles { get; set; }
 
         string AudioProjectViewerDataGridTag { get; set; }
@@ -86,7 +86,7 @@ namespace Editors.Audio.AudioEditor
 
         public string AudioProjectEditorDataGridTag { get; set; } = "AudioProjectEditorDataGrid";
         public bool ShowModdedStatesOnly { get; set; }
-        public ISettings Settings { get; set; }
+        public AudioSettingsStore AudioSettings { get; set; }
         public ObservableCollection<AudioFile> AudioFiles { get; set; } = [];
 
         public string AudioProjectViewerDataGridTag { get; set; } = "AudioProjectViewerDataGrid";
@@ -153,7 +153,7 @@ namespace Editors.Audio.AudioEditor
             AudioProject.DirectoryPath = directory;
             AudioProject.Language = language;
 
-            var label = $"Audio Project Explorer - {DataGridHelpers.AddExtraUnderscoresToString(fileName)}";
+            var label = $"Audio Project Explorer - {DataGridHelpers.DuplicateUnderscores(fileName)}";
             eventHub.Publish(new SetAudioProjectExplorerLabelEvent(label));
 
             eventHub.Publish(new CreateAudioProjectTreeEvent());

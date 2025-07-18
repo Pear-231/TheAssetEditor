@@ -158,12 +158,12 @@ namespace Editors.Audio.AudioEditor.AudioProjectViewer
             }
             else if (selectedNode.IsDialogueEvent())
             {
-                SetAudioProjectViewerLabel(DataGridHelpers.AddExtraUnderscoresToString(selectedNode.Name));
+                SetAudioProjectViewerLabel(DataGridHelpers.DuplicateUnderscores(selectedNode.Name));
                 LoadDataGrid(selectedNode.NodeType);
             }
             else if (selectedNode.IsStateGroup())
             {
-                SetAudioProjectViewerLabel(DataGridHelpers.AddExtraUnderscoresToString(selectedNode.Name));
+                SetAudioProjectViewerLabel(DataGridHelpers.DuplicateUnderscores(selectedNode.Name));
                 LoadDataGrid(selectedNode.NodeType);
             }
             else
@@ -263,12 +263,9 @@ namespace Editors.Audio.AudioEditor.AudioProjectViewer
             var selectedNode = _audioEditorService.SelectedExplorerNode;
             if (selectedNode.IsDialogueEvent())
             {
-                var dialogueEvent = AudioProjectHelpers
-                    .GetDialogueEventFromName(_audioEditorService.AudioProject, selectedNode.Name);
-
                 var dialogueEventStateGroups = _audioRepository
-                    .QualifiedStateGroupLookupByStateGroupByDialogueEvent[dialogueEvent.Name]
-                    .Select(kvp => DataGridHelpers.AddExtraUnderscoresToString(kvp.Key))
+                    .QualifiedStateGroupLookupByStateGroupByDialogueEvent[selectedNode.Name]
+                    .Select(kvp => DataGridHelpers.DuplicateUnderscores(kvp.Key))
                     .ToList();
 
                 var copiedStateGroups = rowColumns;

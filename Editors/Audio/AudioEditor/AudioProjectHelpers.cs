@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Data;
 using System.Linq;
+using Editors.Audio.AudioEditor.DataGrids;
 using Editors.Audio.AudioEditor.Models;
 using Editors.Audio.AudioEditor.Settings;
-using Editors.Audio.AudioEditor.DataGrids;
 using Editors.Audio.GameSettings.Warhammer3;
 using Editors.Audio.Storage;
 using static Editors.Audio.AudioEditor.Settings.Settings;
-
-// TODO: Should these be split into multiple files?
 
 namespace Editors.Audio.AudioEditor
 {
@@ -25,24 +22,6 @@ namespace Editors.Audio.AudioEditor
             return null;
         }
 
-        public static SoundBank GetSoundBankFromName(AudioProject audioProject, string soundBankName)
-        {
-            return audioProject.SoundBanks.FirstOrDefault(soundBank => soundBank.Name == soundBankName);
-        }
-
-        public static DialogueEvent GetDialogueEventFromName(AudioProject audioProject, string dialogueEventName)
-        {
-            return audioProject.SoundBanks
-                .Where(soundBank => soundBank.SoundBankType == SoundBanks.Wh3SoundBankType.DialogueEventSoundBank)
-                .SelectMany(soundBank => soundBank.DialogueEvents)
-                .FirstOrDefault(dialogueEvent => dialogueEvent.Name == dialogueEventName);
-        }
-
-        public static StateGroup GetStateGroupFromName(AudioProject audioProject, string stateGroupName)
-        {
-            return audioProject.StateGroups.FirstOrDefault(stateGroup => stateGroup.Name == stateGroupName);
-        }
-
         public static ActionEvent GetActionEventFromRow(AudioProject audioProject, DataRow row)
         {
             var actionEventName = GetActionEventNameFromRow(row);
@@ -54,17 +33,29 @@ namespace Editors.Audio.AudioEditor
 
         public static StatePath GetStatePathFromRow(IAudioRepository audioRepository, DialogueEvent selectedDialogueEvent, DataRow row)
         {
-            // Remove any rows with empty values due to a new CA state group being added to still allow the user to edit the out of date state path
-            var filteredRow = row.Table.Columns
-                .Cast<DataColumn>()
-                .Where(column =>
-                {
-                    var cell = row[column];
-                    return cell != DBNull.Value && !string.IsNullOrEmpty(cell.ToString());
-                })
-                .ToDictionary(column => column.ColumnName, column => row[column].ToString());
+            // TODO: Figure out how this function actually is used?
+            // CA sometimes add new State Groups into a Dialogue Event
+            // When that Dialogue Event already contains State Paths the new State Group's value in the path is empty
+            // So we skip any state groups with empty values
+            var rowStatePathNodes = new List<StatePathNode>();
+            foreach (DataColumn column in row.Table.Columns)
+            {
+                var valueObject = row[column];
+                if (valueObject == DBNull.Value)
+                    continue;
 
-            var rowStatePathNodes = GetStatePathNodes(audioRepository, filteredRow, selectedDialogueEvent);
+                var stateName = valueObject.ToString();
+                if (string.IsNullOrEmpty(stateName))
+                    continue;
+
+                var stateGroupColumnName = DataGridHelpers.DeduplicateUnderscores(column.ColumnName);
+
+                rowStatePathNodes.Add(new StatePathNode
+                {
+                    StateGroup = new StateGroup { Name = GetStateGroupFromStateGroupWithQualifier(audioRepository, selectedDialogueEvent.Name, stateGroupColumnName) },
+                    State = new State { Name = stateName }
+                });
+            }
 
             foreach (var statePath in selectedDialogueEvent.StatePaths)
             {
@@ -73,12 +64,6 @@ namespace Editors.Audio.AudioEditor
             }
 
             return null;
-        }
-
-        public static State GetStateFromRow(StateGroup stateGroup, DataRow row)
-        {
-            var stateName = GetStateNameFromRow(row);
-            return stateGroup.States.FirstOrDefault(state => state.Name == stateName);
         }
 
         public static string GetValueFromRow(DataRow row, string columnName)
@@ -96,64 +81,6 @@ namespace Editors.Audio.AudioEditor
             return GetValueFromRow(row, DataGridTemplates.StateColumn);
         }
 
-        public static List<StatePathNode> GetStatePathNodes(IAudioRepository audioRepository, Dictionary<string, string> row, DialogueEvent selectedDialogueEvent)
-        {
-            var statePath = new StatePath();
-            foreach (var kvp in row)
-            {
-                var columnName = DataGridHelpers.RemoveExtraUnderscoresFromString(kvp.Key);
-                var columnValue = kvp.Value;
-                statePath.Nodes.Add(new StatePathNode
-                {
-                    StateGroup = new StateGroup { Name = GetStateGroupFromStateGroupWithQualifier(audioRepository, selectedDialogueEvent.Name, columnName) },
-                    State = new State { Name = columnValue }
-                });
-            }
-
-            return statePath.Nodes;
-        }
-
-        public static StatePath CreateStatePathFromRow(IAudioRepository audioRepository, ObservableCollection<AudioFile> audioFiles, ISettings settings, DataRow row, DialogueEvent selectedDialogueEvent)
-        {
-            var statePath = new StatePath();
-
-            foreach (DataColumn column in row.Table.Columns)
-            {
-                var value = row[column].ToString();
-                var columnName = DataGridHelpers.RemoveExtraUnderscoresFromString(column.ColumnName);
-
-                statePath.Nodes.Add(new StatePathNode
-                {
-                    StateGroup = new StateGroup
-                    {
-                        Name = GetStateGroupFromStateGroupWithQualifier(audioRepository, selectedDialogueEvent.Name, columnName)
-                    },
-                    State = new State { Name = value }
-                });
-            }
-
-            if (audioFiles.Count == 1)
-            {
-                var storedSoundSettings = settings as SoundSettings;
-                statePath.Sound = CreateSound(audioFiles[0]);
-                statePath.Sound.Settings = BuildSoundSettings(storedSoundSettings);
-            }
-            else
-            {
-                var storedRanSeqContainerSettings = settings as RandomSequenceContainerSettings;
-                statePath.RandomSequenceContainer = new RandomSequenceContainer
-                {
-                    Sounds = [],
-                    Settings = BuildRanSeqContainerSettings(storedRanSeqContainerSettings)
-                };
-
-                foreach (var audioFile in audioFiles)
-                    statePath.RandomSequenceContainer.Sounds.Add(CreateSound(audioFile));
-            }
-
-            return statePath;
-        }
-
         public static StatePath CreateStatePathFromStatePathNodes(IAudioRepository audioRepository, List<StatePathNode> statePathNodes, List<AudioFile> audioFiles)
         {
             var statePath = new StatePath();
@@ -169,14 +96,14 @@ namespace Editors.Audio.AudioEditor
                 if (audioFiles.Count == 1)
                 {
                     statePath.Sound = CreateSound(audioFiles[0]);
-                    statePath.Sound.Settings = new SoundSettings();
+                    statePath.Sound.AudioSettings = new AudioSettings();
                 }
                 else
                 {
                     statePath.RandomSequenceContainer = new RandomSequenceContainer
                     {
                         Sounds = [],
-                        Settings = BuildRecommendedRanSeqContainerSettings(audioFiles)
+                        AudioSettings = BuildRecommendedRanSeqContainerSettings(audioFiles)
                     };
 
                     foreach (var audioFile in audioFiles)
@@ -188,33 +115,6 @@ namespace Editors.Audio.AudioEditor
             }
 
             return statePath;
-        }
-
-        public static State CreateStateFromRow(DataRow row)
-        {
-            return new State
-            {
-                Name = GetStateNameFromRow(row)
-            };
-        }
-
-        public class StatePathNodeComparer : IEqualityComparer<StatePathNode>
-        {
-            public bool Equals(StatePathNode x, StatePathNode y)
-            {
-                if (x == null && y == null)
-                    return true;
-                if (x == null || y == null)
-                    return false;
-
-                return string.Equals(x.StateGroup?.Name, y.StateGroup?.Name, StringComparison.Ordinal) &&
-                       string.Equals(x.State?.Name, y.State?.Name, StringComparison.Ordinal);
-            }
-
-            public int GetHashCode(StatePathNode obj)
-            {
-                return HashCode.Combine(obj.StateGroup?.Name, obj.State?.Name);
-            }
         }
 
         private static Sound CreateSound(AudioFile audioFile)
@@ -233,22 +133,22 @@ namespace Editors.Audio.AudioEditor
             var actionEvent = GetActionEventFromRow(audioProject, row);
 
             if (actionEvent.RandomSequenceContainer != null)
-                return actionEvent.RandomSequenceContainer.Settings;
+                return actionEvent.RandomSequenceContainer.AudioSettings;
             else
-                return actionEvent.Sound.Settings;
+                return actionEvent.Sound.AudioSettings;
         }
 
         public static ISettings GetSettingsFromStatePath(IAudioEditorService audioEditorService, IAudioRepository audioRepository)
         {
             var audioProjectItem = audioEditorService.SelectedExplorerNode;
             var selectedViewerRow = audioEditorService.SelectedViewerRows[0];
-            var dialogueEvent = GetDialogueEventFromName(audioEditorService.AudioProject, audioProjectItem.Name);
+            var dialogueEvent = audioEditorService.AudioProject.GetDialogueEvent(audioEditorService.SelectedExplorerNode.Name);
             var statePath = GetStatePathFromRow(audioRepository, dialogueEvent, selectedViewerRow);
 
             if (statePath.RandomSequenceContainer != null)
-                return statePath.RandomSequenceContainer.Settings;
+                return statePath.RandomSequenceContainer.AudioSettings;
             else
-                return statePath.Sound.Settings;
+                return statePath.Sound.AudioSettings;
         }
 
         public static void InsertStatePathAlphabetically(DialogueEvent selectedDialogueEvent, StatePath statePath)
@@ -324,9 +224,9 @@ namespace Editors.Audio.AudioEditor
             states.Insert(insertIndex, newState);
         }
 
-        public static SoundSettings BuildSoundSettings(SoundSettings storedSoundSettings)
+        public static AudioSettings BuildSoundSettings(AudioSettings storedSoundSettings)
         {
-            var soundSettings = new SoundSettings();
+            var soundSettings = new AudioSettings();
             soundSettings.LoopingType = storedSoundSettings.LoopingType;
             if (storedSoundSettings.LoopingType == LoopingType.FiniteLooping)
                 soundSettings.NumberOfLoops = storedSoundSettings.NumberOfLoops;

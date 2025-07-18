@@ -54,7 +54,7 @@ namespace Editors.Audio.AudioEditor.AudioFilesExplorer
             if (editablePack == null)
                 return;
 
-            AudioFilesExplorerLabel = $"Audio Files Explorer - {DataGridHelpers.AddExtraUnderscoresToString(editablePack.Name)}";
+            AudioFilesExplorerLabel = $"Audio Files Explorer - {DataGridHelpers.DuplicateUnderscores(editablePack.Name)}";
 
             CreateAudioFilesTree(editablePack);
 

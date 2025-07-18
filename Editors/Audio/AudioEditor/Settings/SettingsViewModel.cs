@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Editors.Audio.AudioEditor.Models;
 using Editors.Audio.AudioEditor.Events;
+using Editors.Audio.AudioEditor.Models;
 using Editors.Audio.Storage;
 using Shared.Core.Events;
 using static Editors.Audio.AudioEditor.Settings.Settings;
@@ -190,18 +190,9 @@ namespace Editors.Audio.AudioEditor.Settings
             StoreSettings();
         }
 
-        private SoundSettings BuildSoundSettings()
+        public void StoreSettings()
         {
-            return new SoundSettings
-            {
-                LoopingType = LoopingType,
-                NumberOfLoops = LoopingType == LoopingType.FiniteLooping ? NumberOfLoops : 1
-            };
-        }
-
-        private RandomSequenceContainerSettings BuildRanSeqContainerSettings()
-        {
-            return new RandomSequenceContainerSettings
+            _audioEditorService.AudioSettings = new AudioSettings
             {
                 PlaylistType = PlaylistType,
                 EnableRepetitionInterval = EnableRepetitionInterval,
@@ -216,23 +207,13 @@ namespace Editors.Audio.AudioEditor.Settings
             };
         }
 
-        private ISettings BuildSettings()
-        {
-            if (AudioFiles.Count > 1)
-                return BuildRanSeqContainerSettings();
-            else
-                return BuildSoundSettings();
-        }
-
-        public void StoreSettings() => _audioEditorService.Settings = BuildSettings();
-
         public void ShowSettingsFromAudioProjectViewerItem()
         {
-            ISettings settings = null;
+            AudioSettings settings = null;
             var audioFiles = new List<AudioFile>();
 
-            var audioProjectItem = _audioEditorService.SelectedExplorerNode;
-            if (audioProjectItem.IsActionEventSoundBank())
+            var selectedExplorerNode = _audioEditorService.SelectedExplorerNode;
+            if (selectedExplorerNode.IsActionEventSoundBank())
             {
                 var selectedViewerRow = _audioEditorService.SelectedViewerRows[0];
                 settings = AudioProjectHelpers.GetSettingsFromActionEvent(_audioEditorService.AudioProject, selectedViewerRow);
@@ -258,14 +239,13 @@ namespace Editors.Audio.AudioEditor.Settings
                     }
                 }
             }
-            else if (audioProjectItem.IsDialogueEvent())
+            else if (selectedExplorerNode.IsDialogueEvent())
             {
                 settings = AudioProjectHelpers.GetSettingsFromStatePath(_audioEditorService, _audioRepository);
 
                 var selectedViewerRow = _audioEditorService.SelectedViewerRows[0];
-                var dialogueEvent = AudioProjectHelpers.GetDialogueEventFromName(_audioEditorService.AudioProject, _audioEditorService.SelectedExplorerNode.Name);
+                var dialogueEvent = _audioEditorService.AudioProject.GetDialogueEvent(selectedExplorerNode.Name);
                 var statePath = AudioProjectHelpers.GetStatePathFromRow(_audioRepository, dialogueEvent, selectedViewerRow);
-
                 if (statePath.Sound != null)
                 {
                     audioFiles.Add(new AudioFile()
@@ -291,7 +271,7 @@ namespace Editors.Audio.AudioEditor.Settings
             SetSettingsFromAudioProjectItemSettings(settings, audioFiles);
         }
 
-        public void SetSettingsFromAudioProjectItemSettings(ISettings settings, List<AudioFile> audioFiles)
+        public void SetSettingsFromAudioProjectItemSettings(AudioSettings settings, List<AudioFile> audioFiles)
         {
             ResetAudioFiles();
             ResetSettingsPlaylistType();
@@ -299,37 +279,37 @@ namespace Editors.Audio.AudioEditor.Settings
 
             SetAudioFiles(audioFiles);
 
-            if (settings is RandomSequenceContainerSettings ranSeqContainerSettings)
+            if (audioFiles.Count > 1)
             {
-                PlaylistType = ranSeqContainerSettings.PlaylistType;
+                PlaylistType = settings.PlaylistType;
 
-                if (ranSeqContainerSettings.PlaylistType == PlaylistType.Sequence)
-                    EndBehaviour = ranSeqContainerSettings.EndBehaviour;
+                if (settings.PlaylistType == PlaylistType.Sequence)
+                    EndBehaviour = settings.EndBehaviour;
                 else
                 {
-                    EnableRepetitionInterval = ranSeqContainerSettings.EnableRepetitionInterval;
+                    EnableRepetitionInterval = settings.EnableRepetitionInterval;
 
                     if (EnableRepetitionInterval)
-                        RepetitionInterval = ranSeqContainerSettings.RepetitionInterval;
+                        RepetitionInterval = settings.RepetitionInterval;
                 }
 
-                AlwaysResetPlaylist = ranSeqContainerSettings.AlwaysResetPlaylist;
+                AlwaysResetPlaylist = settings.AlwaysResetPlaylist;
 
-                PlaylistMode = ranSeqContainerSettings.PlaylistMode;
+                PlaylistMode = settings.PlaylistMode;
 
-                LoopingType = ranSeqContainerSettings.LoopingType;
+                LoopingType = settings.LoopingType;
                 if (LoopingType == LoopingType.FiniteLooping)
-                    NumberOfLoops = ranSeqContainerSettings.NumberOfLoops;
+                    NumberOfLoops = settings.NumberOfLoops;
 
-                TransitionType = ranSeqContainerSettings.TransitionType;
+                TransitionType = settings.TransitionType;
                 if (TransitionType != TransitionType.Disabled)
-                    TransitionDuration = ranSeqContainerSettings.TransitionDuration;
+                    TransitionDuration = settings.TransitionDuration;
             }
-            else if (settings is SoundSettings soundSettings)
+            else
             {
-                LoopingType = soundSettings.LoopingType;
+                LoopingType = settings.LoopingType;
                 if (LoopingType == LoopingType.FiniteLooping)
-                    NumberOfLoops = soundSettings.NumberOfLoops;
+                    NumberOfLoops = settings.NumberOfLoops;
             }
 
             SetSettingsEnablementAndVisibility();

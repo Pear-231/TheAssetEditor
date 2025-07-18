@@ -15,6 +15,25 @@ namespace Editors.Audio.AudioEditor.Models
         public string WemDiskFilePath { get; set; }
         public long InMemoryMediaSize { get; set; }
         public string Language { get; set; }
-        public SoundSettings Settings { get; set; }
+        public AudioSettings AudioSettings { get; set; }
+
+        public static Sound Create(string fileName, string filePath, AudioSettings audioSettings)
+        {
+            return new Sound()
+            {
+                WavFileName = fileName,
+                WavFilePath = filePath,
+                AudioSettings = audioSettings
+            };
+        }
+
+        public static Sound Create(string fileName, string filePath)
+        {
+            return new Sound()
+            {
+                WavFileName = fileName,
+                WavFilePath = filePath
+            };
+        }
     }
 }

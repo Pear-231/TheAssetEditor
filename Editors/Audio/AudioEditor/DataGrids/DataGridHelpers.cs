@@ -11,12 +11,12 @@ namespace Editors.Audio.AudioEditor.DataGrids
 {
     internal static class DataGridHelpers
     {
-        public static string AddExtraUnderscoresToString(string wtfWpf)
+        public static string DuplicateUnderscores(string wtfWpf)
         {
             return wtfWpf.Replace("_", "__");
         }
 
-        public static string RemoveExtraUnderscoresFromString(string wtfWpf)
+        public static string DeduplicateUnderscores(string wtfWpf)
         {
             return wtfWpf.Replace("__", "_");
         }
