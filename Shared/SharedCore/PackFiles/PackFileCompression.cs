@@ -194,13 +194,13 @@ namespace Shared.Core.PackFiles
             }
         }
 
-        public static byte[] Compress(byte[] data, CompressionFormat format)
+        public static byte[] Compress(byte[] data, CompressionFormat compressionFormat)
         {
-            if(format == CompressionFormat.Zstd)
+            if(compressionFormat == CompressionFormat.Zstd)
                 return CompressZstd(data);
-            else if(format == CompressionFormat.Lz4)
+            else if(compressionFormat == CompressionFormat.Lz4)
                 return CompressLz4(data);
-            else if (format == CompressionFormat.Lzma1)
+            else if (compressionFormat == CompressionFormat.Lzma1)
                 return CompressLzma1(data);
             return data;
         }

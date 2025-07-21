@@ -273,6 +273,49 @@ namespace Editors.Audio.AudioEditor.Models
             }
         }
 
+
+
+
+
+
+
+        public List<SoundBank> GetActionEventSoundBanks()
+        {
+            return SoundBanks
+                .Where(soundBank => soundBank.SoundBankType == Wh3SoundBankType.ActionEventSoundBank)
+                .ToList();
+        }
+
+        public List<SoundBank> GetDialogueEventSoundBanks()
+        {
+            return SoundBanks
+                .Where(soundBank => soundBank.SoundBankType == Wh3SoundBankType.DialogueEventSoundBank)
+                .ToList();
+        }
+
+        public List<SoundBank> GetEditedActionEventSoundBanks()
+        {
+            return SoundBanks
+                .Where(soundBank => soundBank.SoundBankType == Wh3SoundBankType.ActionEventSoundBank 
+                    && soundBank.ActionEvents.Count > 0)
+                .ToList();
+        }
+
+        public List<SoundBank> GetEditedDialogueEventSoundBanks()
+        {
+            return SoundBanks
+                .Where(soundBank => soundBank.SoundBankType == Wh3SoundBankType.DialogueEventSoundBank 
+                    && soundBank.DialogueEvents.Any(dialogueEvent => dialogueEvent.StatePaths.Count > 0))
+                .ToList();
+        }
+
+        public List<StateGroup> GetEditedStateGroups()
+        {
+            return StateGroups
+                .Where(state => state.States.Count > 0)
+                .ToList();
+        }
+
         public SoundBank GetSoundBank(string soundBankName)
         {
             return SoundBanks.FirstOrDefault(soundBank => soundBank.Name == soundBankName);

@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using static Editors.Audio.GameSettings.Warhammer3.DialogueEvents;
 
@@ -28,14 +27,35 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
         [ObservableProperty] public string _presetFilterDisplayText;
         [ObservableProperty] public DialogueEventPreset? _presetFilter = DialogueEventPreset.ShowAll;
 
-        public static TreeNode GetNodeFromName(ObservableCollection<TreeNode> audioProjectTree, string nodeName)
+        public static TreeNode CreateContainer(string name, NodeType nodeType, TreeNode parent = null)
+        {
+            return new TreeNode
+            {
+                Name = name,
+                NodeType = nodeType,
+                Parent = parent,
+                Children = []
+            };
+        }
+
+        public static TreeNode CreateChildNode(string name, NodeType nodeType, TreeNode parent)
+        {
+            return new TreeNode
+            {
+                Name = name,
+                NodeType = nodeType,
+                Parent = parent
+            };
+        }
+
+        public static TreeNode GetNode(ObservableCollection<TreeNode> audioProjectTree, string nodeName)
         {
             foreach (var node in audioProjectTree)
             {
                 if (node.Name == nodeName)
                     return node;
 
-                var childNode = GetNodeFromName(node.Children, nodeName);
+                var childNode = GetNode(node.Children, nodeName);
                 if (childNode != null)
                     return childNode;
             }

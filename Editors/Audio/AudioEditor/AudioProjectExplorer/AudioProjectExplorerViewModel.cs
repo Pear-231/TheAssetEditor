@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Editors.Audio.AudioEditor.Events;
+using Editors.Audio.AudioEditor.Models;
+using Editors.Audio.GameSettings.Warhammer3;
 using Serilog;
 using Shared.Core.ErrorHandling;
 using Shared.Core.Events;
@@ -29,6 +32,10 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
 
         private ObservableCollection<TreeNode> _unfilteredTree;
         [ObservableProperty] public TreeNode _selectedNode;
+
+        private readonly string _actionEventsContainerName = "Action Events";
+        private readonly string _dialogueEventsContainerName = "Dialogue Events";
+        private readonly string _stateGroupsContainerName = "State Groups";
 
         public AudioProjectExplorerViewModel(IEventHub eventHub, IAudioEditorService audioEditorService)
         {
@@ -64,7 +71,58 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
 
         public void CreateAudioProjectTree(SetAudioProjectExplorerLabelEvent setAudioProjectExplorerLabelEvent)
         {
-            TreeBuilder.CreateAudioProjectTree(_audioEditorService, AudioProjectTree, ShowEditedAudioProjectItemsOnly);
+            var audioProject = _audioEditorService.AudioProject;
+
+            AudioProjectTree.Clear();
+
+            var actionEventsContainer = TreeNode.CreateContainer(_actionEventsContainerName, NodeType.ActionEventsContainer);
+            var dialogueEventsContainer = TreeNode.CreateContainer(_dialogueEventsContainerName, NodeType.DialogueEventsContainer);
+            var stateGroupsContainer = TreeNode.CreateContainer(_stateGroupsContainerName, NodeType.StateGroupsContainer);
+
+            var actionEventSoundBanks = ShowEditedAudioProjectItemsOnly
+                ? audioProject.GetEditedActionEventSoundBanks()
+                : audioProject.GetActionEventSoundBanks();
+
+            foreach (var actionEventSoundBank in actionEventSoundBanks)
+            {
+                var node = TreeNode.CreateChildNode(actionEventSoundBank.Name, NodeType.ActionEventSoundBank, actionEventsContainer);
+                actionEventsContainer.Children.Add(node);
+            }
+
+            var dialogueEventSoundBanks = ShowEditedAudioProjectItemsOnly
+                ? audioProject.GetEditedDialogueEventSoundBanks()
+                : audioProject.GetDialogueEventSoundBanks();
+
+            foreach (var dialogueEventSoundBank in dialogueEventSoundBanks)
+            {
+                var soundBankNode = TreeNode.CreateContainer(dialogueEventSoundBank.Name, NodeType.DialogueEventSoundBank, dialogueEventsContainer);
+
+                var dialogueEvents = ShowEditedAudioProjectItemsOnly
+                    ? dialogueEventSoundBank.GetEditedDialogueEvents()
+                    : dialogueEventSoundBank.DialogueEvents;
+
+                foreach (var dialogueEvent in dialogueEvents)
+                {
+                    var node = TreeNode.CreateChildNode(dialogueEvent.Name, NodeType.DialogueEvent, soundBankNode);
+                    soundBankNode.Children.Add(node);
+                }
+                dialogueEventsContainer.Children.Add(soundBankNode);
+            }
+
+            var stateGroups = ShowEditedAudioProjectItemsOnly
+                ? audioProject.GetEditedStateGroups()
+                : audioProject.StateGroups;
+
+            foreach (var stateGroup in stateGroups)
+            {
+                var node = TreeNode.CreateChildNode(stateGroup.Name, NodeType.StateGroup, stateGroupsContainer);
+                stateGroupsContainer.Children.Add(node);
+            }
+
+            AudioProjectTree.Add(actionEventsContainer);
+            AudioProjectTree.Add(dialogueEventsContainer);
+            AudioProjectTree.Add(stateGroupsContainer);
+            
             _unfilteredTree = new ObservableCollection<TreeNode>(AudioProjectTree);
         }
 
@@ -76,16 +134,16 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
 
             ResetButtonEnablement();
 
-            if (_audioEditorService.SelectedExplorerNode.IsDialogueEventSoundBank())
+            if (SelectedNode.IsDialogueEventSoundBank())
             {
-                DialogueEventFilter.HandleDialogueEventsPresetFilter(this, _audioEditorService, _audioEditorService.SelectedExplorerNode.Name);
-                _logger.Here().Information($"Loaded Dialogue Event SoundBank: {_audioEditorService.SelectedExplorerNode.Name}");
+                InitialiseDialogueEventPresetFilter();
+                _logger.Here().Information($"Loaded Dialogue Event SoundBank: {SelectedNode.Name}");
             }
         }
 
         partial void OnSelectedDialogueEventPresetChanged(DialogueEventPreset? value)
         {
-            DialogueEventFilter.ApplyDialogueEventPresetFiltering(_audioEditorService);
+            ApplyDialogueEventPresetFiltering();
         }
 
         partial void OnSearchQueryChanged(string value)
@@ -144,7 +202,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
 
         partial void OnShowEditedAudioProjectItemsOnlyChanged(bool value)
         {
-            TreeBuilder.FilterEditedAudioProjectItems(_audioEditorService, this, AudioProjectTree, ShowEditedAudioProjectItemsOnly);
+            FilterEditedAudioProjectItems();
         }
 
         [RelayCommand] public void CollapseOrExpandAudioProjectTree() 
@@ -173,6 +231,110 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
         [RelayCommand] public void ClearText()
         {
             SearchQuery = "";
+        }
+
+        public void ApplyDialogueEventPresetFiltering()
+        {
+            if (!SelectedNode.IsDialogueEventSoundBank() || SelectedDialogueEventPreset == null)
+                return;
+
+            SelectedNode.PresetFilter = SelectedDialogueEventPreset;
+            if (SelectedDialogueEventPreset != DialogueEventPreset.ShowAll)
+                SelectedNode.PresetFilterDisplayText = $" (Filtered by {GetDialogueEventPresetDisplayString(SelectedDialogueEventPreset)} preset)";
+            else
+                SelectedNode.PresetFilterDisplayText = null;
+
+            ApplyDialogueEventVisibilityFilter(SelectedNode, SelectedDialogueEventPreset);
+        }
+
+        public void FilterEditedAudioProjectItems()
+        {
+            var audioProject = _audioEditorService.AudioProject;
+            var editedActionEventSoundBanks = audioProject.GetEditedActionEventSoundBanks();
+            var editedDialogueEventSoundBanks = audioProject.GetEditedDialogueEventSoundBanks();
+            var editedStateGroups = audioProject.GetEditedStateGroups();
+
+            foreach (var rootNode in AudioProjectTree)
+                ProcessNode(rootNode, editedActionEventSoundBanks, editedDialogueEventSoundBanks, editedStateGroups);
+
+            if (!ShowEditedAudioProjectItemsOnly)
+            {
+                var dialogueEventsContainer = TreeNode.GetNode(AudioProjectTree, _dialogueEventsContainerName);
+                if (dialogueEventsContainer == null) 
+                    return;
+
+                foreach (var soundBankNode in dialogueEventsContainer.Children)
+                {
+                    if (soundBankNode.PresetFilter.HasValue && soundBankNode.PresetFilter.Value != DialogueEventPreset.ShowAll)
+                        ApplyDialogueEventVisibilityFilter(soundBankNode, soundBankNode.PresetFilter);
+                }
+            }
+        }
+
+        private void ProcessNode(
+            TreeNode node,
+            List<SoundBank> editedActionEventSoundBanks,
+            List<SoundBank> editedDialogueEventSoundBanks,
+            List<StateGroup> editedStateGroups)
+        {
+            foreach (var child in node.Children)
+                ProcessNode(child, editedActionEventSoundBanks, editedDialogueEventSoundBanks, editedStateGroups);
+
+            var isVisible = !ShowEditedAudioProjectItemsOnly
+                || IsNodeEdited(node, editedActionEventSoundBanks, editedDialogueEventSoundBanks, editedStateGroups);
+
+            if (node.Children.Any())
+                isVisible &= node.Children.Any(c => c.IsVisible);
+
+            node.IsVisible = isVisible;
+        }
+
+        private static bool IsNodeEdited(
+            TreeNode node,
+            List<SoundBank> editedActionEventSoundBanks,
+            List<SoundBank> editedDialogueEventSoundBanks,
+            List<StateGroup> editedStateGroups)
+        {
+            return node.NodeType switch
+            {
+                NodeType.StateGroupsContainer => editedStateGroups.Count != 0,
+                NodeType.ActionEventSoundBank => editedActionEventSoundBanks.Any(soundBank => soundBank.Name == node.Name),
+                NodeType.DialogueEventSoundBank => editedDialogueEventSoundBanks.Any(soundBank => soundBank.Name == node.Name),
+                NodeType.StateGroup => editedStateGroups.Any(stateGroup => stateGroup.Name == node.Name),
+                NodeType.DialogueEvent => editedDialogueEventSoundBanks
+                                        .Where(soundBank => soundBank.Name == node.Parent.Name)
+                                        .SelectMany(soundBank => soundBank.DialogueEvents)
+                                        .Any(dialogueEvent => dialogueEvent.Name == node.Name),
+                _ => true,
+            };
+        }
+
+        public void InitialiseDialogueEventPresetFilter()
+        {
+            var soundBankSubtype = SoundBanks.GetSoundBankSubtype(SelectedNode.Name);
+
+            DialogueEventPresets = new ObservableCollection<DialogueEventPreset>(DialogueEventData
+                .Where(dialogueEvent => dialogueEvent.SoundBank == soundBankSubtype)
+                .SelectMany(dialogueEvent => dialogueEvent.DialogueEventPreset)
+                .Distinct());
+
+            SelectedDialogueEventPreset = SelectedNode.PresetFilter != DialogueEventPreset.ShowAll
+                    ? SelectedNode.PresetFilter
+                    : null;
+
+            IsDialogueEventPresetFilterEnabled = true;
+        }
+
+        private static void ApplyDialogueEventVisibilityFilter(TreeNode soundBankNode, DialogueEventPreset? dialogueEventPreset)
+        {
+            var allowedNames = DialogueEventData
+                .Where(dialogueEvent => SoundBanks.GetSoundBankSubTypeString(dialogueEvent.SoundBank) == soundBankNode.Name
+                    && (!dialogueEventPreset.HasValue || dialogueEvent.DialogueEventPreset.Contains(dialogueEventPreset.Value)))
+                .Select(dialogueEvent => dialogueEvent.Name)
+                .ToHashSet();
+
+            foreach (var dialogueEventNode in soundBankNode.Children)
+                dialogueEventNode.IsVisible = allowedNames.Contains(dialogueEventNode.Name);
         }
 
         public void ResetDialogueEventFilterComboBoxSelectedItem(WatermarkComboBox watermarkComboBox)
