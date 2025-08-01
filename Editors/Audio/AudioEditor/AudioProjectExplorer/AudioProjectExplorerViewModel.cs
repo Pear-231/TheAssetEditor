@@ -4,6 +4,8 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Editors.Audio.AudioEditor.AudioProjectExplorer.Filters;
+using Editors.Audio.AudioEditor.Events;
 using Editors.Audio.AudioEditor.Models;
 using Editors.Audio.GameSettings.Warhammer3;
 using Serilog;
@@ -11,7 +13,6 @@ using Shared.Core.ErrorHandling;
 using Shared.Core.Events;
 using Xceed.Wpf.Toolkit;
 using static Editors.Audio.GameSettings.Warhammer3.DialogueEvents;
-using Editors.Audio.AudioEditor.Events;
 
 namespace Editors.Audio.AudioEditor.AudioProjectExplorer
 {
@@ -19,6 +20,8 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
     {
         private readonly IEventHub _eventHub;
         private readonly IAudioEditorService _audioEditorService;
+        private readonly IAudioProjectTreeBuilderService _audioProjectTreeBuilder;
+        private readonly IAudioProjectTreeFilterService _audioProjectTreeFilterService;
 
         private readonly ILogger _logger = Logging.Create<AudioProjectExplorerViewModel>();
 
@@ -28,19 +31,21 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
         [ObservableProperty] private DialogueEventPreset? _selectedDialogueEventPreset;
         [ObservableProperty] private ObservableCollection<DialogueEventPreset> _dialogueEventPresets = [];
         [ObservableProperty] private string _searchQuery;
-        [ObservableProperty] public ObservableCollection<AudioProjectExplorerTreeNode> _audioProjectTree = [];
+        [ObservableProperty] public ObservableCollection<AudioProjectTreeNode> _audioProjectTree = [];
 
-        private ObservableCollection<AudioProjectExplorerTreeNode> _unfilteredTree;
-        [ObservableProperty] public AudioProjectExplorerTreeNode _selectedNode;
+        private ObservableCollection<AudioProjectTreeNode> _unfilteredTree;
+        [ObservableProperty] public AudioProjectTreeNode _selectedNode;
 
-        private readonly string _actionEventsContainerName = "Action Events";
-        private readonly string _dialogueEventsContainerName = "Dialogue Events";
-        private readonly string _stateGroupsContainerName = "State Groups";
-
-        public AudioProjectExplorerViewModel(IEventHub eventHub, IAudioEditorService audioEditorService)
+        public AudioProjectExplorerViewModel(
+            IEventHub eventHub,
+            IAudioEditorService audioEditorService,
+            IAudioProjectTreeBuilderService audioProjectTreeBuilder,
+            IAudioProjectTreeFilterService audioProjectTreeFilterService)
         {
             _eventHub = eventHub;
             _audioEditorService = audioEditorService;
+            _audioProjectTreeBuilder = audioProjectTreeBuilder;
+            _audioProjectTreeFilterService = audioProjectTreeFilterService;
 
             AudioProjectExplorerLabel = $"Audio Project Explorer";
 
@@ -52,7 +57,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
 
         private void OnAudioProjectInitialised(AudioProjectInitialisedEvent e)
         {
-            CreateAudioProjectTree();
+            AudioProjectTree = _audioProjectTreeBuilder.BuildTree(_audioEditorService.AudioProject, ShowEditedAudioProjectItemsOnly);
             SetLabel(e.Label);
         }
 
@@ -62,9 +67,9 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
 
             AudioProjectTree.Clear();
 
-            var actionEventsContainer = AudioProjectExplorerTreeNode.CreateContainer(_actionEventsContainerName, AudioProjectExplorerTreeNodeType.ActionEventsContainer);
-            var dialogueEventsContainer = AudioProjectExplorerTreeNode.CreateContainer(_dialogueEventsContainerName, AudioProjectExplorerTreeNodeType.DialogueEventsContainer);
-            var stateGroupsContainer = AudioProjectExplorerTreeNode.CreateContainer(_stateGroupsContainerName, AudioProjectExplorerTreeNodeType.StateGroupsContainer);
+            var actionEventsContainer = AudioProjectTreeNode.CreateContainerNode(AudioProjectTreeInfo.ActionEventSoundBanksContainerName, AudioProjectTreeNodeType.ActionEventSoundBanksContainer);
+            var dialogueEventsContainer = AudioProjectTreeNode.CreateContainerNode(AudioProjectTreeInfo.DialogueEventSoundBanksContainer, AudioProjectTreeNodeType.DialogueEventSoundBanksContainer);
+            var stateGroupsContainer = AudioProjectTreeNode.CreateContainerNode(AudioProjectTreeInfo.StateGroupsContainerName, AudioProjectTreeNodeType.StateGroupsContainer);
 
             var actionEventSoundBanks = ShowEditedAudioProjectItemsOnly
                 ? audioProject.GetEditedActionEventSoundBanks()
@@ -72,7 +77,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
 
             foreach (var actionEventSoundBank in actionEventSoundBanks)
             {
-                var node = AudioProjectExplorerTreeNode.CreateChildNode(actionEventSoundBank.Name, AudioProjectExplorerTreeNodeType.ActionEventSoundBank, actionEventsContainer);
+                var node = AudioProjectTreeNode.CreateChildNode(actionEventSoundBank.Name, AudioProjectTreeNodeType.ActionEventSoundBank, actionEventsContainer);
                 actionEventsContainer.Children.Add(node);
             }
 
@@ -82,7 +87,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
 
             foreach (var dialogueEventSoundBank in dialogueEventSoundBanks)
             {
-                var soundBankNode = AudioProjectExplorerTreeNode.CreateContainer(dialogueEventSoundBank.Name, AudioProjectExplorerTreeNodeType.DialogueEventSoundBank, dialogueEventsContainer);
+                var soundBankNode = AudioProjectTreeNode.CreateContainerNode(dialogueEventSoundBank.Name, AudioProjectTreeNodeType.DialogueEventSoundBank, dialogueEventsContainer);
 
                 var dialogueEvents = ShowEditedAudioProjectItemsOnly
                     ? dialogueEventSoundBank.GetEditedDialogueEvents()
@@ -90,7 +95,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
 
                 foreach (var dialogueEvent in dialogueEvents)
                 {
-                    var node = AudioProjectExplorerTreeNode.CreateChildNode(dialogueEvent.Name, AudioProjectExplorerTreeNodeType.DialogueEvent, soundBankNode);
+                    var node = AudioProjectTreeNode.CreateChildNode(dialogueEvent.Name, AudioProjectTreeNodeType.DialogueEvent, soundBankNode);
                     soundBankNode.Children.Add(node);
                 }
                 dialogueEventsContainer.Children.Add(soundBankNode);
@@ -102,7 +107,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
 
             foreach (var stateGroup in stateGroups)
             {
-                var node = AudioProjectExplorerTreeNode.CreateChildNode(stateGroup.Name, AudioProjectExplorerTreeNodeType.StateGroup, stateGroupsContainer);
+                var node = AudioProjectTreeNode.CreateChildNode(stateGroup.Name, AudioProjectTreeNodeType.StateGroup, stateGroupsContainer);
                 stateGroupsContainer.Children.Add(node);
             }
 
@@ -110,7 +115,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
             AudioProjectTree.Add(dialogueEventsContainer);
             AudioProjectTree.Add(stateGroupsContainer);
             
-            _unfilteredTree = new ObservableCollection<AudioProjectExplorerTreeNode>(AudioProjectTree);
+            _unfilteredTree = new ObservableCollection<AudioProjectTreeNode>(AudioProjectTree);
         }
 
         private void SetLabel(string label)
@@ -118,7 +123,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
             AudioProjectExplorerLabel = label;
         }
 
-        partial void OnSelectedNodeChanged(AudioProjectExplorerTreeNode value)
+        partial void OnSelectedNodeChanged(AudioProjectTreeNode value)
         {
             _audioEditorService.SelectedAudioProjectExplorerNode = SelectedNode;
 
@@ -133,25 +138,45 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
             }
         }
 
+        private void ReapplyFilters()
+        {
+            if (AudioProjectTree is null)
+                return;
+
+            var opts = new AudioProjectTreeFilterOptions(
+                SearchQuery,
+                ShowEditedAudioProjectItemsOnly,
+                _audioEditorService.AudioProject);
+
+            _audioProjectTreeFilterService.Apply(AudioProjectTree, opts);
+        }
+
         partial void OnSelectedDialogueEventPresetChanged(DialogueEventPreset? value)
         {
-            ApplyDialogueEventPresetFiltering();
+            // The preset belongs to a Dialogue-Event SoundBank node only
+            if (SelectedNode?.IsDialogueEventSoundBank() != true)
+                return;
+
+            // 1️⃣  persist so it survives other filter toggles
+            SelectedNode.PresetFilter = value ?? DialogueEventPreset.ShowAll;
+
+            // 2️⃣  update the “ (Filtered by …)” text the UI binds to
+            SelectedNode.PresetFilterDisplayText =
+                value.HasValue && value.Value != DialogueEventPreset.ShowAll
+                    ? $" (Filtered by {GetDialogueEventPresetDisplayString(value.Value)} preset)"
+                    : null;
+
+            ReapplyFilters();   // apply all active rules again
         }
 
         partial void OnSearchQueryChanged(string value)
         {
-            if (_unfilteredTree == null)
-                return;
-
-            if (string.IsNullOrWhiteSpace(SearchQuery))
-                ResetTree();
-            else
-                AudioProjectTree = FilterFileTree(SearchQuery);
+            ReapplyFilters();
         }
 
-        private ObservableCollection<AudioProjectExplorerTreeNode> FilterFileTree(string query)
+        private ObservableCollection<AudioProjectTreeNode> FilterFileTree(string query)
         {
-            var filteredTree = new ObservableCollection<AudioProjectExplorerTreeNode>();
+            var filteredTree = new ObservableCollection<AudioProjectTreeNode>();
 
             foreach (var treeNode in _unfilteredTree)
             {
@@ -163,7 +188,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
             return filteredTree;
         }
 
-        private static AudioProjectExplorerTreeNode FilterTreeNode(AudioProjectExplorerTreeNode node, string query)
+        private static AudioProjectTreeNode FilterTreeNode(AudioProjectTreeNode node, string query)
         {
             var matchesQuery = node.Name.Contains(query, StringComparison.OrdinalIgnoreCase);
             var filteredChildren = node.Children
@@ -173,12 +198,12 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
 
             if (matchesQuery || filteredChildren.Count != 0)
             {
-                var filteredNode = new AudioProjectExplorerTreeNode
+                var filteredNode = new AudioProjectTreeNode
                 {
                     Name = node.Name,
                     NodeType = node.NodeType,
                     Parent = node.Parent,
-                    Children = new ObservableCollection<AudioProjectExplorerTreeNode>(filteredChildren),
+                    Children = new ObservableCollection<AudioProjectTreeNode>(filteredChildren),
                     IsNodeExpanded = true
                 };
                 return filteredNode;
@@ -189,7 +214,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
 
         partial void OnShowEditedAudioProjectItemsOnlyChanged(bool value)
         {
-            FilterEditedAudioProjectItems();
+            ReapplyFilters();
         }
 
         [RelayCommand] public void CollapseOrExpandAudioProjectTree() 
@@ -197,7 +222,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
             CollapseAndExpandNodes();
         }
 
-        public void CollapseAndExpandNodes()
+        private void CollapseAndExpandNodes()
         {
             foreach (var node in AudioProjectTree)
             {
@@ -206,7 +231,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
             }
         }
 
-        public static void CollapseAndExpandNodesInner(AudioProjectExplorerTreeNode parentNode)
+        private static void CollapseAndExpandNodesInner(AudioProjectTreeNode parentNode)
         {
             foreach (var node in parentNode.Children)
             {
@@ -220,7 +245,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
             SearchQuery = "";
         }
 
-        public void ApplyDialogueEventPresetFiltering()
+        private void ApplyDialogueEventPresetFiltering()
         {
             if (!SelectedNode.IsDialogueEventSoundBank() || SelectedDialogueEventPreset == null)
                 return;
@@ -234,7 +259,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
             ApplyDialogueEventVisibilityFilter(SelectedNode, SelectedDialogueEventPreset);
         }
 
-        public void FilterEditedAudioProjectItems()
+        private void FilterEditedAudioProjectItems()
         {
             var audioProject = _audioEditorService.AudioProject;
             var editedActionEventSoundBanks = audioProject.GetEditedActionEventSoundBanks();
@@ -246,7 +271,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
 
             if (!ShowEditedAudioProjectItemsOnly)
             {
-                var dialogueEventsContainer = AudioProjectExplorerTreeNode.GetNode(AudioProjectTree, _dialogueEventsContainerName);
+                var dialogueEventsContainer = AudioProjectTreeNode.GetNode(AudioProjectTree, AudioProjectTreeInfo.DialogueEventSoundBanksContainer);
                 if (dialogueEventsContainer == null) 
                     return;
 
@@ -259,7 +284,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
         }
 
         private void ProcessNode(
-            AudioProjectExplorerTreeNode node,
+            AudioProjectTreeNode node,
             List<SoundBank> editedActionEventSoundBanks,
             List<SoundBank> editedDialogueEventSoundBanks,
             List<StateGroup> editedStateGroups)
@@ -277,18 +302,18 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
         }
 
         private static bool IsNodeEdited(
-            AudioProjectExplorerTreeNode node,
+            AudioProjectTreeNode node,
             List<SoundBank> editedActionEventSoundBanks,
             List<SoundBank> editedDialogueEventSoundBanks,
             List<StateGroup> editedStateGroups)
         {
             return node.NodeType switch
             {
-                AudioProjectExplorerTreeNodeType.StateGroupsContainer => editedStateGroups.Count != 0,
-                AudioProjectExplorerTreeNodeType.ActionEventSoundBank => editedActionEventSoundBanks.Any(soundBank => soundBank.Name == node.Name),
-                AudioProjectExplorerTreeNodeType.DialogueEventSoundBank => editedDialogueEventSoundBanks.Any(soundBank => soundBank.Name == node.Name),
-                AudioProjectExplorerTreeNodeType.StateGroup => editedStateGroups.Any(stateGroup => stateGroup.Name == node.Name),
-                AudioProjectExplorerTreeNodeType.DialogueEvent => editedDialogueEventSoundBanks
+                AudioProjectTreeNodeType.StateGroupsContainer => editedStateGroups.Count != 0,
+                AudioProjectTreeNodeType.ActionEventSoundBank => editedActionEventSoundBanks.Any(soundBank => soundBank.Name == node.Name),
+                AudioProjectTreeNodeType.DialogueEventSoundBank => editedDialogueEventSoundBanks.Any(soundBank => soundBank.Name == node.Name),
+                AudioProjectTreeNodeType.StateGroup => editedStateGroups.Any(stateGroup => stateGroup.Name == node.Name),
+                AudioProjectTreeNodeType.DialogueEvent => editedDialogueEventSoundBanks
                     .Where(soundBank => soundBank.Name == node.Parent.Name)
                     .SelectMany(soundBank => soundBank.DialogueEvents)
                     .Any(dialogueEvent => dialogueEvent.Name == node.Name),
@@ -296,7 +321,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
             };
         }
 
-        public void InitialiseDialogueEventPresetFilter()
+        private void InitialiseDialogueEventPresetFilter()
         {
             var soundBankSubtype = SoundBanks.GetSoundBankSubtype(SelectedNode.Name);
 
@@ -312,7 +337,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
             IsDialogueEventPresetFilterEnabled = true;
         }
 
-        private static void ApplyDialogueEventVisibilityFilter(AudioProjectExplorerTreeNode soundBankNode, DialogueEventPreset? dialogueEventPreset)
+        private static void ApplyDialogueEventVisibilityFilter(AudioProjectTreeNode soundBankNode, DialogueEventPreset? dialogueEventPreset)
         {
             var allowedNames = DialogueEventData
                 .Where(dialogueEvent => SoundBanks.GetSoundBankSubTypeString(dialogueEvent.SoundBank) == soundBankNode.Name
@@ -326,7 +351,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
 
         private void ResetTree()
         {
-            AudioProjectTree = new ObservableCollection<AudioProjectExplorerTreeNode>(_unfilteredTree);
+            AudioProjectTree = new ObservableCollection<AudioProjectTreeNode>(_unfilteredTree);
         }
 
         public void ResetDialogueEventFilterComboBoxSelectedItem(WatermarkComboBox watermarkComboBox)
@@ -335,7 +360,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectExplorer
             SelectedDialogueEventPreset = null;
         }
 
-        public void ResetButtonEnablement()
+        private void ResetButtonEnablement()
         {
             IsDialogueEventPresetFilterEnabled = false;
         }

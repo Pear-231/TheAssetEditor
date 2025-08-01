@@ -17,7 +17,7 @@ using Shared.Core.PackFiles;
 using Shared.Core.PackFiles.Models;
 using Shared.Core.Services;
 using static Editors.Audio.GameSettings.Warhammer3.DialogueEvents;
-using AudioProjectExplorerTreeNode = Editors.Audio.AudioEditor.AudioProjectExplorer.AudioProjectExplorerTreeNode;
+using AudioProjectTreeNode = Editors.Audio.AudioEditor.AudioProjectExplorer.AudioProjectTreeNode;
 using Editors.Audio.AudioEditor.Events;
 
 namespace Editors.Audio.AudioEditor
@@ -26,8 +26,8 @@ namespace Editors.Audio.AudioEditor
     {
         AudioProject AudioProject { get; set; }
 
-        ObservableCollection<AudioProjectExplorerTreeNode> AudioProjectTree { get; set; }
-        AudioProjectExplorerTreeNode SelectedAudioProjectExplorerNode { get; set; }
+        ObservableCollection<AudioProjectTreeNode> AudioProjectTree { get; set; }
+        AudioProjectTreeNode SelectedAudioProjectExplorerNode { get; set; }
         DialogueEventPreset? SelectedDialogueEventPreset { get; set; }
 
         bool ShowModdedStatesOnly { get; set; }
@@ -78,8 +78,8 @@ namespace Editors.Audio.AudioEditor
 
         public AudioProject AudioProject { get; set; }
 
-        public ObservableCollection<AudioProjectExplorerTreeNode> AudioProjectTree { get; set; }
-        public AudioProjectExplorerTreeNode SelectedAudioProjectExplorerNode { get; set; }
+        public ObservableCollection<AudioProjectTreeNode> AudioProjectTree { get; set; }
+        public AudioProjectTreeNode SelectedAudioProjectExplorerNode { get; set; }
         public DialogueEventPreset? SelectedDialogueEventPreset { get; set; }
 
         public bool ShowModdedStatesOnly { get; set; }

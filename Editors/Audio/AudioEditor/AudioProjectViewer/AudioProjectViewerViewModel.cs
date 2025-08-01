@@ -214,7 +214,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectViewer
             _logger.Here().Information($"Editing {selectedAudioProjectExplorerNode.NodeType} row in Audio Project Viewer table for {selectedAudioProjectExplorerNode.Name}");
         }
 
-        private void Load(AudioProjectExplorerTreeNodeType selectedNodeType)
+        private void Load(AudioProjectTreeNodeType selectedNodeType)
         {
             var tableService = _tableServiceFactory.GetService(selectedNodeType);
             tableService.Load(Table);

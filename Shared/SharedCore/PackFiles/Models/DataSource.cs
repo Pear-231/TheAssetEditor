@@ -159,6 +159,20 @@ namespace Shared.Core.PackFiles.Models
             return data;
         }
 
+        public byte[] ReadDataWithoutDecompressing()
+        {
+            var data = new byte[Size];
+            using (Stream stream = File.Open(_parent.FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            {
+                stream.Seek(Offset, SeekOrigin.Begin);
+                stream.Read(data, 0, data.Length);
+            }
+
+            if (IsEncrypted)
+                data = PackFileEncryption.Decrypt(data);
+            return data;
+        }
+
         public ByteChunk ReadDataAsChunk()
         {
             return new ByteChunk(ReadData());

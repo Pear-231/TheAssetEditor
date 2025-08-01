@@ -2,10 +2,10 @@
 using System.Data;
 using System.Linq;
 using Editors.Audio.AudioEditor.AudioProjectExplorer;
+using Editors.Audio.AudioEditor.Events;
 using Editors.Audio.AudioEditor.Presentation.Table;
 using Editors.Audio.Storage;
 using Shared.Core.Events;
-using Editors.Audio.AudioEditor.Events;
 
 namespace Editors.Audio.AudioEditor.AudioProjectEditor.Table
 {
@@ -18,7 +18,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectEditor.Table
         private readonly IAudioEditorService _audioEditorService = audioEditorService;
         private readonly IAudioRepository _audioRepository = audioRepository;
 
-        public AudioProjectExplorerTreeNodeType NodeType => AudioProjectExplorerTreeNodeType.DialogueEvent;
+        public AudioProjectTreeNodeType NodeType => AudioProjectTreeNodeType.DialogueEvent;
 
         public void Load(DataTable table)
         {

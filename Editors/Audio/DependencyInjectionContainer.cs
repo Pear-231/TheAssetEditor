@@ -5,6 +5,7 @@ using Editors.Audio.AudioEditor.AudioFilesExplorer;
 using Editors.Audio.AudioEditor.AudioProjectEditor;
 using Editors.Audio.AudioEditor.AudioProjectEditor.Table;
 using Editors.Audio.AudioEditor.AudioProjectExplorer;
+using Editors.Audio.AudioEditor.AudioProjectExplorer.Filters;
 using Editors.Audio.AudioEditor.AudioProjectViewer;
 using Editors.Audio.AudioEditor.AudioProjectViewer.Table;
 using Editors.Audio.AudioEditor.Factories;
@@ -33,7 +34,7 @@ namespace Editors.Audio
             // Audio Explorer
             serviceCollection.AddScoped<AudioExplorerViewModel>();
 
-            // Audio Editor
+            // Audio Editor View Models
             serviceCollection.AddScoped<AudioEditorViewModel>();
             serviceCollection.AddScoped<AudioProjectExplorerViewModel>();
             serviceCollection.AddScoped<AudioFilesExplorerViewModel>();
@@ -53,8 +54,17 @@ namespace Editors.Audio
             serviceCollection.AddScoped<OpenMovieFileSelectionWindowCommand>();
             serviceCollection.AddScoped<OpenNewAudioProjectWindowCommand>();
             serviceCollection.AddScoped<OpenAudioProjectConverterWindowCommand>();
+            serviceCollection.AddScoped<SetAudioFilesCommand>();
             serviceCollection.AddScoped<IAudioProjectMutationUICommandFactory, AudioProjectMutationUICommandFactory>();
             RegisterAllAsOriginalType<IAudioProjectMutationUICommand>(serviceCollection, ServiceLifetime.Transient);
+
+            // Audio Files Explorer services
+            serviceCollection.AddSingleton<IAudioFilesTreeBuilderService, AudioFilesTreeBuilderService>();
+            serviceCollection.AddSingleton<IAudioFilesTreeSearchFilterService, AudioFilesTreeFilterService>();
+
+            // Audio Project Explorer services
+            serviceCollection.AddSingleton<IAudioProjectTreeBuilderService, AudioProjectTreeBuilderService>();
+            serviceCollection.AddSingleton<IAudioProjectTreeFilterService, AudioProjectTreeFilterService>();
 
             // Audio Project Editor table
             serviceCollection.AddScoped<IEditorTableServiceFactory, EditorTableServiceFactory>();
@@ -62,7 +72,7 @@ namespace Editors.Audio
             serviceCollection.AddScoped<IEditorTableService, EditorDialogueEventDataGridService>();
             serviceCollection.AddScoped<IEditorTableService, EditorStateGroupDataGridService>();
 
-            // Audio Project Viewer table
+            // Audio Project Viewer services
             serviceCollection.AddScoped<IViewerTableServiceFactory, ViewerTableServiceFactory>();
             serviceCollection.AddScoped<IViewerTableService, ViewerActionEventDataGridService>();
             serviceCollection.AddScoped<IViewerTableService, ViewerDialogueEventDataGridService>();

@@ -12,7 +12,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectViewer.Table
         private readonly IAudioEditorService _audioEditorService = audioEditorService;
         private readonly IEventHub _eventHub = eventHub;
 
-        public AudioProjectExplorerTreeNodeType NodeType => AudioProjectExplorerTreeNodeType.StateGroup;
+        public AudioProjectTreeNodeType NodeType => AudioProjectTreeNodeType.StateGroup;
 
         public void Load(DataTable table)
         {

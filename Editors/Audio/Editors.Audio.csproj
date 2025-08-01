@@ -6,6 +6,14 @@
 		<UseWPF>true</UseWPF>
 	</PropertyGroup>
 
+
+	<ItemGroup>
+	  <Compile Remove="AudioEditor\AudioProjectExplorer\Filters\**" />
+	  <EmbeddedResource Remove="AudioEditor\AudioProjectExplorer\Filters\**" />
+	  <None Remove="AudioEditor\AudioProjectExplorer\Filters\**" />
+	  <Page Remove="AudioEditor\AudioProjectExplorer\Filters\**" />
+	</ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\SharedUI\Shared.Ui.csproj" />
   </ItemGroup>

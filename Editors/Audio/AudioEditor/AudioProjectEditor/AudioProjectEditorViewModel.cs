@@ -6,18 +6,17 @@ using System.Linq;
 using System.Windows.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Editors.Audio.AudioEditor.AudioProjectEditor.Table;
 using Editors.Audio.AudioEditor.AudioProjectExplorer;
+using Editors.Audio.AudioEditor.Events;
 using Editors.Audio.AudioEditor.Presentation.Table;
 using Editors.Audio.AudioEditor.Settings;
+using Editors.Audio.AudioEditor.UICommands;
 using Editors.Audio.GameSettings.Warhammer3;
 using Editors.Audio.Storage;
 using Serilog;
 using Shared.Core.ErrorHandling;
 using Shared.Core.Events;
-using Editors.Audio.AudioEditor.Events;
-using Editors.Audio.AudioEditor.AudioProjectEditor.Table;
-using Editors.Audio.AudioEditor.AudioProjectEditor;
-using Editors.Audio.AudioEditor.UICommands;
 
 namespace Editors.Audio.AudioEditor.AudioProjectEditor
 {
@@ -78,7 +77,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectEditor
                 Table.Columns.Add(column);
         }
 
-        public void OnEditorTableRowAdded(EditorTableRowAddedEvent e) => AddTableRow(e.Row);
+        private void OnEditorTableRowAdded(EditorTableRowAddedEvent e) => AddTableRow(e.Row);
 
         private void AddTableRow(DataRow row)
         {
@@ -176,7 +175,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectEditor
             SetShowModdedStatesOnlyButtonEnablementAndVisibility();
         }
 
-        private void Load(AudioProjectExplorerTreeNodeType selectedNodeType)
+        private void Load(AudioProjectTreeNodeType selectedNodeType)
         {
             var tableService = _tableServiceFactory.GetService(selectedNodeType);
             tableService.Load(Table);

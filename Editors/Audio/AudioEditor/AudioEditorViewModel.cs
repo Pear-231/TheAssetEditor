@@ -105,7 +105,7 @@ namespace Editors.Audio.AudioEditor
             if (e.Key == Key.Delete)
             {
                 foreach (var row in _audioEditorService.SelectedViewerRows)
-                    _audioProjectMutationUICommandFactory.Create(MutationType.Remove, AudioProjectExplorerTreeNodeType.DialogueEvent).Execute(row);
+                    _audioProjectMutationUICommandFactory.Create(MutationType.Remove, AudioProjectTreeNodeType.DialogueEvent).Execute(row);
 
                 e.Handled = true;
             }

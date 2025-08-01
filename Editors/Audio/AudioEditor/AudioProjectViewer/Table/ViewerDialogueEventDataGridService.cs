@@ -18,7 +18,7 @@ namespace Editors.Audio.AudioEditor.AudioProjectViewer.Table
         private readonly IAudioEditorService _audioEditorService = audioEditorService;
         private readonly IAudioRepository _audioRepository = audioRepository;
 
-        public AudioProjectExplorerTreeNodeType NodeType => AudioProjectExplorerTreeNodeType.DialogueEvent;
+        public AudioProjectTreeNodeType NodeType => AudioProjectTreeNodeType.DialogueEvent;
 
         public void Load(DataTable table)
         {
