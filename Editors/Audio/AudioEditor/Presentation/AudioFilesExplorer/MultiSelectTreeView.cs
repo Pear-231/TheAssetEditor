@@ -35,8 +35,9 @@ namespace Editors.Audio.AudioEditor.Presentation.AudioFilesExplorer
             if (SelectedItems is INotifyCollectionChanged collection)
                 collection.CollectionChanged += OnSelectedItemsCollectionChanged;
 
-            PreviewMouseDown += MultiSelectTreeView_PreviewMouseDown;
-            PreviewMouseMove += MultiSelectTreeView_PreviewMouseMove;
+            PreviewMouseDown += MultiSelectTreeViewPreviewMouseDown;
+            PreviewMouseMove += MultiSelectTreeViewPreviewMouseMove; 
+            PreviewMouseDoubleClick += MultiSelectTreeViewPreviewMouseDoubleClick;
         }
 
         private static void OnSelectedItemsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -63,12 +64,15 @@ namespace Editors.Audio.AudioEditor.Presentation.AudioFilesExplorer
             obj.SetValue(IsMultiSelectedProperty, value);
         }
 
-        private void MultiSelectTreeView_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        private void MultiSelectTreeViewPreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             _dragStartPoint = e.GetPosition(this);
             _preDragSelectedNodes = SelectedItems.OfType<AudioFilesTreeNode>().ToList();
             _isDragOperation = false;
             _pendingClickItem = null;
+
+            if (e.ClickCount == 2)
+                return;
 
             var itemUnderMouse = GetTreeViewItemUnderMouse(e);
             if (itemUnderMouse != null)
@@ -83,19 +87,20 @@ namespace Editors.Audio.AudioEditor.Presentation.AudioFilesExplorer
                     !Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
                 {
                     _pendingClickItem = clickedNode;
-                    e.Handled = true; 
+                    e.Handled = true;
                 }
             }
         }
 
-        private void MultiSelectTreeView_PreviewMouseMove(object sender, MouseEventArgs e)
+
+        private void MultiSelectTreeViewPreviewMouseMove(object sender, MouseEventArgs e)
         {
-            var currentPos = e.GetPosition(this);
-            var diff = _dragStartPoint - currentPos;
+            var currentPosition = e.GetPosition(this);
+            var difference = _dragStartPoint - currentPosition;
 
             if (e.LeftButton == MouseButtonState.Pressed &&
-                (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
-                 Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance))
+                (Math.Abs(difference.X) > SystemParameters.MinimumHorizontalDragDistance ||
+                 Math.Abs(difference.Y) > SystemParameters.MinimumVerticalDragDistance))
             {
                 if (_preDragSelectedNodes?.Count > 0)
                 {
@@ -114,6 +119,19 @@ namespace Editors.Audio.AudioEditor.Presentation.AudioFilesExplorer
                         Dispatcher.BeginInvoke(UpdateSelectionStates, System.Windows.Threading.DispatcherPriority.Input);
                     }
                 }
+            }
+        }
+
+        private void MultiSelectTreeViewPreviewMouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            var item = GetTreeViewItemUnderMouse(e);
+            if (item?.DataContext is not AudioFilesTreeNode node)
+                return;
+
+            if (node.Type == AudioFilesTreeNodeType.Directory)
+            {
+                item.IsExpanded = !item.IsExpanded;
+                e.Handled = true;
             }
         }
 
@@ -241,8 +259,8 @@ namespace Editors.Audio.AudioEditor.Presentation.AudioFilesExplorer
 
                     var shouldBeSelected = SelectedItems.Contains(node);
 
-                    //  If an item is not part of our multi-selection but happens to be WPF’s lead item, turn its flag off so the highlight disappears.
-                    //  Don't set IsSelected = true here otherwise we re-enter the single-selection process
+                    // If an item is not part of our multi-selection but happens to be WPF’s lead item, turn its flag off so the highlight disappears.
+                    // Don't set IsSelected = true here otherwise we re-enter the single-selection process.
                     if (!shouldBeSelected && item.IsSelected)
                         item.IsSelected = false;
 
