@@ -10,6 +10,7 @@
         public static string Applications { get { return ApplicationDirectory + "\\Applications"; } }
         public static string Temp { get { return ApplicationDirectory + "\\Temp"; } }
         public static string AnimationIndexMappingDirectory { get { return ApplicationDirectory + "\\Animation\\BoneIndexMapping"; } }
+        public static string UpdateDirectory { get { return Temp + "\\Update"; } }
 
         public static void EnsureCreated()
         {

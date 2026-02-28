@@ -27,7 +27,9 @@ namespace AssetEditor
             PackFileLog.IsLoggingEnabled = false;
 
             ShutdownMode = ShutdownMode.OnExplicitShutdown;
-            VersionChecker.CheckVersion();
+
+            _ = VersionChecker.CheckVersion();
+
             Current.DispatcherUnhandledException += new DispatcherUnhandledExceptionEventHandler(DispatcherUnhandledExceptionHandler);
 
             var forceValidateServiceScopes = Debugger.IsAttached;
