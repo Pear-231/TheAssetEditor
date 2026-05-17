@@ -14,7 +14,7 @@ namespace Editors.Audio.Shared.Wwise.HircExploration
 
         public HircTreeChildrenParser(IAudioRepository audioRepository) : base(audioRepository)
         {
-            HircProcessChildMap.Add(AkBkHircType.Event, ProcessEvent);
+            HircProcessChildMap.Add(AkBkHircType.Event, ProcessActionEvent);
             HircProcessChildMap.Add(AkBkHircType.Action, ProcessAction);
             HircProcessChildMap.Add(AkBkHircType.SwitchContainer, ProcessSwitchContainer);
             HircProcessChildMap.Add(AkBkHircType.LayerContainer, ProcessBlendContainer);
@@ -66,7 +66,7 @@ namespace Editors.Audio.Shared.Wwise.HircExploration
             }
         }
 
-        private void ProcessEvent(HircItem item, HircTreeNode parent)
+        private void ProcessActionEvent(HircItem item, HircTreeNode parent)
         {
             var actionEvent = GetAsType<ICAkEvent>(item);
             var node = new HircTreeNode() { DisplayName = $"Action Event - {AudioRepository.GetNameFromId(item.Id)}", Hirc = item };
@@ -76,6 +76,8 @@ namespace Editors.Audio.Shared.Wwise.HircExploration
             ProcessNext(actions, node);
         }
 
+        // TODO: Figure out why Battle_Individual_Melee_Weapon_Hit_Primary causes stack overflow
+        // TODO: Add contains filtering for Audio Explorer
         private void ProcessAction(HircItem item, HircTreeNode parent)
         {
             var action = GetAsType<ICAkAction>(item);

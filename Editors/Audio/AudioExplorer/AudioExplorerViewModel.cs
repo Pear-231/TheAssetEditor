@@ -69,6 +69,12 @@ namespace Editors.Audio.AudioExplorer
             ExplorerFilter.ExplorerList.SelectedItemChanged += OnEventSelected;
 
             WwiseObjectLabel = "Wwise Object Data";
+
+            var event1 = _audioRepository.GetNameFromId(3666984192); // index 40394, action's idExt 3467370311 "Battle_Individual_Melee_Weapon_Hit_Primary"
+            var event2 = _audioRepository.GetNameFromId(480625608); // index 39717, action's idExt 3467370311 "Battle_Individual_Melee_Weapon_Shield_Bash"
+            var event3 = _audioRepository.GetNameFromId(3467370311); // index 40357, action's idExt 3467370311 "Battle_Individual_Melee_Weapon_Hit"
+            var event4 = _audioRepository.GetNameFromId(1200260816); // index 39870, action's idExt 3467370311 "Battle_Individual_Melee_Weapon_Hit_Secondary"
+
         }
 
         partial void OnSearchByActionEventChanged(bool value)
