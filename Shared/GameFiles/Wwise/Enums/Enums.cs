@@ -57,6 +57,7 @@
         UseState_E = 0x1002,
         UnuseState_E = 0x1102,
         Play = 0x0403,
+        PlayUnknown = 0x2303, // Found in battle_individual_melee__core.bnk as CAkActionPlayEventUnknown
         PlayAndContinue = 0x0503,
         Stop_E = 0x0102,
         Stop_E_O = 0x0103,
