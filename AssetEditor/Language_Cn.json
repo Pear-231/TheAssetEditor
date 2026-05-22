@@ -243,6 +243,7 @@
   "ReferenceModel.SceneObject.AnimationFile": "动画文件",
   "ReferenceModel.SceneObject.MetaFile": "元文件",
   "ReferenceModel.SceneObject.PersistMetaFile": "持久元文件",
+  "ReferenceModel.SceneObject.AudioMetaFile": "音频元文件",
 
   "EditorHost.Menu.General": "常规",
   "EditorHost.Menu.SaveShortcutFile": "保存快捷方式文件",
@@ -418,6 +419,7 @@
   "MetadataEditor.Buttons.Save": "保存",
   "MetadataEditor.Tabs.Persistent": "持久",
   "MetadataEditor.Tabs.Animation": "动画",
+  "MetadataEditor.Tabs.Audio": "音频",
   "MetadataEditor.Entry.HeaderPrefix": "元数据 (v",
   "MetadataEditor.Entry.HeaderSuffix": ") 条目:",
   "MetadataEditor.Attribute.Description": "描述:",

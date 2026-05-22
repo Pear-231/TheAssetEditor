@@ -125,6 +125,13 @@
                     <TextBox Text="{Binding FragAndSlotSelection.MetaDataPersistName, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="true" VerticalContentAlignment="Center"/>
 
                 </DockPanel>
+
+                <DockPanel DockPanel.Dock="Top" Margin="0,3,0,0">
+                    <CheckBox Visibility="Hidden"/>
+                    <Label  Width ="{StaticResource labelWidth}" Content="{loc:Loc ReferenceModel.SceneObject.AudioMetaFile}"/>
+                    <Label  Content=":"/>
+                    <TextBox Text="{Binding FragAndSlotSelection.MetaDataAudioName, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="true" VerticalContentAlignment="Center"/>
+                </DockPanel>
             </DockPanel>
         </StackPanel>
     </Expander>

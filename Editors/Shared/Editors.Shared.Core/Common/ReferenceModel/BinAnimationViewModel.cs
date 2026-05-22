@@ -25,6 +25,7 @@ namespace Editors.Shared.Core.Common.ReferenceModel
         [ObservableProperty] FilterCollection<AnimationBinEntryGenericFormat> _fragmentSlotList;
         [ObservableProperty] string? _metaDataName;
         [ObservableProperty] string? _metaDataPersistName;
+        [ObservableProperty] string? _metaDataAudioName;
         [ObservableProperty] string? _animationFileName;
 
         public BinAnimationViewModel(SceneObjectEditor sceneObjectEditor, IPackFileService pfs, ISkeletonAnimationLookUpHelper skeletonAnimationLookUpHelper, SceneObject sceneObject, IUiCommandFactory uiCommandFactory)
@@ -116,6 +117,7 @@ namespace Editors.Shared.Core.Common.ReferenceModel
             AnimationReference? animationReference = null;
             PackFile? meta = null;
             PackFile? persistMeta = null;
+            PackFile? audioMeta = null;
             string? persistFullpath = null;
 
             if (string.IsNullOrWhiteSpace(value?.AnimationFile) == false)
@@ -126,6 +128,9 @@ namespace Editors.Shared.Core.Common.ReferenceModel
 
             if (string.IsNullOrWhiteSpace(value?.MetaFile) == false)
                 meta = _pfs.FindFile(value.MetaFile);
+
+            if (string.IsNullOrWhiteSpace(value?.SoundFile) == false)
+                audioMeta = _pfs.FindFile(value.SoundFile);
 
             var persist = FragmentSlotList.PossibleValues.FirstOrDefault(x => x.SlotName == "PERSISTENT_METADATA_ALIVE");
             if (persist != null && string.IsNullOrWhiteSpace(persist.MetaFile) == false)
@@ -145,10 +150,12 @@ namespace Editors.Shared.Core.Common.ReferenceModel
             }
 
             _sceneObjectEditor.SetAnimation(_sceneObject, animationReference?.AnimationFile);
-            _sceneObjectEditor.SetMetaFile(_sceneObject, meta, persistMeta);
+            _sceneObjectEditor.SetMetaFile(_sceneObject, meta, persistMeta, audioMeta);
 
             MetaDataName = value?.MetaFile;
             MetaDataPersistName = persistFullpath;
+            MetaDataAudioName = value?.SoundFile;
+
             if (animationReference != null)
                 AnimationFileName = "[" + animationReference?.Container.Name + "] " + animationReference?.AnimationFile;
             else

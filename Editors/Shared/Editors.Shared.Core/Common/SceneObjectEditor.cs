@@ -92,7 +92,7 @@ namespace Editors.Shared.Core.Common
                 var skeletonName = SceneNodeHelper.GetSkeletonName(loadedNode);
                 var fullSkeletonName = $"animations\\skeletons\\{skeletonName}.anim";
                 var skeletonFile = _packFileService.FindFile(fullSkeletonName);
-                SetMetaFile(sceneObject, null, null);
+                SetMetaFile(sceneObject, null, null, null);
                 SetSkeleton(sceneObject, skeletonFile, false);
             }
             sceneObject.MeshName.Value = file.Name;
@@ -177,10 +177,11 @@ namespace Editors.Shared.Core.Common
                 assetViewModel.TriggerSkeletonChanged();
         }*/
 
-        public void SetMetaFile(SceneObject sceneObject, PackFile? metaFile, PackFile? persistantFile)
+        public void SetMetaFile(SceneObject sceneObject, PackFile? metaFile, PackFile? persistantFile, PackFile? audioMetaFile)
         {
             sceneObject.MetaData = metaFile;
             sceneObject.PersistMetaData = persistantFile;
+            sceneObject.AudioMetaData = audioMetaFile;
             _eventHub.Publish(new SceneObjectUpdateEvent(sceneObject, false, false, false, true));
             sceneObject.TriggerMetaDataChanged();
         }
