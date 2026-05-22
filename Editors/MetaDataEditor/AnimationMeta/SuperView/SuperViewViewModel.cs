@@ -28,18 +28,20 @@ namespace Editors.AnimationMeta.SuperView
         [ObservableProperty] string _metaFilePath = "";
         [ObservableProperty] MetaDataEditorViewModel _persistentMetaEditor;
         [ObservableProperty] MetaDataEditorViewModel _metaEditor;
+        [ObservableProperty] MetaDataEditorViewModel _audioMetaEditor;
         [ObservableProperty] int _selectedTabControllerIndex = 0;
         public override Type EditorViewModelType => typeof(EditorView);
         public bool HasUnsavedChanges
         { 
             get 
             {
-                return PersistentMetaEditor.HasUnsavedChanges || MetaEditor.HasUnsavedChanges;
+                return PersistentMetaEditor.HasUnsavedChanges || MetaEditor.HasUnsavedChanges || AudioMetaEditor.HasUnsavedChanges;
             }
             set 
             {
                 PersistentMetaEditor.HasUnsavedChanges = value;
                 MetaEditor.HasUnsavedChanges = value;
+                AudioMetaEditor.HasUnsavedChanges = value;
             } 
         }
 
@@ -76,9 +78,11 @@ namespace Editors.AnimationMeta.SuperView
         {
             var newFile = _packFileService.FindFile(evnt.NewPath);
             if (evnt.FileOwner == PersistentMetaEditor)
-                _sceneObjectBuilder.SetMetaFile(_asset.Data, _asset.Data.MetaData, newFile);
+                _sceneObjectBuilder.SetMetaFile(_asset.Data, _asset.Data.MetaData, newFile, _asset.Data.AudioMetaData);
             else if (evnt.FileOwner == MetaEditor)
-                _sceneObjectBuilder.SetMetaFile(_asset.Data, newFile, _asset.Data.PersistMetaData);
+                _sceneObjectBuilder.SetMetaFile(_asset.Data, newFile, _asset.Data.PersistMetaData, _asset.Data.AudioMetaData);
+            else if (evnt.FileOwner == AudioMetaEditor)
+                _sceneObjectBuilder.SetMetaFile(_asset.Data, _asset.Data.MetaData, _asset.Data.PersistMetaData, newFile);
             else
                 throw new Exception($"Unable to determine file owner when reciving a file save event in SuperView. Owner:{evnt.FileOwner}, File:{evnt.NewPath}");
         }
@@ -87,6 +91,7 @@ namespace Editors.AnimationMeta.SuperView
         {
             PersistentMetaEditor = new MetaDataEditorViewModel(_uiCommandFactory, _metaDataFileParser, _eventHub);
             MetaEditor = new MetaDataEditorViewModel(_uiCommandFactory, _metaDataFileParser, _eventHub);
+            AudioMetaEditor = new MetaDataEditorViewModel(_uiCommandFactory, _metaDataFileParser, _eventHub);
             
             var assetViewModel = _sceneObjectViewModelBuilder.CreateAsset("SuperViewRoot", true, "Root", Color.Black,null);
             SceneObjects.Add(assetViewModel);
@@ -119,6 +124,7 @@ namespace Editors.AnimationMeta.SuperView
         {
             PersistentMetaEditor.LoadFile(e.Owner.PersistMetaData);
             MetaEditor.LoadFile(e.Owner.MetaData);
+            AudioMetaEditor.LoadFile(e.Owner.AudioMetaData);
 
             RecreateMetaDataInformation();
         }
@@ -151,7 +157,8 @@ namespace Editors.AnimationMeta.SuperView
         {
             var res0 = PersistentMetaEditor.Save();
             var res1 = MetaEditor.Save();
-            return res0 && res1;
+            var res2 = AudioMetaEditor.Save();
+            return res0 && res1 && res2;
         }
     }
 }
