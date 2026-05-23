@@ -15,6 +15,7 @@
         Short,
         UShort,
         Single,
+        Double,
         Float16,
         Boolean,
         StringLookup,

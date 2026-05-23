@@ -27,6 +27,7 @@ namespace Shared.ByteParsing
                 (DbEnum: DbTypesEnum.uint32, typeof(uint), ByteParsers.UInt32),
                 (DbEnum: DbTypesEnum.Int64, typeof(long), ByteParsers.Int64),
                 (DbEnum: DbTypesEnum.Single, typeof(float), ByteParsers.Single),
+                (DbEnum: DbTypesEnum.Double, typeof(double), ByteParsers.Double),
                 (DbEnum: DbTypesEnum.Float16, null, ByteParsers.Float16),
                 (DbEnum: DbTypesEnum.Vector3, typeof(Vector3), ByteParsers.Vector3),
                 (DbEnum: DbTypesEnum.Vector4, typeof(Vector4), ByteParsers.Vector4),
@@ -44,7 +45,6 @@ namespace Shared.ByteParsing
                     s_typeToParserMap.Add(type, parser);
             }
         }
-
 
         public static IByteParser Create(Type type)
         {
