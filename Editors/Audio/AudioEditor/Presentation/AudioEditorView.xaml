@@ -72,14 +72,14 @@
                     Header="{loc:Loc AudioEditor.Menu.Tools}" 
                     HorizontalAlignment="Left">
                     <MenuItem 
-                        Header="{loc:Loc AudioEditor.Menu.DialogueEventMerger}" 
-                        Command="{Binding OpenDialogueEventMergerCommand}"/>
+                        Header="{loc:Loc AudioEditor.Menu.AudioProjectConverter}" 
+                        Command="{Binding OpenAudioProjectConverterCommand}"/>
                     <MenuItem
                         Header="{loc:Loc AudioEditor.Menu.AudioProjectMerger}"
                         Command="{Binding OpenAudioProjectMergerCommand}"/>
                     <MenuItem 
-                        Header="{loc:Loc AudioEditor.Menu.AudioProjectConverter}" 
-                        Command="{Binding OpenAudioProjectConverterCommand}"/>
+                        Header="{loc:Loc AudioEditor.Menu.DialogueEventMerger}" 
+                        Command="{Binding OpenDialogueEventMergerCommand}"/>
                 </MenuItem>
             </Menu>
         </Grid>
