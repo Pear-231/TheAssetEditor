@@ -5,7 +5,7 @@ using Shared.Core.PackFiles;
 using Shared.Core.PackFiles.Models;
 using Shared.Core.Settings;
 
-namespace Shared.GameFormats.DB
+namespace Shared.GameFormats.Db
 {
     public interface IDbTableQueryService
     {

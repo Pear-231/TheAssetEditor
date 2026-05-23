@@ -1,6 +1,6 @@
 ﻿using Shared.ByteParsing;
 
-namespace Shared.GameFormats.DB
+namespace Shared.GameFormats.Db
 {
     public class StringArrayTable
     {

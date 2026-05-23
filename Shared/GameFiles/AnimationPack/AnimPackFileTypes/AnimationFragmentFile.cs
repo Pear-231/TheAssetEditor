@@ -3,7 +3,7 @@ using System.Diagnostics;
 using Shared.ByteParsing;
 using Shared.Core.Misc;
 using Shared.Core.Settings;
-using Shared.GameFormats.DB;
+using Shared.GameFormats.Db;
 
 namespace Shared.GameFormats.AnimationPack.AnimPackFileTypes
 {

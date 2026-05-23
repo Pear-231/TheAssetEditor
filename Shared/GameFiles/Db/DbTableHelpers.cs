@@ -1,4 +1,4 @@
-﻿namespace Shared.GameFormats.DB
+﻿namespace Shared.GameFormats.Db
 {
     public static class DbTableHelpers
     {

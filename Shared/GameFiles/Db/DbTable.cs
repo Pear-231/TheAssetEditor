@@ -2,7 +2,7 @@
 using Shared.ByteParsing.Parsers;
 using Shared.Core.PackFiles.Models;
 
-namespace Shared.GameFormats.DB
+namespace Shared.GameFormats.Db
 {
     public class DbTable
     {

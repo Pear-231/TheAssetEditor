@@ -4,7 +4,7 @@ using Shared.Core.PackFiles;
 using Shared.Core.Settings;
 using Shared.GameFormats.AnimationPack;
 using Shared.GameFormats.AnimationPack.AnimPackFileTypes;
-using Shared.GameFormats.DB;
+using Shared.GameFormats.Db;
 using Shared.Ui.Editors.TextEditor;
 
 namespace Editors.AnimationFragmentEditor.AnimationPack.Converters.AnimationFragmentConverter

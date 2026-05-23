@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Shared.Core.DependencyInjection;
 using Shared.GameFormats.AnimationMeta.Parsing;
-using Shared.GameFormats.DB;
+using Shared.GameFormats.Db;
 
 namespace Shared.GameFormats
 {

@@ -2,7 +2,7 @@
 using Newtonsoft.Json.Converters;
 using Shared.ByteParsing.Parsers;
 
-namespace Shared.GameFormats.DB
+namespace Shared.GameFormats.Db
 {
     public class DbColumnSchema
     {

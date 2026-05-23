@@ -7,7 +7,7 @@ using Shared.Core.ErrorHandling;
 using Shared.Core.Misc;
 using Shared.Core.Settings;
 
-namespace Shared.GameFormats.DB
+namespace Shared.GameFormats.Db
 {
     public interface IDbSchemaManager
     {
