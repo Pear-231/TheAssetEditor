@@ -138,7 +138,7 @@
 
             <Expander
                 Grid.Row="3"
-                Margin="4, 5, 4, 0"
+                Margin="4, 5, 4, 5"
                 Header="{loc:Loc AudioExplorer.Languages}">
                 <Grid>
                     <Grid.RowDefinitions>
