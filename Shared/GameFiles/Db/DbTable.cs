@@ -53,16 +53,7 @@ namespace Shared.GameFormats.Db
                 var row = new DbTableRow();
 
                 foreach (var column in Schema.ColumnSchemas)
-                {
-                    try
-                    {
-                        row.Values[column.Name] = ReadColumnValue(data, column);
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new InvalidDataException($"Failed parsing table '{TableName}' row {rowIndex} column '{column.Name}'", ex);
-                    }
-                }
+                    row.Values[column.Name] = ReadColumnValue(data, column);
 
                 rows.Add(row);
             }
@@ -86,11 +77,43 @@ namespace Shared.GameFormats.Db
             if (column.Type == DbTypesEnum.List)
                 throw new NotSupportedException($"Unsupported Db field type: {column.Type}");
 
+            if (column.Type == DbTypesEnum.Optstring || column.Type == DbTypesEnum.Optstring_ascii)
+            {
+                var optStringFlag = data.Buffer[data.Index];
+                if (optStringFlag > 1)
+                {
+                    var fallbackType = column.Type == DbTypesEnum.Optstring ? DbTypesEnum.String : DbTypesEnum.String_ascii;
+
+                    try
+                    {
+                        var fallbackParser = ByteParsers.GetParser(fallbackType);
+                        var fallbackValue = fallbackParser.GetValueAsObject(data.Buffer, data.Index, out var fallbackBytesRead);
+                        data.Advance(fallbackBytesRead);
+                        return fallbackValue;
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception($"Failed to decode column '{column.Name}' ({column.Type}) at byte index {data.Index}. Optional string flag byte was {optStringFlag}, so it was interpreted as a non-optional string, but fallback parsing failed. {ex.Message}", ex);
+                    }
+                }
+            }
+
             if (column.IsOptional && column.Type != DbTypesEnum.Optstring && column.Type != DbTypesEnum.Optstring_ascii)
             {
                 var hasValue = data.ReadBool();
-                var parser = ByteParsers.GetParser(column.Type);
-                var value = parser.GetValueAsObject(data.Buffer, data.Index, out var bytesRead);
+                object? value;
+                int bytesRead;
+
+                try
+                {
+                    var parser = ByteParsers.GetParser(column.Type);
+                    value = parser.GetValueAsObject(data.Buffer, data.Index, out bytesRead);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Failed to decode optional column '{column.Name}' ({column.Type}) at byte index {data.Index}. {ex.Message}", ex);
+                }
+
                 data.Advance(bytesRead);
                 if (!hasValue)
                     return null;
@@ -98,8 +121,19 @@ namespace Shared.GameFormats.Db
                 return value;
             }
 
-            var parserForRequired = ByteParsers.GetParser(column.Type);
-            var requiredValue = parserForRequired.GetValueAsObject(data.Buffer, data.Index, out var requiredBytesRead);
+            object? requiredValue;
+            int requiredBytesRead;
+
+            try
+            {
+                var parserForRequiredValue = ByteParsers.GetParser(column.Type);
+                requiredValue = parserForRequiredValue.GetValueAsObject(data.Buffer, data.Index, out requiredBytesRead);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to decode column '{column.Name}' ({column.Type}) at byte index {data.Index}. {ex.Message}", ex);
+            }
+
             data.Advance(requiredBytesRead);
             return requiredValue;
         }

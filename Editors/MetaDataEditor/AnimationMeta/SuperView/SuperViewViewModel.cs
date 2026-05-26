@@ -5,24 +5,38 @@ using Editors.Shared.Core.Common;
 using Editors.Shared.Core.Common.BaseControl;
 using Editors.Shared.Core.Common.ReferenceModel;
 using Microsoft.Xna.Framework;
+using Serilog;
+using Shared.Core.ErrorHandling;
 using Shared.Core.Events;
 using Shared.Core.Events.Scoped;
 using Shared.Core.PackFiles;
 using Shared.Core.ToolCreation;
+using Shared.GameFormats.AnimationMeta.Definitions;
 using Shared.GameFormats.AnimationMeta.Parsing;
+using Shared.GameFormats.Db;
 
 namespace Editors.AnimationMeta.SuperView
 {
     public partial class SuperViewViewModel : EditorHostBase, ISaveableEditor
     {
+        private const string AudioMetadataTagsTableName = "audio_metadata_tags_tables";
+        private const int AudioTabIndex = 2;
+
+        private static readonly string[] s_audioMetadataTagKeyColumns = ["key", "Key"];
+        private static readonly string[] s_audioMetadataTagBattleStartColumns = ["sound_event_battle_start", "Sound Event Battle Start"];
+
+        private readonly ILogger _logger = Logging.Create<SuperViewViewModel>();
         SceneObjectViewModel _asset;
 
         private readonly SceneObjectEditor _sceneObjectBuilder;
         private readonly MetaDataFileParser _metaDataFileParser;
         private readonly IMetaDataBuilder _metaDataFactory;
         private readonly IPackFileService _packFileService;
+        private readonly IDbTableQueryService _dbTableQueryService;
         private readonly IEventHub _eventHub;
         private readonly IUiCommandFactory _uiCommandFactory;
+
+        public DbTable? DebugAudioMetadataTagsTable { get; private set; }
 
         [ObservableProperty] string _persistentMetaFilePath = "";
         [ObservableProperty] string _metaFilePath = "";
@@ -53,7 +67,8 @@ namespace Editors.AnimationMeta.SuperView
             SceneObjectEditor sceneObjectBuilder,
             IEditorHostParameters editorHostParameters,
             MetaDataFileParser metaDataFileParser,
-            IMetaDataBuilder metaDataFactory)
+            IMetaDataBuilder metaDataFactory,
+            IDbTableQueryService dbTableQueryService)
             : base(editorHostParameters)
         {
             DisplayName = "Super view";
@@ -63,6 +78,7 @@ namespace Editors.AnimationMeta.SuperView
             _sceneObjectBuilder = sceneObjectBuilder;
             _metaDataFileParser = metaDataFileParser;
             _metaDataFactory = metaDataFactory;
+            _dbTableQueryService = dbTableQueryService;
             Initialize();
             eventHub.Register<ScopedFileSavedEvent>(this, OnFileSaved);
             eventHub.Register<SceneObjectUpdateEvent>(this, OnSceneObjectUpdated);
@@ -70,9 +86,99 @@ namespace Editors.AnimationMeta.SuperView
             eventHub.Register<SelecteMetaDataAttributeChangedEvent>(this, OnSelectedMetaDataAttributeChanged);
         }
 
-        private void OnSelectedMetaDataAttributeChanged(SelecteMetaDataAttributeChangedEvent @event) => RecreateMetaDataInformation();
+        private void OnSelectedMetaDataAttributeChanged(SelecteMetaDataAttributeChangedEvent @event)
+        {
+            RecreateMetaDataInformation();
+            PrintAudioSoundEventLookup();
+        }
         void OnMetaDataAttributeChanged(MetaDataAttributeChangedEvent @event) => RecreateMetaDataInformation();
         void OnMetaDataChanged(SceneObject sceneObject) => RecreateMetaDataInformation();
+
+        private void PrintAudioSoundEventLookup()
+        {
+            if (SelectedTabControllerIndex != AudioTabIndex)
+                return;
+
+            var audioMetaDataFile = _asset.Data.AudioMetaData;
+            if (audioMetaDataFile == null)
+            {
+                _logger.Here().Information("No audio metadata file is loaded on the current asset.");
+                return;
+            }
+
+            var containers = _packFileService.GetAllPackfileContainers();
+            var audioMetadataTagsTables = _dbTableQueryService.LoadTables(AudioMetadataTagsTableName, containers);
+            var audioMetadataTagsTable = audioMetadataTagsTables.FirstOrDefault();
+            DebugAudioMetadataTagsTable = audioMetadataTagsTable;
+
+            if (AudioMetaEditor.SelectedAttribute is not SoundTrigger_v10 soundTrigger)
+                return;
+
+            if (string.IsNullOrWhiteSpace(soundTrigger.SoundEvent))
+                return;
+
+            if (audioMetadataTagsTables.Count == 0)
+            {
+                _logger.Here().Information("Unable to load table '{TableName}'", AudioMetadataTagsTableName);
+                return;
+            }
+
+            var battleStartActionEvent = string.Empty;
+            var foundMapping = false;
+            foreach (var currentTable in audioMetadataTagsTables)
+            {
+                if (!TryResolveBattleStartActionEvent(currentTable, soundTrigger.SoundEvent, out battleStartActionEvent))
+                    continue;
+
+                foundMapping = true;
+                break;
+            }
+
+            if (foundMapping)
+            {
+                _logger.Here().Information(
+                    "Audio metadata key '{SoundEventKey}' maps to battle start action event '{BattleStartActionEvent}'",
+                    soundTrigger.SoundEvent,
+                    battleStartActionEvent);
+            }
+            else
+            {
+                _logger.Here().Information(
+                    "No audio metadata battle start mapping found for key '{SoundEventKey}' in table '{TableName}'",
+                    soundTrigger.SoundEvent,
+                    AudioMetadataTagsTableName);
+            }
+        }
+
+        private bool TryResolveBattleStartActionEvent(DbTable audioMetadataTagsTable, string soundEventKey, out string battleStartActionEvent)
+        {
+            battleStartActionEvent = string.Empty;
+
+            foreach (var row in audioMetadataTagsTable.Rows)
+            {
+                var rowKey = string.Empty;
+                foreach (var keyColumn in s_audioMetadataTagKeyColumns)
+                {
+                    rowKey = row.GetString(keyColumn) ?? string.Empty;
+                    if (string.IsNullOrWhiteSpace(rowKey) == false)
+                        break;
+                }
+
+                if (!string.Equals(rowKey, soundEventKey, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                foreach (var battleStartColumn in s_audioMetadataTagBattleStartColumns)
+                {
+                    battleStartActionEvent = row.GetString(battleStartColumn) ?? string.Empty;
+                    if (string.IsNullOrWhiteSpace(battleStartActionEvent) == false)
+                        return true;
+                }
+
+                return false;
+            }
+
+            return false;
+        }
 
         private void OnFileSaved(ScopedFileSavedEvent evnt)
         {

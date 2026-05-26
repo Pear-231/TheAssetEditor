@@ -1,169 +1,51 @@
-﻿using Shared.ByteParsing;
-using Serilog;
+﻿using Serilog;
+using Shared.ByteParsing;
 using Shared.Core.ErrorHandling;
 using Shared.Core.PackFiles;
 using Shared.Core.PackFiles.Models;
-using Shared.Core.Settings;
+using Shared.Core.PackFiles.Utility;
 
 namespace Shared.GameFormats.Db
 {
     public interface IDbTableQueryService
     {
-        DbTable? LoadTable(string tableName, IPackFileContainer? container = null);
-        List<DbTable> LoadTables(string tableName, IPackFileContainer? container = null);
+        DbTable LoadTable(PackFile packFile, string directory);
+        List<DbTable> LoadTables(string directory, List<IPackFileContainer> containers);
     }
 
-    public class DbTableQueryService(
-        IPackFileService packFileService,
-        IDbSchemaManager schemaManager,
-        ApplicationSettingsService applicationSettingsService) : IDbTableQueryService
+    public class DbTableQueryService(IDbSchemaManager schemaManager) : IDbTableQueryService
     {
-        private const string DefaultVanillaDbFileName = "data__";
-
         private readonly ILogger _logger = Logging.Create<DbTableQueryService>();
-        private readonly IPackFileService _packFileService = packFileService;
         private readonly IDbSchemaManager _schemaManager = schemaManager;
-        private readonly ApplicationSettingsService _applicationSettingsService = applicationSettingsService;
 
-        public DbTable? LoadTable(string tableName, IPackFileContainer? container = null)
+        public DbTable LoadTable(PackFile packFile, string directory)
         {
-            if (string.IsNullOrWhiteSpace(tableName))
-                return null;
-
-            if (!_schemaManager.EnsureLoaded())
-                return null;
-
-            var sanitisedTableName = tableName.Trim().Trim('"', '\'');
-            var normalisedInput = sanitisedTableName.Replace('/', '\\');
-
-            var tableFolderName = GetDbTableFolderNameFromPath(normalisedInput);
-            if (tableFolderName != null)
-            {
-                var file = _packFileService.FindFile(normalisedInput, container);
-                if (file == null)
-                    return null;
-
-                var data = file.DataSource.ReadData();
-                var header = DbTableHeader.ReadData(new ByteChunk(data));
-
-                var schema = _schemaManager.GetSchema(tableFolderName, header.Version);
-
-                if (schema == null)
-                {
-                    _logger.Here().Warning($"Unable to resolve schema for Db file {normalisedInput} (table folder {tableFolderName}, version {header.Version})");
-                    return null;
-                }
-
-                return DbTable.CreateFromBytes(data, tableFolderName, schema);
-            }
-
-            var tableFolder = DbTableHelpers.NormaliseLookupTableFolder(sanitisedTableName);
-            var vanillaFileName = GetVanillaDbFileName(tableFolder);
-            var vanillaPath = $"db\\{tableFolder}\\{vanillaFileName}";
-
-            return LoadTable(vanillaPath, container);
+            _schemaManager.EnsureLoaded();
+            var data = packFile.DataSource.ReadData();
+            var header = DbTableHeader.ReadData(new ByteChunk(data));
+            var schema = _schemaManager.GetSchema(directory, header.Version);
+            return DbTable.CreateFromBytes(data, packFile.Name, schema);
         }
 
-        public List<DbTable> LoadTables(string tableName, IPackFileContainer? container = null)
+        public List<DbTable> LoadTables(string tablesDirectory, List<IPackFileContainer> containers)
         {
-            if (string.IsNullOrWhiteSpace(tableName))
-                return [];
+            _schemaManager.EnsureLoaded();
 
-            if (!_schemaManager.EnsureLoaded())
-                return [];
+            var tables = new List<DbTable>();
 
-            var sanitisedTableName = tableName.Trim().Trim('"', '\'');
-            var tableFolder = DbTableHelpers.NormaliseLookupTableFolder(sanitisedTableName);
-            var resolvedPaths = ResolveTableFilePaths(tableFolder, container);
-            if (resolvedPaths.Count == 0)
+            var tablesDirectoryPath = $"db\\{tablesDirectory}";
+            var packFiles = PackFileServiceUtility.GetDirectoryFiles(tablesDirectoryPath, containers);
+            if (packFiles.Count == 0)
             {
-                _logger.Here().Warning($"Unable to resolve Db table folder {tableFolder}.");
-                return [];
+                _logger.Here().Warning($"Unable to resolve Db directory {tablesDirectory}.");
+                return tables;
             }
 
-            var decodedTables = new List<DbTable>(resolvedPaths.Count);
-            foreach (var path in resolvedPaths)
-            {
-                var decodedTable = LoadTable(path, container);
-                if (decodedTable != null)
-                    decodedTables.Add(decodedTable);
-            }
+            foreach (var tablePackFile in packFiles)
+                tables.Add(LoadTable(tablePackFile, tablesDirectory));
 
-            return decodedTables;
+            return tables;
         }
 
-        private List<string> ResolveTableFilePaths(string tableFolderName, IPackFileContainer? container)
-        {
-            var folderPrefix = $"db\\{tableFolderName}\\";
-
-            var matchingPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            if (container != null)
-                AddMatchingPaths(container.GetAllFiles().Keys, folderPrefix, tableFolderName, matchingPaths);
-            else
-            {
-                var allContainers = _packFileService.GetAllPackfileContainers();
-                foreach (var currentContainer in allContainers)
-                    AddMatchingPaths(currentContainer.GetAllFiles().Keys, folderPrefix, tableFolderName, matchingPaths);
-            }
-
-            return matchingPaths
-                .OrderBy(x => Path.GetFileName(x), StringComparer.OrdinalIgnoreCase)
-                .ThenBy(x => x, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-        }
-
-        private static void AddMatchingPaths(
-            IEnumerable<string> files,
-            string folderPrefix,
-            string tableFolderName,
-            HashSet<string> output)
-        {
-            foreach (var path in files)
-            {
-                var normalisedPath = path.Replace('/', '\\').Trim();
-                if (!normalisedPath.StartsWith(folderPrefix, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                var splitPath = normalisedPath.Split('\\', StringSplitOptions.RemoveEmptyEntries);
-                if (splitPath.Length != 3)
-                    continue;
-
-                if (!string.Equals(splitPath[0], "db", StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                if (!string.Equals(splitPath[1], tableFolderName, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                output.Add(normalisedPath);
-            }
-        }
-
-        private string GetVanillaDbFileName(string tableFolderName)
-        {
-            var currentGame = _applicationSettingsService.CurrentSettings.CurrentGame;
-            if (currentGame == GameTypeEnum.Warhammer
-                || currentGame == GameTypeEnum.Warhammer2
-                || currentGame == GameTypeEnum.Warhammer3
-                || currentGame == GameTypeEnum.Troy
-                || currentGame == GameTypeEnum.ThreeKingdoms
-                || currentGame == GameTypeEnum.Pharaoh)
-            {
-                return DefaultVanillaDbFileName;
-            }
-
-            return tableFolderName;
-        }
-
-        private static string? GetDbTableFolderNameFromPath(string normalisedPath)
-        {
-            var splitPath = normalisedPath.Split('\\', StringSplitOptions.RemoveEmptyEntries);
-            if (splitPath.Length != 3)
-                return null;
-
-            if (!string.Equals(splitPath[0], "db", StringComparison.OrdinalIgnoreCase))
-                return null;
-
-            return splitPath[1];
-        }
     }
 }
