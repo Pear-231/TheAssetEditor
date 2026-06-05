@@ -4,6 +4,12 @@ using Shared.ByteParsing.Parsers;
 
 namespace Shared.GameFormats.Db
 {
+    public enum DbStringSerialisationMode
+    {
+        Default,
+        FixedLengthZeroTerminatedUtf8
+    }
+
     public class DbColumnSchema
     {
         public string Name { get; set; } = string.Empty;
@@ -18,6 +24,9 @@ namespace Shared.GameFormats.Db
 
         [JsonConverter(typeof(StringEnumConverter))]
         public DbTypesEnum Type { get; set; }
+
+        [JsonConverter(typeof(StringEnumConverter))]
+        public DbStringSerialisationMode StringSerialisationMode { get; set; } = DbStringSerialisationMode.Default;
 
         public DbColumnSchema DeepClone()
         {

@@ -1,6 +1,7 @@
 ﻿using Shared.ByteParsing;
 using Shared.ByteParsing.Parsers;
 using Shared.Core.PackFiles.Models;
+using System.Text;
 
 namespace Shared.GameFormats.Db
 {
@@ -36,6 +37,25 @@ namespace Shared.GameFormats.Db
             return table;
         }
 
+        public static DbTable CreateFromBytesAtOffsets(byte[] fileContent, string tableName, DbTableSchema schema, IReadOnlyList<int> rowOffsets)
+        {
+            if (fileContent == null)
+                throw new ArgumentNullException(nameof(fileContent));
+            if (schema == null)
+                throw new ArgumentNullException(nameof(schema));
+            if (rowOffsets == null)
+                throw new ArgumentNullException(nameof(rowOffsets));
+
+            var table = new DbTable
+            {
+                TableName = tableName,
+                Schema = schema
+            };
+
+            table.ReadDataAtOffsets(fileContent, rowOffsets);
+            return table;
+        }
+
         public void ReadData(byte[] fileContent)
         {
             if (fileContent == null)
@@ -52,8 +72,54 @@ namespace Shared.GameFormats.Db
             {
                 var row = new DbTableRow();
 
-                foreach (var column in Schema.ColumnSchemas)
-                    row.Values[column.Name] = ReadColumnValue(data, column);
+                try
+                {
+                    foreach (var column in Schema.ColumnSchemas)
+                        row.Values[column.Name] = ReadColumnValue(data, column);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Failed to decode row {rowIndex} in table '{TableName}'. {ex.Message}", ex);
+                }
+
+                rows.Add(row);
+            }
+
+            Header = header;
+            Rows = rows;
+        }
+
+        public void ReadDataAtOffsets(byte[] fileContent, IReadOnlyList<int> rowOffsets)
+        {
+            if (fileContent == null)
+                throw new ArgumentNullException(nameof(fileContent));
+            if (rowOffsets == null)
+                throw new ArgumentNullException(nameof(rowOffsets));
+
+            if (Schema == null)
+                throw new ArgumentNullException(nameof(Schema));
+
+            var data = new ByteChunk(fileContent);
+            var header = DbTableHeader.ReadData(data);
+
+            var rows = new List<DbTableRow>();
+            foreach (var rowOffset in rowOffsets.OrderBy(x => x))
+            {
+                if (rowOffset < data.Index || rowOffset >= fileContent.Length)
+                    continue;
+
+                var rowData = new ByteChunk(fileContent, rowOffset);
+                var row = new DbTableRow();
+
+                try
+                {
+                    foreach (var column in Schema.ColumnSchemas)
+                        row.Values[column.Name] = ReadColumnValue(rowData, column);
+                }
+                catch
+                {
+                    continue;
+                }
 
                 rows.Add(row);
             }
@@ -64,6 +130,28 @@ namespace Shared.GameFormats.Db
 
         private static object? ReadColumnValue(ByteChunk data, DbColumnSchema column)
         {
+            if (column.StringSerialisationMode == DbStringSerialisationMode.FixedLengthZeroTerminatedUtf8
+                && (column.Type == DbTypesEnum.String
+                    || column.Type == DbTypesEnum.String_ascii
+                    || column.Type == DbTypesEnum.Optstring
+                    || column.Type == DbTypesEnum.Optstring_ascii))
+            {
+                if (column.MaxLength <= 0)
+                    throw new Exception($"Column '{column.Name}' uses fixed-length text serialisation but has an invalid MaxLength of {column.MaxLength}.");
+
+                if (data.BytesLeft < column.MaxLength)
+                    throw new Exception($"Failed to decode fixed-length text column '{column.Name}'. Needs {column.MaxLength} bytes but only {data.BytesLeft} bytes remain.");
+
+                var rawValue = Encoding.UTF8.GetString(data.Buffer, data.Index, column.MaxLength);
+                var zeroTerminatorIndex = rawValue.IndexOf('\0');
+                var value = zeroTerminatorIndex >= 0
+                    ? rawValue.Substring(0, zeroTerminatorIndex)
+                    : rawValue;
+
+                data.Advance(column.MaxLength);
+                return value;
+            }
+
             if (column.Type == DbTypesEnum.StringLookup)
             {
                 var hasValue = data.ReadBool();
@@ -100,25 +188,32 @@ namespace Shared.GameFormats.Db
 
             if (column.IsOptional && column.Type != DbTypesEnum.Optstring && column.Type != DbTypesEnum.Optstring_ascii)
             {
-                var hasValue = data.ReadBool();
-                object? value;
-                int bytesRead;
+                if (data.BytesLeft < 1)
+                    throw new Exception($"Failed to decode optional column '{column.Name}' ({column.Type}) at byte index {data.Index}. No bytes left for optional flag.");
 
-                try
+                var optionalFlag = data.Buffer[data.Index];
+                if (optionalFlag <= 1)
                 {
-                    var parser = ByteParsers.GetParser(column.Type);
-                    value = parser.GetValueAsObject(data.Buffer, data.Index, out bytesRead);
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception($"Failed to decode optional column '{column.Name}' ({column.Type}) at byte index {data.Index}. {ex.Message}", ex);
-                }
+                    var hasValue = data.ReadBool();
+                    object? optionalValue;
+                    int optionalBytesRead;
 
-                data.Advance(bytesRead);
-                if (!hasValue)
-                    return null;
+                    try
+                    {
+                        var parser = ByteParsers.GetParser(column.Type);
+                        optionalValue = parser.GetValueAsObject(data.Buffer, data.Index, out optionalBytesRead);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception($"Failed to decode optional column '{column.Name}' ({column.Type}) at byte index {data.Index}. {ex.Message}", ex);
+                    }
 
-                return value;
+                    data.Advance(optionalBytesRead);
+                    if (!hasValue)
+                        return null;
+
+                    return optionalValue;
+                }
             }
 
             object? requiredValue;

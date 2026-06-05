@@ -17,14 +17,6 @@
                 _error = $"Not enough space in stream. Asking for {FieldSize} bytes, but only {bytesLeft} bytes left";
                 return false;
             }
-            var value = buffer[index];
-            if (!(value == 1 || value == 0))
-            {
-                bytesRead = 0;
-                _error = value + " is not a valid bool";
-                return false;
-            }
-
             bytesRead = FieldSize;
             _error = null;
             return true;
@@ -59,7 +51,7 @@
             value = false;
             var canDecode = CanDecode(buffer, index, out bytesRead, out _error);
             if (canDecode)
-                value = buffer[index] == 1;
+                value = buffer[index] != 0;
             return canDecode;
         }
 

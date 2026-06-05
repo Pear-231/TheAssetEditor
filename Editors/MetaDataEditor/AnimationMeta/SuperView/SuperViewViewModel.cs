@@ -106,13 +106,13 @@ namespace Editors.AnimationMeta.SuperView
                 return;
             }
 
+            if (AudioMetaEditor.SelectedAttribute is not SoundTrigger_v10 soundTrigger)
+                return;
+
             var containers = _packFileService.GetAllPackfileContainers();
             var audioMetadataTagsTables = _dbTableQueryService.LoadTables(AudioMetadataTagsTableName, containers);
             var audioMetadataTagsTable = audioMetadataTagsTables.FirstOrDefault();
             DebugAudioMetadataTagsTable = audioMetadataTagsTable;
-
-            if (AudioMetaEditor.SelectedAttribute is not SoundTrigger_v10 soundTrigger)
-                return;
 
             if (string.IsNullOrWhiteSpace(soundTrigger.SoundEvent))
                 return;

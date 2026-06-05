@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(\\(Get-ChildItem \"D:\\\\SteamLibrary\\\\steamapps\\\\common\\\\Total War WARHAMMER III\\\\assembly_kit\\\\raw_data\\\\db\"\\).Count)",
+      "Bash(dotnet build *)",
+      "Bash(dotnet test *)"
+    ]
+  }
+}

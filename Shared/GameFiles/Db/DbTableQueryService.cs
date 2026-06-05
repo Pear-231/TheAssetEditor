@@ -24,7 +24,28 @@ namespace Shared.GameFormats.Db
             var data = packFile.DataSource.ReadData();
             var header = DbTableHeader.ReadData(new ByteChunk(data));
             var schema = _schemaManager.GetSchema(directory, header.Version);
-            return DbTable.CreateFromBytes(data, packFile.Name, schema);
+
+            try
+            {
+                return DbTable.CreateFromBytes(data, packFile.Name, schema);
+            }
+            catch
+            {
+                if (!_schemaManager.TryInferSchemaFromAssemblyKitData(directory, header.Version, data, schema, out var refinedSchema))
+                    throw;
+
+                try
+                {
+                    return DbTable.CreateFromBytes(data, packFile.Name, refinedSchema);
+                }
+                catch
+                {
+                    if (_schemaManager.TryGetLocatedAssemblyKitRowOffsets(directory, header.Version, data, refinedSchema, out var locatedRows))
+                        return DbTable.CreateFromBytesAtOffsets(data, packFile.Name, refinedSchema, locatedRows.Select(x => x.RowOffset).ToList());
+
+                    throw;
+                }
+            }
         }
 
         public List<DbTable> LoadTables(string tablesDirectory, List<IPackFileContainer> containers)
