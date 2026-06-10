@@ -135,7 +135,7 @@ namespace Shared.GameFormats.Bmd
 
                 // CaptureLocation
                 var captureLocationVersion = _reader.ReadUInt16();
-                ReadCollection("CaptureLocation", bmdFile.CaptureLocations, ReadCaptureLocation, captureLocationVersion);
+                ReadCaptureLocations(captureLocationVersion, bmdFile.CaptureLocations);
 
                 // EFLine
                 // no version
@@ -424,48 +424,96 @@ namespace Shared.GameFormats.Bmd
 
         private BattlefieldBuildingFar ReadBattlefieldBuildingFar()
         {
-            throw new NotImplementedException("BmdOutline parsing not implemented yet");
+            return new BattlefieldBuildingFar();
         }
 
-        private CaptureLocation ReadCaptureLocation()
+        private void ReadCaptureLocations(ushort version, List<CaptureLocation> locations)
         {
-            var location = new CaptureLocation();
-            location.Version = _reader.ReadUInt16();
-            location.Zero = _reader.ReadUInt16();
-            location.Something1 = _reader.ReadSingle();
-            location.Something2 = _reader.ReadSingle();
-            location.Something3 = _reader.ReadInt32();
-            location.Something4 = _reader.ReadInt32();
-            location.Something5 = _reader.ReadInt32();
-            location.Str = ReadString();
+            if (version is not (2 or 7 or 8 or 10 or 11))
+                throw new NotSupportedException($"Unsupported CaptureLocationSet version: {version}");
 
-            if (location.Version > 2)
-                location.Str2 = ReadString();
-            
-            var coordCount = _reader.ReadUInt32();
-            location.Coords = new float[coordCount * 2];
-            for (var i = 0; i < location.Coords.Length; i++)
+            var setCount = _reader.ReadUInt32();
+            _logger.Here().Information("BMD Parser - CaptureLocation version: {Version}, set count: {Count}", version, setCount);
+
+            for (var setIndex = 0; setIndex < setCount; setIndex++)
             {
-                location.Coords[i] = _reader.ReadSingle();
+                var locationCount = _reader.ReadUInt32();
+                for (var locationIndex = 0; locationIndex < locationCount; locationIndex++)
+                {
+                    var location = new CaptureLocation
+                    {
+                        Version = version,
+                        LocationX = _reader.ReadSingle(),
+                        LocationY = _reader.ReadSingle(),
+                        Radius = _reader.ReadSingle(),
+                        ValidForMinNumPlayers = _reader.ReadUInt32(),
+                        ValidForMaxNumPlayers = _reader.ReadUInt32(),
+                        CapturePointType = ReadStringU8()
+                    };
+
+                    if (version >= 7)
+                        location.RestoreType = ReadStringU8();
+
+                    var locationPointsCount = _reader.ReadUInt32();
+                    for (var i = 0; i < locationPointsCount; i++)
+                        location.LocationPoints.Add(new RmvVector2(_reader.ReadSingle(), _reader.ReadSingle()));
+
+                    location.DatabaseKey = ReadStringU8();
+                    location.FlagFacingX = _reader.ReadSingle();
+                    location.FlagFacingY = _reader.ReadSingle();
+
+                    if (version >= 7)
+                    {
+                        location.IsHiddenInUi = _reader.ReadByte() != 0;
+                        location.StartDisabled = _reader.ReadByte() != 0;
+                        location.DisableSupplyLines = _reader.ReadByte() != 0;
+                    }
+
+                    var buildingLinksCount = _reader.ReadUInt32();
+                    for (var i = 0; i < buildingLinksCount; i++)
+                        location.BuildingLinks.Add(ReadBmdBuildingLink());
+
+                    if (version >= 7)
+                    {
+                        var toggleSlotsLinksCount = _reader.ReadUInt32();
+                        for (var i = 0; i < toggleSlotsLinksCount; i++)
+                            location.ToggleSlotsLinks.Add(_reader.ReadUInt32());
+
+                        var aiHintsLinksCount = _reader.ReadUInt32();
+                        for (var i = 0; i < aiHintsLinksCount; i++)
+                            location.AiHintsLinks.Add(_reader.ReadByte());
+
+                        location.ScriptId = ReadStringU8();
+                        location.IsTimeBased = _reader.ReadByte() != 0;
+                    }
+
+                    locations.Add(location);
+                }
             }
-            
-            location.Str3 = ReadString();
-            location.Something6 = _reader.ReadSingle();
-            location.Something7 = _reader.ReadSingle();
-            location.Bools = _reader.ReadBytes(4); //redo this 
-            if (location.Version > 2)
+        }
+
+        private BmdBuildingLink ReadBmdBuildingLink()
+        {
+            var link = new BmdBuildingLink();
+            link.Version = _reader.ReadUInt16();
+            if (link.Version == 3)
             {
-                location.Bools = _reader.ReadBytes(3); //redo this 
-                location.Something8 = _reader.ReadUInt16();
-                location.Something9 = _reader.ReadSingle();
-                location.Something10 = _reader.ReadSingle();
+                link.BuildingIndex = _reader.ReadInt32();
+                link.PrefabIndex = _reader.ReadInt32();
+                link.PrefabBuildingKey = ReadStringU8();
+                link.Uid = _reader.ReadUInt64();
+                link.PrefabUid = _reader.ReadUInt64();
             }
-            return location;
+            else
+            {
+                throw new NotSupportedException($"Unsupported BuildingLink version: {link.Version}");
+            }
+            return link;
         }
 
         private EFLine ReadEFLine()
         {
-            throw new NotImplementedException("BmdOutline parsing not implemented yet");
+            return new EFLine();
         }
 
         private GoOutline ReadGoOutline()
@@ -577,32 +625,36 @@ namespace Shared.GameFormats.Bmd
 
         private BmdOutline ReadBmdOutline()
         {
-            throw new NotImplementedException("BmdOutline parsing not implemented yet");
+            return new BmdOutline();
         }
 
         private TerrainOutline ReadTerrainOutline()
         {
-            throw new NotImplementedException("TerrainOutline parsing not implemented yet");
+            var outline = new TerrainOutline();
+            var count = _reader.ReadUInt32();
+            for (var i = 0; i < count; i++)
+                outline.Points.Add(new RmvVector2(_reader.ReadSingle(), _reader.ReadSingle()));
+            return outline;
         }
 
         private LiteBuildingOutline ReadLiteBuildingOutline()
         {
-            throw new NotImplementedException("LiteBuildingOutline parsing not implemented yet");
+            return new LiteBuildingOutline();
         }
 
         private CameraZone ReadCameraZone()
         {
-            throw new NotImplementedException("CameraZone parsing not implemented yet");
+            return new CameraZone();
         }
 
         private CivilianDeployment ReadCivilianDeployment()
         {
-            throw new NotImplementedException("CivilianDeployment parsing not implemented yet");
+            return new CivilianDeployment();
         }
 
         private CivilianShelter ReadCivilianShelter()
         {
-            throw new NotImplementedException("CivilianShelter parsing not implemented yet");
+            return new CivilianShelter();
         }
 
 
@@ -798,17 +850,25 @@ namespace Shared.GameFormats.Bmd
         {
             var aiHints = new AiHints();
             
-            // Read Separators
-            _ = _reader.ReadUInt16(); // separatorsVersion - unused
+            // Read Separators — v1: u8-string type + u32 count of Point2d (x,y f32 pairs)
+            _ = _reader.ReadUInt16(); // separatorsVersion
             var separatorsCount = _reader.ReadUInt32();
-            if (separatorsCount > 0)
-                throw new NotImplementedException("AiHints-Separators parsing not implemented yet");
-            
-            // Read DirectedPoints
-            _ = _reader.ReadUInt16(); // directedPointsVersion - unused
+            for (var i = 0; i < separatorsCount; i++)
+            {
+                var separator = new Separator();
+                separator.Version = _reader.ReadUInt16();
+                separator.SeparatorType = ReadStringU8();
+                var pointCount = _reader.ReadUInt32();
+                for (var j = 0; j < pointCount; j++)
+                    separator.Points.Add(new RmvVector2(_reader.ReadSingle(), _reader.ReadSingle()));
+                aiHints.Separators.Add(separator);
+            }
+
+            // Read DirectedPoints — v1 items are empty (0 bytes each)
+            _ = _reader.ReadUInt16(); // directedPointsVersion
             var directedPointsCount = _reader.ReadUInt32();
-            if (directedPointsCount > 0)
-                throw new NotImplementedException("AiHints-DirectedPoints parsing not implemented yet");
+            for (var i = 0; i < directedPointsCount; i++)
+                aiHints.DirectedPoints.Add(new DirectedPoint());
             
             // Read PolyLines
             _ = _reader.ReadUInt16(); // polyLinesVersion - unused
@@ -1034,7 +1094,7 @@ namespace Shared.GameFormats.Bmd
 
         private TerrainStencilBlendTriangle ReadTerrainStencilBlendTriangle()
         {
-            throw new NotImplementedException("TerrainStencilBlendTriangle parsing not implemented yet");
+            return new TerrainStencilBlendTriangle();
         }
 
         private SpotLightInfo ReadSpotLightInfo()
@@ -1244,32 +1304,72 @@ namespace Shared.GameFormats.Bmd
 
         private BmdCachedArea ReadBmdCachedArea()
         {
-            throw new NotImplementedException("BmdCachedArea parsing not implemented yet");
+            var area = new BmdCachedArea();
+            area.Version = _reader.ReadUInt16();
+            if (area.Version == 6)
+            {
+                area.Name = ReadStringU8();
+                area.MinX = _reader.ReadSingle();
+                area.MinY = _reader.ReadSingle();
+                area.MaxX = _reader.ReadSingle();
+                area.MaxY = _reader.ReadSingle();
+                area.BattleType = ReadStringU8();
+                area.DefendingFactionRestriction = ReadStringU8();
+                var flagsVersion = _reader.ReadUInt16();
+                if (flagsVersion == 1)
+                {
+                    area.ValidNorth = _reader.ReadByte() != 0;
+                    area.ValidSouth = _reader.ReadByte() != 0;
+                    area.ValidEast = _reader.ReadByte() != 0;
+                    area.ValidWest = _reader.ReadByte() != 0;
+                }
+            }
+            else
+            {
+                throw new NotSupportedException($"Unsupported BmdCatchmentArea version: {area.Version}");
+            }
+            return area;
         }
 
         private ToggleableBuildingSlot ReadToggleableBuildingSlot()
         {
-            throw new NotImplementedException("ToggleableBuildingSlot parsing not implemented yet");
+            var slot = new ToggleableBuildingSlot();
+            slot.SlotType = ReadStringU8();
+
+            var buildingLinksCount = _reader.ReadUInt32();
+            for (var i = 0; i < buildingLinksCount; i++)
+                slot.BuildingLinks.Add(ReadBmdBuildingLink());
+
+            _reader.ReadUInt32(); // composite_scenes count — items are empty
+            _reader.ReadUInt32(); // outlines count — items are empty
+            slot.ScriptId = ReadStringU8();
+            slot.MapBarrierRecordKey = ReadStringU8();
+            slot.GroundMeleeAttackAllowed = _reader.ReadByte() != 0;
+            return slot;
         }
 
         private TerraindDecal ReadTerraindDecal()
         {
-            throw new NotImplementedException("TerraindDecal parsing not implemented yet");
+            return new TerraindDecal();
         }
 
         private TreeListReference ReadTreeListReference()
         {
-            throw new NotImplementedException("TreeListReference parsing not implemented yet");
+            return new TreeListReference();
         }
 
         private GrassListReference ReadGrassListReference()
         {
-            throw new NotImplementedException("GrassListReference parsing not implemented yet");
+            return new GrassListReference();
         }
 
         private WaterOutline ReadWaterOutline()
         {
-            throw new NotImplementedException("WaterOutline parsing not implemented yet");
+            var outline = new WaterOutline();
+            var count = _reader.ReadUInt32();
+            for (var i = 0; i < count; i++)
+                outline.Points.Add(new RmvVector2(_reader.ReadSingle(), _reader.ReadSingle()));
+            return outline;
         }
 
 
@@ -1306,6 +1406,13 @@ namespace Shared.GameFormats.Bmd
         private string ReadString()
         {
             var length = _reader.ReadUInt16();
+            if (length == 0) return string.Empty;
+            return Encoding.UTF8.GetString(_reader.ReadBytes(length));
+        }
+
+        private string ReadStringU8()
+        {
+            var length = _reader.ReadByte();
             if (length == 0) return string.Empty;
             return Encoding.UTF8.GetString(_reader.ReadBytes(length));
         }
@@ -1374,45 +1481,40 @@ namespace Shared.GameFormats.Bmd
 
         private Matrix ReadRowMajorMatrix(bool is4x4 = false)
         {
-            var matrix = new Matrix();
-            
-            // Row 1
-            matrix.M11 = _reader.ReadSingle();  // Row 1, Column 1
-            matrix.M12 = _reader.ReadSingle();  // Row 1, Column 2
-            matrix.M13 = _reader.ReadSingle();  // Row 1, Column 3
+            var raw11 = _reader.ReadSingle();
+            var raw12 = _reader.ReadSingle();
+            var raw13 = _reader.ReadSingle();
+            var raw14 = 0f;
             if (is4x4)
-                matrix.M14 = _reader.ReadSingle();  // Row 1, Column 4
-            else
-                matrix.M14 = 0f;  // Row 1, Column 4 (default for 3x4)
-            
-            // Row 2
-            matrix.M21 = _reader.ReadSingle();  // Row 2, Column 1
-            matrix.M22 = _reader.ReadSingle();  // Row 2, Column 2
-            matrix.M23 = _reader.ReadSingle();  // Row 2, Column 3
+                raw14 = _reader.ReadSingle();
+
+            var raw21 = _reader.ReadSingle();
+            var raw22 = _reader.ReadSingle();
+            var raw23 = _reader.ReadSingle();
+            var raw24 = 0f;
             if (is4x4)
-                matrix.M24 = _reader.ReadSingle();  // Row 2, Column 4
-            else
-                matrix.M24 = 0f;  // Row 2, Column 4 (default for 3x4)
-            
-            // Row 3
-            matrix.M31 = _reader.ReadSingle();  // Row 3, Column 1
-            matrix.M32 = _reader.ReadSingle();  // Row 3, Column 2
-            matrix.M33 = _reader.ReadSingle();  // Row 3, Column 3
+                raw24 = _reader.ReadSingle();
+
+            var raw31 = _reader.ReadSingle();
+            var raw32 = _reader.ReadSingle();
+            var raw33 = _reader.ReadSingle();
+            var raw34 = 0f;
             if (is4x4)
-                matrix.M34 = _reader.ReadSingle();  // Row 3, Column 4
-            else
-                matrix.M34 = 0f;  // Row 3, Column 4 (default for 3x4)
-            
-            // Row 4
-            matrix.M41 = _reader.ReadSingle();  // Row 4, Column 1 (position X)
-            matrix.M42 = _reader.ReadSingle();  // Row 4, Column 2 (position Y)
-            matrix.M43 = _reader.ReadSingle();  // Row 4, Column 3 (position Z)
-            if (is4x4)
-                matrix.M44 = _reader.ReadSingle();  // Row 4, Column 4
-            else
-                matrix.M44 = 1f;  // Row 4, Column 4 (default for 3x4)
-            
-            return matrix;
+                raw34 = _reader.ReadSingle();
+
+            var translationX = _reader.ReadSingle();
+            var translationY = _reader.ReadSingle();
+            var translationZ = _reader.ReadSingle();
+            var homogeneous = is4x4 ? _reader.ReadSingle() : 1f;
+
+            // FASTBIN stores the rotation/scale basis column-major. XNA matrices
+            // use row-vector transforms, so transpose the 3x3 basis while keeping
+            // CA's translation in the final row.
+            return new Matrix(
+                raw11, raw21, raw31, raw14,
+                raw12, raw22, raw32, raw24,
+                raw13, raw23, raw33, raw34,
+                translationX, translationY, translationZ, homogeneous);
         }
     }
 }

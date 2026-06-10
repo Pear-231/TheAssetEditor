@@ -15,9 +15,9 @@ namespace Shared.GameFormats.RigidModel
         {
         }
 
-        public RmvFile Load(byte[] bytes)
+        public RmvFile Load(byte[] bytes, string? sourcePath = null)
         {
-            _logger.Here().Information($"Loading RmvFile. Bytes:{bytes.Length}");
+            _logger.Here().Information($"Loading RmvFile: {sourcePath}, Bytes: {bytes.Length}");
             var file = LoadOnlyHeaders(bytes);
 
             var modelList = new RmvModel[file.Header.LodCount][];

@@ -166,9 +166,9 @@ namespace Editors.Reports.Bmd
                     {
                         dynamic captureLocationRecord = new ExpandoObject();
                         captureLocationRecord.Path = path;
-                        captureLocationRecord.PositionX = captureLocation.Coords.Length > 0 ? captureLocation.Coords[0] : 0;
-                        captureLocationRecord.PositionY = captureLocation.Coords.Length > 1 ? captureLocation.Coords[1] : 0;
-                        captureLocationRecord.Str = captureLocation.Str;
+                        captureLocationRecord.PositionX = captureLocation.LocationX;
+                        captureLocationRecord.PositionY = captureLocation.LocationY;
+                        captureLocationRecord.Str = captureLocation.CapturePointType;
                         captureLocationRecords.Add(captureLocationRecord);
                     }
 
@@ -236,7 +236,7 @@ namespace Editors.Reports.Bmd
                     {
                         dynamic terrainOutlineRecord = new ExpandoObject();
                         terrainOutlineRecord.Path = path;
-                        terrainOutlineRecord.Version = terrainOutline.Version;
+                        terrainOutlineRecord.PointCount = terrainOutline.Points.Count;
                         terrainOutlineRecords.Add(terrainOutlineRecord);
                     }
 
@@ -584,7 +584,7 @@ namespace Editors.Reports.Bmd
                     {
                         dynamic toggleableBuildingSlotRecord = new ExpandoObject();
                         toggleableBuildingSlotRecord.Path = path;
-                        toggleableBuildingSlotRecord.Version = toggleableBuildingSlot.Version;
+                        toggleableBuildingSlotRecord.SlotType = toggleableBuildingSlot.SlotType;
                         toggleableBuildingSlotRecords.Add(toggleableBuildingSlotRecord);
                     }
 
@@ -620,7 +620,7 @@ namespace Editors.Reports.Bmd
                     {
                         dynamic waterOutlineRecord = new ExpandoObject();
                         waterOutlineRecord.Path = path;
-                        waterOutlineRecord.Version = waterOutline.Version;
+                        waterOutlineRecord.PointCount = waterOutline.Points.Count;
                         waterOutlineRecords.Add(waterOutlineRecord);
                     }
                 }
@@ -771,16 +771,12 @@ namespace Editors.Reports.Bmd
                 errors.Add("Corrupted Deployment version detected");
             if (parsedFile.BmdCachedAreas.Any(b => b.Version > 100))
                 errors.Add("Corrupted BmdCachedArea version detected");
-            if (parsedFile.ToggleableBuildingSlots.Any(t => t.Version > 100))
-                errors.Add("Corrupted ToggleableBuildingSlot version detected");
             if (parsedFile.TerraindDecals.Any(t => t.Version > 100))
                 errors.Add("Corrupted TerraindDecal version detected");
             if (parsedFile.TreeListReferences.Any(t => t.Version > 100))
                 errors.Add("Corrupted TreeListReference version detected");
             if (parsedFile.GrassListReferences.Any(g => g.Version > 100))
                 errors.Add("Corrupted GrassListReference version detected");
-            if (parsedFile.WaterOutlines.Any(w => w.Version > 100))
-                errors.Add("Corrupted WaterOutline version detected");
             
             // Check single object versions
             if (parsedFile.PlayableArea != null && parsedFile.PlayableArea.PlayableAreaVersion > 100)

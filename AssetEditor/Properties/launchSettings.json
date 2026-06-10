@@ -98,6 +98,11 @@
       "commandName": "Project",
       "commandLineArgs": "-devcfg CampaignAnimationDamsel",
       "nativeDebugging": false
+    },
+    "AE-BattleMap-WakaChateau": {
+      "commandName": "Project",
+      "commandLineArgs": "-devcfg BattleMap_WakaChateau",
+      "nativeDebugging": false
     }
   }
 }

@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using GameWorld.Core.Rendering.Materials;
 using GameWorld.Core.Rendering.Materials.Shaders;
+using Serilog;
 using Shared.Core.PackFiles;
 using Shared.Core.Services;
 using Shared.GameFormats.RigidModel.MaterialHeaders;
@@ -10,6 +11,8 @@ namespace GameWorld.Core.Services
 {
     public class WsModelMaterialProvider
     {
+        private static readonly ILogger _logger = Log.ForContext<WsModelMaterialProvider>();
+
         private readonly IPackFileService _packFileService;
         private readonly CapabilityMaterialFactory _materialFactory;
         private WsModelFile? _wsModelFile;
@@ -58,7 +61,7 @@ namespace GameWorld.Core.Services
                     var found = _wsModelFile.MaterialList.FirstOrDefault(x => x.LodIndex == lodIndex && x.PartIndex == meshIndex);
                     if (found == null)
                     {
-                        _standardDialogs.ShowDialogBox($"Unable to apply wsmodel file. Mismatch between expected mesh and lod counts.\nReverting to using rmv2 material.");
+                        _logger.Warning("WsModel mismatch for lod={LodIndex} mesh={MeshIndex} — reverting to RMV2 material", lodIndex, meshIndex);
                         _wsModelFile = null;
                         return;
                     }

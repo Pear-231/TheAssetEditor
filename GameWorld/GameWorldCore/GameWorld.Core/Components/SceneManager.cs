@@ -188,10 +188,13 @@ namespace GameWorld.Core.Components
                 {
                     if (child is IDrawableItem drawableNode && child.IsVisible)
                         drawableNode.Render(_renderEngineComponent, parentMatrix);
-                    DrawBasicSceneHirarchy(child, parentMatrix * child.ModelMatrix);
+                    DrawBasicSceneHirarchy(child, ComposeWorldTransform(child.ModelMatrix, parentMatrix));
                 }
             }
         }
+
+        internal static Matrix ComposeWorldTransform(Matrix childMatrix, Matrix parentMatrix)
+            => childMatrix * parentMatrix;
 
         public void DumpToConsole()
         {

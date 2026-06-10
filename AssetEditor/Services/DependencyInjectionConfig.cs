@@ -37,6 +37,7 @@ namespace AssetEditor.Services
                 new Editors.Ipc.DependencyInjectionContainer(),
                 new Editors.BmdEditor.DependencyInjectionContainer(),
                 new Editors.CscEditor.DependencyInjectionContainer(),
+                new Editors.BattleMapEditor.DependencyInjectionContainer(),
 
                 // Host application
                 new DependencyInjectionContainer(),

@@ -2,6 +2,7 @@
 using CommunityToolkit.Diagnostics;
 using GameWorld.Core.Components.Selection;
 using GameWorld.Core.Rendering;
+using GameWorld.Core.Rendering.RenderItems;
 using GameWorld.Core.Services;
 using GameWorld.Core.Utility;
 using GameWorld.Core.WpfWindow;
@@ -36,6 +37,10 @@ namespace GameWorld.Core.Components.Rendering
         bool _bigSceneDepthBiasMode = false;
         bool _drawGlow = true;
         SaveRenderImageSettings? _saveRenderImageSettings;
+
+        public bool UseInstancing { get; set; } = true;
+
+        private readonly Dictionary<VertexBuffer, (DynamicVertexBuffer Vb, MeshInstanceData[] Data)> _instanceBufferCache = new();
 
         private BloomFilter _bloomFilter;
         Texture2D _whiteTexture;
@@ -277,8 +282,7 @@ namespace GameWorld.Core.Components.Rendering
                 }
             }
 
-            foreach (var item in _renderItems[RenderBuckedId.Normal])
-                item.Draw(device, commonShaderParameters, renderingTechnique);
+            DrawNormalBucket(device, commonShaderParameters, renderingTechnique);
 
             if (drawLines)
             {
@@ -297,6 +301,89 @@ namespace GameWorld.Core.Components.Rendering
 
         }
 
+        void DrawNormalBucket(GraphicsDevice device, CommonShaderParameters parameters, RenderingTechnique renderingTechnique)
+        {
+            // For the emissive pass, or when instancing is disabled, draw everything individually.
+            if (renderingTechnique != RenderingTechnique.Normal || !UseInstancing)
+            {
+                foreach (var item in _renderItems[RenderBuckedId.Normal])
+                    item.Draw(device, parameters, renderingTechnique);
+                return;
+            }
+
+            // Group GeometryRenderItems by their VertexBuffer identity.
+            // Non-geometry items (markers, overlays, etc.) are drawn individually as before.
+            var groups = new Dictionary<VertexBuffer, List<GeometryRenderItem>>();
+            var individuals = new List<IRenderItem>();
+
+            foreach (var item in _renderItems[RenderBuckedId.Normal])
+            {
+                if (item is GeometryRenderItem gri && gri.MeshBatchKey != null && gri.BoundIndexBuffer != null)
+                {
+                    if (!groups.TryGetValue(gri.MeshBatchKey, out var bucket))
+                    {
+                        bucket = [];
+                        groups[gri.MeshBatchKey] = bucket;
+                    }
+                    bucket.Add(gri);
+                }
+                else
+                {
+                    individuals.Add(item);
+                }
+            }
+
+            foreach (var item in individuals)
+                item.Draw(device, parameters, renderingTechnique);
+
+            var instancingEffect = _resourceLibrary.GetStaticEffect(ShaderTypes.GeometryInstance);
+
+            foreach (var (vb, items) in groups)
+                DrawInstanced(device, parameters, vb, items[0].BoundIndexBuffer!, items, instancingEffect);
+        }
+
+        void DrawInstanced(
+            GraphicsDevice device,
+            CommonShaderParameters parameters,
+            VertexBuffer geometryVb,
+            IndexBuffer geometryIb,
+            List<GeometryRenderItem> items,
+            Effect instancingEffect)
+        {
+            var count = items.Count;
+
+            if (!_instanceBufferCache.TryGetValue(geometryVb, out var cached) || cached.Data.Length < count)
+            {
+                if (cached.Vb != null)
+                    _graphicsResourceCreator.DisposeTracked(cached.Vb);
+
+                var capacity = Math.Max(count, 64);
+                var newVb = _graphicsResourceCreator.CreateDynamicVertexBuffer(
+                    MeshInstanceData.VertexDeclaration, capacity, BufferUsage.WriteOnly);
+                cached = (newVb, new MeshInstanceData[capacity]);
+                _instanceBufferCache[geometryVb] = cached;
+            }
+
+            var colour = new Vector3(0.72f, 0.72f, 0.72f);
+            for (var i = 0; i < count; i++)
+                cached.Data[i] = MeshInstanceData.FromMatrix(items[i].WorldMatrix, colour);
+
+            cached.Vb.SetData(cached.Data, 0, count, SetDataOptions.Discard);
+
+            instancingEffect.Parameters["WVP"].SetValue(parameters.View * parameters.Projection);
+            instancingEffect.CurrentTechnique = instancingEffect.Techniques["Instancing"];
+            instancingEffect.CurrentTechnique.Passes[0].Apply();
+
+            device.Indices = geometryIb;
+            device.SetVertexBuffers(
+                new VertexBufferBinding(geometryVb, 0, 0),
+                new VertexBufferBinding(cached.Vb, 0, 1));
+            device.DrawInstancedPrimitives(
+                PrimitiveType.TriangleList, 0, 0,
+                geometryIb.IndexCount / 3,
+                count);
+        }
+
         public void Dispose()
         {
             _eventHub.UnRegister(this);
@@ -311,6 +398,10 @@ namespace GameWorld.Core.Components.Rendering
 
             _renderLines.Clear();
             _renderItems.Clear();
+
+            foreach (var (_, cached) in _instanceBufferCache)
+                _graphicsResourceCreator.DisposeTracked(cached.Vb);
+            _instanceBufferCache.Clear();
 
             foreach (var item in _rasterStates.Values)
                 _graphicsResourceCreator.DisposeTracked(item);

@@ -44,7 +44,6 @@ namespace Editors.BmdEditor
             EditorInfoBuilder
                 .Create<BmdEditorViewModel, BmdEditorView>(EditorEnums.BMD_Editor)
                 .AddExtention(".bmd", EditorPriorites.Default)
-                //.AddExtention(".bin", EditorPriorites.Default) // TODO: Re-enable when BMD parser is complete
                 .Build(editorDatabase);
         }
     }

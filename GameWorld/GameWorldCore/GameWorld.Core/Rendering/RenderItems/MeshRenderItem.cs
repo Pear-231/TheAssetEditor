@@ -12,6 +12,10 @@ namespace GameWorld.Core.Rendering.RenderItems
         private readonly IShader _shader;
         private readonly Matrix _modelMatrix;
 
+        public VertexBuffer? MeshBatchKey => _geometry.GetGeometryContext().VertexBuffer;
+        public IndexBuffer? BoundIndexBuffer => _geometry.GetGeometryContext().IndexBuffer;
+        public Matrix WorldMatrix => _modelMatrix;
+
         public GeometryRenderItem(MeshObject geometry, IShader shader, Matrix modelMatrix)
         {
             _geometry = geometry;

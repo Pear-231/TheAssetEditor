@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Shared.Core.PackFiles;
 using Shared.GameFormats.Bmd;
@@ -15,6 +16,7 @@ namespace Editors.BmdEditor.Services
         private readonly IPackFileService _packFileService = packFileService;
         private readonly ILogger _logger = Serilog.Log.ForContext<BmdElementLoader>();
         private readonly BmdSceneCreator _bmdSceneCreator = bmdSceneCreator;
+        private readonly Dictionary<string, BmdFile> _referencedBmdCache = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Loads all elements from a BMD file into the provided collections
@@ -41,7 +43,8 @@ namespace Editors.BmdEditor.Services
             ObservableCollection<PlayableAreaViewModel> playableAreas,
             ObservableCollection<CscInfoViewModel> cscInfos,
             ObservableCollection<DeploymentViewModel> deployments,
-            bool loadChildBmds = true)
+            bool loadChildBmds = true,
+            bool loadScene = true)
         {
             if (bmdFile == null) return;
 
@@ -67,8 +70,8 @@ namespace Editors.BmdEditor.Services
             LoadCscInfos(bmdFile, cscInfos, allElements);
             LoadDeployments(bmdFile, deployments, allElements);
 
-            // After all view models are created, load the 3D scene with direct references
-            _bmdSceneCreator.LoadSceneContent(bmdFile, allElements);
+            if (loadScene)
+                _bmdSceneCreator.LoadSceneContent(bmdFile, allElements);
         }
 
         /// <summary>
@@ -114,7 +117,8 @@ namespace Editors.BmdEditor.Services
                 childBuildingProjectileEmitters, childZonesTemplates, childProps, childVfxInfos,
                 childPointLights, childSpotLights, childSounds, childPolyMeshes, childLightProbes,
                 childTerrainHoles, childPlayableAreas, childCscInfos, childDeployments,
-                loadChildBmds: false);
+                loadChildBmds: false,
+                loadScene: false);
 
             // Add all loaded elements to the parent's Children collection
             foreach (var element in childAllElements)
@@ -146,8 +150,11 @@ namespace Editors.BmdEditor.Services
                         if (referencedBmdFile != null)
                         {
                             _logger.Information($"Found referenced BMD file: {bmd.BmdString}");
-                            var referencedBmdData = referencedBmdFile.DataSource.ReadData();
-                            var referencedBmd = BmdParser.Parse(referencedBmdData);
+                            if (!_referencedBmdCache.TryGetValue(bmd.BmdString, out var referencedBmd))
+                            {
+                                referencedBmd = BmdParser.Parse(referencedBmdFile.DataSource.ReadData());
+                                _referencedBmdCache[bmd.BmdString] = referencedBmd;
+                            }
                             LoadChildElements(vm, referencedBmd);
                             _logger.Information($"Successfully loaded {vm.ChildElements.Count} child elements for BMD: {bmd.BmdString}");
                         }

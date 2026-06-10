@@ -23,6 +23,7 @@
         Twui_Editor,
         BMD_Editor,
         Csc_Editor,
+        BattleMapViewer_Editor,
         None,
     }
 }

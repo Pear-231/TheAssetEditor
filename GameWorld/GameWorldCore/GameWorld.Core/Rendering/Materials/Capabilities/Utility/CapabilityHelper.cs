@@ -50,11 +50,16 @@ namespace GameWorld.Core.Rendering.Materials.Capabilities.Utility
 
             try
             {
+                if (parameter.Type == "float2")
+                {
+                    var x = float.Parse(parameter.Value.Split(",")[0], CultureInfo.InvariantCulture);
+                    return x;
+                }
+
                 if (parameter.Type != "float")
                     throw new Exception($"Parameter {parameterInstance.Name} was expected to be float, but was {parameter.Type}");
 
-                var parsedValue = float.Parse(parameter.Value, CultureInfo.InvariantCulture);
-                return parsedValue;
+                return float.Parse(parameter.Value, CultureInfo.InvariantCulture);
             }
             catch (Exception e)
             {

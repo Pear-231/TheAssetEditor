@@ -342,3 +342,5 @@ healthchecksdb
 
 # MonoGame build outputs
 /GameWorld/ContentProject/Content/bin/
+
+/Research

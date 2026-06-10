@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Shared.GameFormats.RigidModel.Transforms;
 using GameWorld.Core.SceneNodes;
+using GameWorld.Core.Rendering.RenderItems;
 
 namespace Editors.BmdEditor.Services
 {
@@ -709,6 +711,264 @@ namespace Editors.BmdEditor.Services
             typedTarget.SelectedNodeColour = SelectedNodeColour;
             typedTarget.Scale = Scale;
             typedTarget.FailedModelPath = FailedModelPath;
+            base.CopyInto(target);
+        }
+    }
+
+    // Capture location flagpole: vertical pole + flag rectangle, rendered at the location center (XZ plane)
+    public class CaptureLocationFlagpoleNode(string name = "CaptureLocation_Flagpole") : GroupNode(name), IDrawableItem
+    {
+        public Color PoleColour { get; set; } = Color.White;
+        public Color FlagColour { get; set; } = Color.Red;
+        public float PoleHeight { get; set; } = 5f;
+        public float LocationX { get; set; }
+        public float LocationY { get; set; }
+
+        public void Render(GameWorld.Core.Components.Rendering.RenderEngineComponent renderEngine, Matrix parentWorld)
+        {
+            if (!IsVisible) return;
+
+            var worldTransform = ModelMatrix * parentWorld;
+            var origin = Vector3.Transform(new Vector3(LocationX, 0, LocationY), worldTransform);
+            var poleTop = Vector3.Transform(new Vector3(LocationX, PoleHeight, LocationY), worldTransform);
+            var flagTl = Vector3.Transform(new Vector3(LocationX, PoleHeight, LocationY), worldTransform);
+            var flagTr = Vector3.Transform(new Vector3(LocationX + 1.5f, PoleHeight - 0.5f, LocationY), worldTransform);
+            var flagBr = Vector3.Transform(new Vector3(LocationX + 1.5f, PoleHeight - 1.5f, LocationY), worldTransform);
+            var flagBl = Vector3.Transform(new Vector3(LocationX, PoleHeight - 1f, LocationY), worldTransform);
+
+            renderEngine.AddRenderLines([
+                new VertexPositionColor(origin, PoleColour),
+                new VertexPositionColor(poleTop, PoleColour),
+                new VertexPositionColor(flagTl, FlagColour),
+                new VertexPositionColor(flagTr, FlagColour),
+                new VertexPositionColor(flagTr, FlagColour),
+                new VertexPositionColor(flagBr, FlagColour),
+                new VertexPositionColor(flagBr, FlagColour),
+                new VertexPositionColor(flagBl, FlagColour),
+                new VertexPositionColor(flagBl, FlagColour),
+                new VertexPositionColor(flagTl, FlagColour),
+            ]);
+        }
+
+        public override ISceneNode CreateCopyInstance() => new CaptureLocationFlagpoleNode();
+
+        public override void CopyInto(ISceneNode target)
+        {
+            if (target is not CaptureLocationFlagpoleNode typedTarget) return;
+            typedTarget.PoleColour = PoleColour;
+            typedTarget.FlagColour = FlagColour;
+            typedTarget.PoleHeight = PoleHeight;
+            typedTarget.LocationX = LocationX;
+            typedTarget.LocationY = LocationY;
+            base.CopyInto(target);
+        }
+    }
+
+    // Terrain outline — renders one Outline2d (closed polygon at y=0) in orange
+    public class TerrainOutlineNode(string name = "TerrainOutline") : GroupNode(name), IDrawableItem
+    {
+        public Color NodeColour { get; set; } = Color.Orange;
+        public List<RmvVector2> Points { get; set; } = [];
+
+        public void Render(GameWorld.Core.Components.Rendering.RenderEngineComponent renderEngine, Matrix parentWorld)
+        {
+            if (!IsVisible || Points.Count < 2) return;
+
+            var worldTransform = ModelMatrix * parentWorld;
+            var lineVertices = new List<VertexPositionColor>();
+
+            for (var i = 0; i < Points.Count; i++)
+            {
+                var a = Points[i];
+                var b = Points[(i + 1) % Points.Count];
+                lineVertices.Add(new VertexPositionColor(Vector3.Transform(new Vector3(a.X, 0, a.Y), worldTransform), NodeColour));
+                lineVertices.Add(new VertexPositionColor(Vector3.Transform(new Vector3(b.X, 0, b.Y), worldTransform), NodeColour));
+            }
+
+            renderEngine.AddRenderLines([.. lineVertices]);
+        }
+
+        public override ISceneNode CreateCopyInstance() => new TerrainOutlineNode();
+
+        public override void CopyInto(ISceneNode target)
+        {
+            if (target is not TerrainOutlineNode typedTarget) return;
+            typedTarget.NodeColour = NodeColour;
+            typedTarget.Points = [.. Points];
+            base.CopyInto(target);
+        }
+    }
+
+    // Water outline — renders one Outline2d (closed polygon at y=0) in blue
+    public class WaterOutlineNode(string name = "WaterOutline") : GroupNode(name), IDrawableItem
+    {
+        public Color NodeColour { get; set; } = Color.DodgerBlue;
+        public List<RmvVector2> Points { get; set; } = [];
+
+        public void Render(GameWorld.Core.Components.Rendering.RenderEngineComponent renderEngine, Matrix parentWorld)
+        {
+            if (!IsVisible || Points.Count < 2) return;
+
+            var worldTransform = ModelMatrix * parentWorld;
+            var lineVertices = new List<VertexPositionColor>();
+
+            for (var i = 0; i < Points.Count; i++)
+            {
+                var a = Points[i];
+                var b = Points[(i + 1) % Points.Count];
+                lineVertices.Add(new VertexPositionColor(Vector3.Transform(new Vector3(a.X, 0, a.Y), worldTransform), NodeColour));
+                lineVertices.Add(new VertexPositionColor(Vector3.Transform(new Vector3(b.X, 0, b.Y), worldTransform), NodeColour));
+            }
+
+            renderEngine.AddRenderLines([.. lineVertices]);
+        }
+
+        public override ISceneNode CreateCopyInstance() => new WaterOutlineNode();
+
+        public override void CopyInto(ISceneNode target)
+        {
+            if (target is not WaterOutlineNode typedTarget) return;
+            typedTarget.NodeColour = NodeColour;
+            typedTarget.Points = [.. Points];
+            base.CopyInto(target);
+        }
+    }
+
+    public class TerrainHeightMapNode(string name = "Terrain") : GroupNode(name), IDrawableItem
+    {
+        public Color LowColour { get; set; } = new(78, 92, 72);
+        public Color HighColour { get; set; } = new(145, 150, 135);
+        public float[,] Heights { get; set; } = new float[0, 0];
+        public float WorldSize { get; set; } = 2048f;
+        public int SampleStep { get; set; } = 16;
+        private VertexPositionColor[]? _triangles;
+
+        public void Render(GameWorld.Core.Components.Rendering.RenderEngineComponent renderEngine, Matrix parentWorld)
+        {
+            var width = Heights.GetLength(0);
+            var height = Heights.GetLength(1);
+            if (!IsVisible || width < 2 || height < 2)
+                return;
+
+            _triangles ??= BuildTriangles();
+            renderEngine.AddRenderItem(
+                GameWorld.Core.Components.Rendering.RenderBuckedId.Normal,
+                new VertexColorTriangleRenderItem(_triangles, ModelMatrix * parentWorld));
+        }
+
+        private VertexPositionColor[] BuildTriangles()
+        {
+            var width = Heights.GetLength(0);
+            var height = Heights.GetLength(1);
+            var step = Math.Max(1, SampleStep);
+            var vertices = new List<VertexPositionColor>();
+            var minHeight = Heights.Cast<float>().Min();
+            var maxHeight = Heights.Cast<float>().Max();
+            var heightRange = Math.Max(0.001f, maxHeight - minHeight);
+
+            VertexPositionColor Point(int x, int y)
+            {
+                var px = x / (float)(width - 1) * WorldSize;
+                var pz = y / (float)(height - 1) * WorldSize;
+                var amount = (Heights[x, y] - minHeight) / heightRange;
+                return new VertexPositionColor(
+                    new Vector3(px, Heights[x, y], pz),
+                    Color.Lerp(LowColour, HighColour, amount));
+            }
+
+            for (var y = 0; y < height - 1; y += step)
+            {
+                var nextY = Math.Min(y + step, height - 1);
+                for (var x = 0; x < width - 1; x += step)
+                {
+                    var nextX = Math.Min(x + step, width - 1);
+                    var topLeft = Point(x, y);
+                    var topRight = Point(nextX, y);
+                    var bottomLeft = Point(x, nextY);
+                    var bottomRight = Point(nextX, nextY);
+
+                    vertices.Add(topLeft);
+                    vertices.Add(topRight);
+                    vertices.Add(bottomRight);
+                    vertices.Add(topLeft);
+                    vertices.Add(bottomRight);
+                    vertices.Add(bottomLeft);
+                }
+            }
+
+            return [.. vertices];
+        }
+
+        public override ISceneNode CreateCopyInstance() => new TerrainHeightMapNode();
+
+        public override void CopyInto(ISceneNode target)
+        {
+            if (target is not TerrainHeightMapNode typedTarget)
+                return;
+
+            typedTarget.LowColour = LowColour;
+            typedTarget.HighColour = HighColour;
+            typedTarget.Heights = Heights;
+            typedTarget.WorldSize = WorldSize;
+            typedTarget.SampleStep = SampleStep;
+            base.CopyInto(target);
+        }
+    }
+
+    public class DeploymentAreaNode(string name = "DeploymentArea") : GroupNode(name), IDrawableItem
+    {
+        public Color NodeColour { get; set; } = new(40, 150, 255, 150);
+        public List<RmvVector2> Points { get; set; } = [];
+
+        public void Render(GameWorld.Core.Components.Rendering.RenderEngineComponent renderEngine, Matrix parentWorld)
+        {
+            if (!IsVisible || Points.Count < 3)
+                return;
+
+            var world = ModelMatrix * parentWorld;
+            var vertices = new List<VertexPositionColor>();
+            var minY = Points.Min(x => x.Y);
+            var maxY = Points.Max(x => x.Y);
+            const int bands = 18;
+
+            for (var band = 0; band <= bands; band++)
+            {
+                var y = MathHelper.Lerp(minY, maxY, band / (float)bands);
+                var intersections = new List<float>();
+
+                for (var i = 0; i < Points.Count; i++)
+                {
+                    var a = Points[i];
+                    var b = Points[(i + 1) % Points.Count];
+                    if ((a.Y <= y && b.Y > y) || (b.Y <= y && a.Y > y))
+                        intersections.Add(a.X + ((y - a.Y) / (b.Y - a.Y) * (b.X - a.X)));
+                }
+
+                intersections.Sort();
+                for (var i = 0; i + 1 < intersections.Count; i += 2)
+                {
+                    vertices.Add(new VertexPositionColor(
+                        Vector3.Transform(new Vector3(intersections[i], 0.08f, y), world),
+                        NodeColour));
+                    vertices.Add(new VertexPositionColor(
+                        Vector3.Transform(new Vector3(intersections[i + 1], 0.08f, y), world),
+                        NodeColour));
+                }
+            }
+
+            if (vertices.Count > 0)
+                renderEngine.AddRenderLines([.. vertices]);
+        }
+
+        public override ISceneNode CreateCopyInstance() => new DeploymentAreaNode();
+
+        public override void CopyInto(ISceneNode target)
+        {
+            if (target is not DeploymentAreaNode typedTarget)
+                return;
+
+            typedTarget.NodeColour = NodeColour;
+            typedTarget.Points = [.. Points];
             base.CopyInto(target);
         }
     }

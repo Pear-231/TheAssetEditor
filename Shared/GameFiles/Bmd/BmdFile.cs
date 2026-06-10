@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Shared.GameFormats.RigidModel.Transforms;
 
 namespace Shared.GameFormats.Bmd
@@ -142,36 +142,35 @@ namespace Shared.GameFormats.Bmd
 
     public class BattlefieldBuildingFar
     {
-        //TODO: Not properly implemented
         public ushort Version { get; set; }
-        
     }
 
     public class CaptureLocation
     {
-        //TODO: Not properly implemented
         public ushort Version { get; set; }
-        public ushort Zero { get; set; }
-        public float Something1 { get; set; }
-        public float Something2 { get; set; }
-        public int Something3 { get; set; }
-        public int Something4 { get; set; }
-        public int Something5 { get; set; }
-        public string Str { get; set; } = string.Empty;
-        public string Str2 { get; set; } = string.Empty;
-        public float[] Coords { get; set; } = [];
-        public string Str3 { get; set; } = string.Empty;
-        public float Something6 { get; set; }
-        public float Something7 { get; set; }
-        public byte[] Bools { get; set; } = new byte[7];
-        public ushort Something8 { get; set; }
-        public float Something9 { get; set; }
-        public float Something10 { get; set; }
+        public float LocationX { get; set; }
+        public float LocationY { get; set; }
+        public float Radius { get; set; }
+        public uint ValidForMinNumPlayers { get; set; }
+        public uint ValidForMaxNumPlayers { get; set; }
+        public string CapturePointType { get; set; } = string.Empty;
+        public string RestoreType { get; set; } = string.Empty;
+        public List<RmvVector2> LocationPoints { get; set; } = [];
+        public string DatabaseKey { get; set; } = string.Empty;
+        public float FlagFacingX { get; set; }
+        public float FlagFacingY { get; set; }
+        public bool IsHiddenInUi { get; set; }
+        public bool StartDisabled { get; set; }
+        public bool DisableSupplyLines { get; set; }
+        public List<BmdBuildingLink> BuildingLinks { get; set; } = [];
+        public List<uint> ToggleSlotsLinks { get; set; } = [];
+        public List<byte> AiHintsLinks { get; set; } = [];
+        public string ScriptId { get; set; } = string.Empty;
+        public bool IsTimeBased { get; set; }
     }
 
     public class EFLine
     {
-        //TODO: Not properly implemented
         public ushort Version { get; set; }
     }
 
@@ -208,37 +207,31 @@ namespace Shared.GameFormats.Bmd
 
     public class BmdOutline
     {
-        //TODO: Not properly implemented
         public ushort Version { get; set; }
     }
 
     public class TerrainOutline
     {
-        //TODO: Not properly implemented
-        public ushort Version { get; set; }
+        public List<RmvVector2> Points { get; set; } = [];
     }
 
     public class LiteBuildingOutline
     {
-        //TODO: Not properly implemented
         public ushort Version { get; set; }
     }
 
     public class CameraZone
     {
-        //TODO: Not properly implemented
         public ushort Version { get; set; }
     }
 
     public class CivilianDeployment
     {
-        //TODO: Not properly implemented
         public ushort Version { get; set; }
     }
 
     public class CivilianShelter
     {
-        //TODO: Not properly implemented
         public ushort Version { get; set; }
     }
 
@@ -316,6 +309,8 @@ namespace Shared.GameFormats.Bmd
     {
         //TODO: Not properly implemented
         public ushort Version { get; set; }
+        public string SeparatorType { get; set; } = string.Empty;
+        public List<RmvVector2> Points { get; set; } = [];
     }
 
     public class DirectedPoint
@@ -535,12 +530,37 @@ namespace Shared.GameFormats.Bmd
     {
         //TODO: Not properly implemented
         public ushort Version { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public float MinX { get; set; }
+        public float MinY { get; set; }
+        public float MaxX { get; set; }
+        public float MaxY { get; set; }
+        public string BattleType { get; set; } = string.Empty;
+        public string DefendingFactionRestriction { get; set; } = string.Empty;
+        public bool ValidNorth { get; set; }
+        public bool ValidSouth { get; set; }
+        public bool ValidEast { get; set; }
+        public bool ValidWest { get; set; }
+    }
+
+    public class BmdBuildingLink
+    {
+        public ushort Version { get; set; }
+        public int BuildingIndex { get; set; }
+        public int PrefabIndex { get; set; }
+        public string PrefabBuildingKey { get; set; } = string.Empty;
+        public ulong Uid { get; set; }
+        public ulong PrefabUid { get; set; }
     }
 
     public class ToggleableBuildingSlot
     {
         //TODO: Not properly implemented
-        public ushort Version { get; set; }
+        public string SlotType { get; set; } = string.Empty;
+        public List<BmdBuildingLink> BuildingLinks { get; set; } = [];
+        public string ScriptId { get; set; } = string.Empty;
+        public string MapBarrierRecordKey { get; set; } = string.Empty;
+        public bool GroundMeleeAttackAllowed { get; set; }
     }
 
     public class TerraindDecal
@@ -564,7 +584,7 @@ namespace Shared.GameFormats.Bmd
     public class WaterOutline
     {
         //TODO: Not properly implemented
-        public ushort Version { get; set; }
+        public List<RmvVector2> Points { get; set; } = [];
     }
 
 
