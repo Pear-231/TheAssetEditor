@@ -20,6 +20,7 @@ using Shared.Core.PackFiles.Utility;
 using Shared.Core.Services;
 using Shared.Core.Settings;
 using Shared.Core.ToolCreation;
+using Shared.GameFormats.DB;
 using Shared.Ui.Common;
 
 namespace AssetEditor
@@ -51,6 +52,7 @@ namespace AssetEditor
 
             _ = _serviceProvider.GetRequiredService<RecentFilesTracker>(); // Force instance of the RecentFilesTracker
             _ = _serviceProvider.GetRequiredService<IScopeRepository>();  // Force instance of the IScopeRepository
+            _ = InitializeDbSchemas(_serviceProvider.GetRequiredService<IDbSchemaManager>());
 
             var uiCommandFactory = _serviceProvider.GetRequiredService<IUiCommandFactory>();
 
@@ -174,6 +176,18 @@ namespace AssetEditor
             var newerReleases = await VersionChecker.GetNewerReleases();
             if (newerReleases != null)
                 uiCommandFactory.Create<OpenUpdaterWindowCommand>(x => x.Configure(newerReleases)).Execute();
+        }
+
+        private static async Task InitializeDbSchemas(IDbSchemaManager schemaManager)
+        {
+            try
+            {
+                await schemaManager.InitializeAsync();
+            }
+            catch (Exception exception)
+            {
+                Logging.Create<App>().Here().Error($"Unable to initialize the RPFM DB schemas: {exception.Message}");
+            }
         }
 
         void DispatcherUnhandledExceptionHandler(object sender, DispatcherUnhandledExceptionEventArgs args)

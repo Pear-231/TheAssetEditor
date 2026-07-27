@@ -56,7 +56,21 @@
                                 <Border BorderThickness="0.5" Margin="3" BorderBrush="DarkGray" DockPanel.Dock="Bottom"/>
                                 <Label  FontWeight="bold"  Content="{Binding FieldName, UpdateSourceTrigger=PropertyChanged}" Width ="{StaticResource labelWidth}" />
                                 <Label FontWeight="bold"  Content=":"/>
-                                <TextBox Text="{Binding ValueAsString, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"  VerticalContentAlignment="Center" IsReadOnly="{Binding IsReadOnly}"/>
+                                <StackPanel>
+                                    <TextBox Text="{Binding ValueAsString, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" VerticalContentAlignment="Center" IsReadOnly="{Binding IsReadOnly}"/>
+                                    <TextBlock Text="{Binding RelatedValue}" FontStyle="Italic" Foreground="Gray">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="Text" Value="">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
                         
                             </DockPanel>
                         </ContentControl>

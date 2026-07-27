@@ -15,12 +15,15 @@
         Short,
         UShort,
         Single,
+        Double,
         Float16,
         Boolean,
         StringLookup,
         List,
         Vector3,
-        Vector4
+        Vector4,
+        OptionalInteger,
+        ColourRGB
     }
 
     public interface IByteParser

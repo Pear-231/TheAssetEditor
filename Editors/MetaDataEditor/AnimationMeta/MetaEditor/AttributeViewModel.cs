@@ -25,6 +25,7 @@ namespace Editors.AnimationMeta.Presentation
         [ObservableProperty] string _valueAsString;
         [ObservableProperty] string _fieldName;
         [ObservableProperty] string _description;
+        [ObservableProperty] string _relatedValue = "";
         [ObservableProperty] bool _isReadOnly = true;
         [ObservableProperty] bool _isValid = true;
 
