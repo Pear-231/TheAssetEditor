@@ -84,12 +84,15 @@
     <ItemGroup>
       <None Update="Language_Cn.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>Always</CopyToPublishDirectory>
       </None>
       <None Update="Language_Fr.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>Always</CopyToPublishDirectory>
       </None>
       <None Update="Language_En.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>Always</CopyToPublishDirectory>
       </None>
     </ItemGroup>
 
