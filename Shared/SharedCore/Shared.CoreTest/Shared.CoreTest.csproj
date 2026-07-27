@@ -31,6 +31,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Testing\Shared\Test.TestingUtility.csproj" />
+    <ProjectReference Include="..\..\GameFiles\Shared.GameFormats.csproj" />
     <ProjectReference Include="..\Shared.Core\Shared.Core.csproj" />
   </ItemGroup>
 
