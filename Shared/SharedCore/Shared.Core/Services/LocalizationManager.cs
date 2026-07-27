@@ -14,8 +14,7 @@ namespace Shared.Core.Services
 
         public List<string> GetPossibleLanguages()
         {
-            var currentDirectory = Directory.GetCurrentDirectory();
-            var langaugeFiles = Directory.GetFiles(currentDirectory, "Language_*.json")
+            var langaugeFiles = Directory.GetFiles(AppContext.BaseDirectory, "Language_*.json")
                 .Select(Path.GetFileNameWithoutExtension)
                 .Select(name => name!.Substring("Language_".Length).ToLower())
                 .ToList();
@@ -28,11 +27,11 @@ namespace Shared.Core.Services
         {
             _selectedLangauge = languageCode.ToLower();
 
-            var languageFile= $"Language_{_selectedLangauge}.json";
+            var languageFile = Path.Combine(AppContext.BaseDirectory, $"Language_{_selectedLangauge}.json");
             if (File.Exists(languageFile) == false)
             {
                 MessageBox.Show($"Language file for code '{_selectedLangauge}' not found.");
-                _logger.Here().Error($"Language file for code '{_selectedLangauge}' not found. in {Directory.GetCurrentDirectory()}");
+                _logger.Here().Error($"Language file for code '{_selectedLangauge}' not found in {AppContext.BaseDirectory}");
                 return;
             }
 

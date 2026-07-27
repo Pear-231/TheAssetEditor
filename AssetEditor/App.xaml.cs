@@ -62,7 +62,7 @@ namespace AssetEditor
             if (settingsService.CurrentSettings.IsFirstTimeStartingApplication)
             {
                 var detectedLang = DetectSystemLanguage();
-                if (File.Exists($"Language_{detectedLang}.json"))
+                if (File.Exists(Path.Combine(AppContext.BaseDirectory, $"Language_{detectedLang}.json")))
                     settingsService.CurrentSettings.SelectedLangauge = detectedLang;
                 settingsService.Save();
             }
