@@ -1,14 +1,16 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using Editors.AnimationMeta.Presentation;
 using Editors.AnimationMeta.SuperView.Visualisation;
+using Editors.Audio.Shared.Utilities;
+using Editors.Audio.Shared.Wwise.HircExploration;
 using Editors.Shared.Core.Common;
 using Editors.Shared.Core.Common.BaseControl;
 using Editors.Shared.Core.Common.ReferenceModel;
 using Microsoft.Xna.Framework;
-using System.IO;
 using Shared.Core.Events;
 using Shared.Core.Events.Scoped;
 using Shared.Core.PackFiles;
+using Shared.Core.Settings;
 using Shared.Core.ToolCreation;
 using Shared.GameFormats.AnimationMeta.Definitions;
 using Shared.GameFormats.AnimationMeta.Parsing;
@@ -18,11 +20,6 @@ namespace Editors.AnimationMeta.SuperView
 {
     public partial class SuperViewViewModel : EditorHostBase, ISaveableEditor
     {
-        private const string AudioMetadataTagsTableName = "audio_metadata_tags_tables";
-        private const string LandUnitsTableName = "land_units_tables";
-        private const string UnitArmourTypesTableName = "unit_armour_types_tables";
-        private const string UnitVariantsTableName = "unit_variants_tables";
-        private const string VariantsTableName = "variants_tables";
         private const int AudioTabIndex = 2;
 
         private readonly ILogger _logger = Logging.Create<SuperViewViewModel>();
@@ -33,10 +30,12 @@ namespace Editors.AnimationMeta.SuperView
         private readonly IMetaDataBuilder _metaDataFactory;
         private readonly IPackFileService _packFileService;
         private readonly IDbTableQueryService _dbTableQueryService;
+        private readonly IActionEventSwitchGroupResolver _actionEventSwitchGroupResolver;
+        private readonly IUnitAudioSwitchResolver _unitAudioSwitchResolver;
+        private readonly ApplicationSettingsService _applicationSettingsService;
         private readonly IEventHub _eventHub;
         private readonly IUiCommandFactory _uiCommandFactory;
         private Dictionary<string, string>? _battleEventsByAudioMetadataTagKey;
-        private Dictionary<string, string>? _armourAudioTypesByVariantMeshName;
         private string _variantMeshName = "";
 
         [ObservableProperty] string _persistentMetaFilePath = "";
@@ -69,7 +68,10 @@ namespace Editors.AnimationMeta.SuperView
             IEditorHostParameters editorHostParameters,
             MetaDataFileParser metaDataFileParser,
             IMetaDataBuilder metaDataFactory,
-            IDbTableQueryService dbTableQueryService)
+            IDbTableQueryService dbTableQueryService,
+            IActionEventSwitchGroupResolver actionEventSwitchGroupResolver,
+            IUnitAudioSwitchResolver unitAudioSwitchResolver,
+            ApplicationSettingsService applicationSettingsService)
             : base(editorHostParameters)
         {
             DisplayName = "Super view";
@@ -80,6 +82,9 @@ namespace Editors.AnimationMeta.SuperView
             _metaDataFileParser = metaDataFileParser;
             _metaDataFactory = metaDataFactory;
             _dbTableQueryService = dbTableQueryService;
+            _actionEventSwitchGroupResolver = actionEventSwitchGroupResolver;
+            _unitAudioSwitchResolver = unitAudioSwitchResolver;
+            _applicationSettingsService = applicationSettingsService;
             Initialize();
             eventHub.Register<ScopedFileSavedEvent>(this, OnFileSaved);
             eventHub.Register<SceneObjectUpdateEvent>(this, OnSceneObjectUpdated);
@@ -120,17 +125,33 @@ namespace Editors.AnimationMeta.SuperView
             {
                 _battleEventsByAudioMetadataTagKey ??= LoadBattleEventsByAudioMetadataTagKey();
                 _battleEventsByAudioMetadataTagKey.TryGetValue(soundTrigger.SoundEvent, out var battleEvent);
-                _armourAudioTypesByVariantMeshName ??= LoadArmourAudioTypesByVariantMeshName();
-                _armourAudioTypesByVariantMeshName.TryGetValue(_variantMeshName, out var armourAudioType);
-
                 var soundEventVariable = AudioMetaEditor.SelectedTag?.Variables
                     .FirstOrDefault(x => x.FieldName == "Sound Event");
                 if (soundEventVariable != null)
                 {
                     var battleEventDisplay = battleEvent ?? "not found";
-                    var armourAudioTypeDisplay = armourAudioType ?? "not found";
-                    soundEventVariable.RelatedValue =
-                        $"Battle sound event: {battleEventDisplay}\nArmour audio type: {armourAudioTypeDisplay}";
+                    var relatedValues = new List<string> { $"Battle sound event: {battleEventDisplay}" };
+
+                    if (battleEvent != null)
+                    {
+                        var switchGroups = _actionEventSwitchGroupResolver.GetSwitchGroups(battleEvent)
+                            .Select(x => x.Name)
+                            .ToArray();
+
+                        if (switchGroups.Length == 0)
+                            relatedValues.Add("Switch group: not found");
+                        else
+                        {
+                            var currentGame = _applicationSettingsService.CurrentSettings.CurrentGame;
+                            var switchValues = _unitAudioSwitchResolver.Resolve(currentGame, _variantMeshName, switchGroups);
+                            relatedValues.AddRange(switchGroups.Select(group =>
+                                $"{group}: {(switchValues.TryGetValue(group, out var value) ? value : "not found")}"));
+                        }
+                    }
+                    else
+                        relatedValues.Add("Switch group: not found");
+
+                    soundEventVariable.RelatedValue = string.Join("\n", relatedValues);
                 }
             }
             catch (Exception exception)
@@ -142,7 +163,7 @@ namespace Editors.AnimationMeta.SuperView
         private Dictionary<string, string> LoadBattleEventsByAudioMetadataTagKey()
         {
             var battleEventsByKey = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            var tables = _dbTableQueryService.LoadTables(AudioMetadataTagsTableName, _packFileService.GetAllPackfileContainers());
+            var tables = _dbTableQueryService.LoadTables("audio_metadata_tags_tables", _packFileService.GetAllPackfileContainers());
 
             foreach (var row in tables.SelectMany(x => x.Rows))
             {
@@ -153,76 +174,6 @@ namespace Editors.AnimationMeta.SuperView
             }
 
             return battleEventsByKey;
-        }
-
-        private Dictionary<string, string> LoadArmourAudioTypesByVariantMeshName()
-        {
-            var containers = _packFileService.GetAllPackfileContainers();
-            var variants = _dbTableQueryService.LoadTables(VariantsTableName, containers).SelectMany(x => x.Rows);
-            var unitVariants = _dbTableQueryService.LoadTables(UnitVariantsTableName, containers).SelectMany(x => x.Rows);
-            var landUnits = _dbTableQueryService.LoadTables(LandUnitsTableName, containers).SelectMany(x => x.Rows);
-            var unitArmourTypes = _dbTableQueryService.LoadTables(UnitArmourTypesTableName, containers).SelectMany(x => x.Rows);
-
-            var variantMeshNamesByVariant = variants
-                .Where(x => string.IsNullOrWhiteSpace(x.GetString("variant_name")) == false)
-                .GroupBy(x => x.GetString("variant_name")!, StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(
-                    x => x.Key,
-                    x => NormaliseVariantMeshName(x.First().GetString("variant_filename")),
-                    StringComparer.OrdinalIgnoreCase);
-
-            var armourKeysByLandUnit = landUnits
-                .Where(x => string.IsNullOrWhiteSpace(x.GetString("key")) == false)
-                .GroupBy(x => x.GetString("key")!, StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(
-                    x => x.Key,
-                    x => x.First().GetString("armour") ?? "",
-                    StringComparer.OrdinalIgnoreCase);
-
-            var audioTypesByArmourKey = unitArmourTypes
-                .Where(x => string.IsNullOrWhiteSpace(x.GetString("key")) == false)
-                .GroupBy(x => x.GetString("key")!, StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(
-                    x => x.Key,
-                    x => x.First().GetString("audio_type") ?? "",
-                    StringComparer.OrdinalIgnoreCase);
-
-            var audioTypesByVariantMeshName = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
-            foreach (var unitVariant in unitVariants)
-            {
-                var variant = unitVariant.GetString("variant");
-                var landUnit = unitVariant.GetString("unit");
-                if (string.IsNullOrWhiteSpace(variant) || string.IsNullOrWhiteSpace(landUnit))
-                    continue;
-                if (!variantMeshNamesByVariant.TryGetValue(variant, out var variantMeshName) || string.IsNullOrWhiteSpace(variantMeshName))
-                    continue;
-                if (!armourKeysByLandUnit.TryGetValue(landUnit, out var armourKey) || string.IsNullOrWhiteSpace(armourKey))
-                    continue;
-                if (!audioTypesByArmourKey.TryGetValue(armourKey, out var audioType) || string.IsNullOrWhiteSpace(audioType))
-                    continue;
-
-                if (!audioTypesByVariantMeshName.TryGetValue(variantMeshName, out var audioTypes))
-                {
-                    audioTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                    audioTypesByVariantMeshName.Add(variantMeshName, audioTypes);
-                }
-
-                audioTypes.Add(audioType);
-            }
-
-            return audioTypesByVariantMeshName.ToDictionary(
-                x => x.Key,
-                x => string.Join(", ", x.Value.OrderBy(value => value)),
-                StringComparer.OrdinalIgnoreCase);
-        }
-
-        private static string NormaliseVariantMeshName(string? variantMeshFilename)
-        {
-            if (string.IsNullOrWhiteSpace(variantMeshFilename))
-                return "";
-
-            var filename = Path.GetFileName(variantMeshFilename.Replace('\\', '/'));
-            return Path.GetFileNameWithoutExtension(filename);
         }
 
         private void OnFileSaved(ScopedFileSavedEvent evnt)
@@ -282,7 +233,7 @@ namespace Editors.AnimationMeta.SuperView
 
         public void Load(AnimationToolInput debugDataToLoad)
         {
-            _variantMeshName = NormaliseVariantMeshName(debugDataToLoad.Mesh.Name);
+            _variantMeshName = UnitAudioSwitchResolver.NormaliseVariantMeshName(debugDataToLoad.Mesh.Name);
             _sceneObjectBuilder.SetMesh(_asset.Data, debugDataToLoad.Mesh);
 
             // Hack :(

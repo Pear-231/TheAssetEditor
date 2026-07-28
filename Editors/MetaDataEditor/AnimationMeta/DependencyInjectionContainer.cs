@@ -4,6 +4,7 @@ using Editors.AnimationMeta.Presentation;
 using Editors.AnimationMeta.Presentation.View;
 using Editors.AnimationMeta.SuperView;
 using Editors.AnimationMeta.SuperView.Visualisation;
+using Editors.Audio.Shared.Utilities;
 using Editors.Shared.Core.Common.BaseControl;
 using Microsoft.Extensions.DependencyInjection;
 using Shared.Core.DependencyInjection;
@@ -21,6 +22,7 @@ namespace Editors.AnimationMeta
 
             serviceCollection.AddScoped<EditorHost<SuperViewViewModel>>();
             serviceCollection.AddScoped<SuperViewViewModel>();
+            serviceCollection.AddScoped<IUnitAudioSwitchResolver, UnitAudioSwitchResolver>();
 
             serviceCollection.AddScoped<IMetaDataBuilder, MetaDataBuilder>(); // Needs heavy refactorying!
 
