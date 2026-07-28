@@ -29,6 +29,7 @@ using Editors.Audio.Shared.Storage.CacheDatabase;
 using Editors.Audio.Shared.Utilities;
 using Editors.Audio.Shared.Wwise;
 using Editors.Audio.Shared.Wwise.Generators;
+using Editors.Audio.Shared.Wwise.HircExploration;
 using Editors.Audio.WaveformVisualiser.Presentation;
 using Microsoft.Extensions.DependencyInjection;
 using Shared.Core.DependencyInjection;
@@ -134,6 +135,8 @@ namespace Editors.Audio
             // Shared audio stuff 
             serviceCollection.AddScoped<IAudioRepository, AudioRepository>();
             serviceCollection.AddScoped<IAudioCacheHelper, AudioCacheHelper>();
+            serviceCollection.AddScoped<IHircGraphService, HircGraphService>();
+            serviceCollection.AddScoped<IActionEventSwitchGroupResolver, ActionEventSwitchGroupResolver>();
             serviceCollection.AddScoped<IMovieAudioResolver, MovieAudioResolver>();
             serviceCollection.AddSingleton<BnkLoader>();
             serviceCollection.AddSingleton<DatLoader>();
