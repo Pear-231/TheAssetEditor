@@ -109,7 +109,7 @@ namespace Editors.Audio.Shared.Utilities
                 .ToArray();
         }
 
-        internal static string NormaliseVariantMeshName(string? variantMeshFilename)
+        public static string NormaliseVariantMeshName(string? variantMeshFilename)
         {
             if (string.IsNullOrWhiteSpace(variantMeshFilename))
                 return "";

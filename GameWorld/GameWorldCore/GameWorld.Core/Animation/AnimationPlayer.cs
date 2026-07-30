@@ -53,9 +53,11 @@ namespace GameWorld.Core.Animation
 
 
     public delegate void FrameChanged(int currentFrame);
+    public delegate void PlaybackChanged(bool isPlaying);
     public class AnimationPlayer
     {
         public event FrameChanged OnFrameChanged;
+        public event PlaybackChanged OnPlaybackChanged;
 
         GameSkeleton _skeleton;
         TimeSpanExtension _timeSinceStart;
@@ -138,6 +140,7 @@ namespace GameWorld.Core.Animation
                     {
                         _timeSinceStart = TimeSpanExtension.FromMicroseconds(animationLengthUs);
                         IsPlaying = false;
+                        OnPlaybackChanged?.Invoke(false);
                     }
                 }
 
@@ -171,15 +174,25 @@ namespace GameWorld.Core.Animation
             }
         }
 
-        public void Play() { IsPlaying = true; IsEnabled = true; }
+        public void Play()
+        {
+            IsPlaying = true;
+            IsEnabled = true;
+            OnPlaybackChanged?.Invoke(true);
+        }
 
-        public void Pause() { IsPlaying = false; }
+        public void Pause()
+        {
+            IsPlaying = false;
+            OnPlaybackChanged?.Invoke(false);
+        }
         public void Stop()
         {
             IsPlaying = false;
             _currentAnimFrame = null;
             IsEnabled = false;
             _skeleton?.Update();
+            OnPlaybackChanged?.Invoke(false);
         }
 
         public int GetFps()

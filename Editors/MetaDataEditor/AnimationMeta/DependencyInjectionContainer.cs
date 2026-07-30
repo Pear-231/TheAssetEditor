@@ -23,6 +23,7 @@ namespace Editors.AnimationMeta
             serviceCollection.AddScoped<EditorHost<SuperViewViewModel>>();
             serviceCollection.AddScoped<SuperViewViewModel>();
             serviceCollection.AddScoped<IUnitAudioSwitchResolver, UnitAudioSwitchResolver>();
+            serviceCollection.AddScoped<IActionEventAudioResolver, ActionEventAudioResolver>();
 
             serviceCollection.AddScoped<IMetaDataBuilder, MetaDataBuilder>(); // Needs heavy refactorying!
 
