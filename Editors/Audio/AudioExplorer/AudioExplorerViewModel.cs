@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -287,7 +285,7 @@ namespace Editors.Audio.AudioExplorer
                 SelectedNode = null;
                 TreeList.Clear();
 
-                var dialogueEvents = _audioRepository.GetHircsByHircType(AkBkHircType.Dialogue_Event);
+                var dialogueEvents = _audioRepository.GetHircs(AkBkHircType.Dialogue_Event);
                 foreach (var dialogueEvent in dialogueEvents)
                 {
                     var dialogueEventRootNode = hircTreeChildrenParser.BuildHierarchy(dialogueEvent);
