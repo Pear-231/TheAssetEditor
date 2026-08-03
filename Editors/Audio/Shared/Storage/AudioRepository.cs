@@ -116,7 +116,7 @@ namespace Editors.Audio.Shared.Storage
                 foreach (var bnk in resolvedBnks.Values)
                     bnk.Layer.ResolvedBnkPaths.Add(bnk.Bnk.Path);
 
-                var datData = layers[^1].Repository.LoadDatData();
+                var datData = MergeDatData(layers.Select(layer => layer.Repository.LoadDatData()));
                 ApplyLoadedLayers(
                     layers,
                     resolvedBnks.Keys.ToList(),
@@ -145,18 +145,47 @@ namespace Editors.Audio.Shared.Storage
             if (!HasRelevantAudioFiles(projectFileContainers))
                 return sources;
 
-            var projectFilesFingerprint = _cacheHelper.ComputeFingerprint(allContainers, "project files");
+            var projectFilesFingerprint = _cacheHelper.ComputeFingerprint(projectFileContainers, "project files");
             var editableContainer = _packFileService.GetEditablePack();
             var cacheOwner = editableContainer ?? projectFileContainers[^1];
-            var projectFilesLabel = $"ProjectFiles_{cacheOwner.Name}";
+            var projectFilesLabel = cacheOwner.Name;
 
             sources.Add(new AudioCacheSource(
                 _cacheHelper.GetCacheFilePath(projectFilesLabel, projectFilesFingerprint),
                 projectFilesFingerprint,
                 false,
                 projectFileContainers,
-                allContainers));
+                projectFileContainers));
             return sources;
+        }
+
+        internal static CachedAudioDatData MergeDatData(IEnumerable<CachedAudioDatData> layers)
+        {
+            var result = new CachedAudioDatData();
+            foreach (var layer in layers)
+            {
+                foreach (var (id, name) in layer.NameById)
+                    result.NameById[id] = name;
+
+                AppendLists(result.StateGroupsByDialogueEvent, layer.StateGroupsByDialogueEvent);
+                AppendLists(result.StatesByStateGroup, layer.StatesByStateGroup);
+            }
+
+            return result;
+        }
+
+        private static void AppendLists(Dictionary<string, List<string>> target, Dictionary<string, List<string>> source)
+        {
+            foreach (var (key, values) in source)
+            {
+                if (!target.TryGetValue(key, out var targetValues))
+                {
+                    targetValues = [];
+                    target[key] = targetValues;
+                }
+
+                targetValues.AddRange(values);
+            }
         }
 
         public void Clear()

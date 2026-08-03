@@ -361,6 +361,63 @@ namespace Test.Audio
             Assert.That(loaded.GetBnks(), Has.Count.EqualTo(1));
         }
 
+        [Test]
+        public void MergeDatData_AppendsLayerDataAndLetsProjectNamesOverrideGameNames()
+        {
+            var gameData = new CachedAudioDatData
+            {
+                NameById = new Dictionary<uint, string> { [1] = "game", [2] = "game-only" },
+                StateGroupsByDialogueEvent = new Dictionary<string, List<string>> { ["event"] = ["game-group"] },
+                StatesByStateGroup = new Dictionary<string, List<string>> { ["group"] = ["game-state"] }
+            };
+            var projectData = new CachedAudioDatData
+            {
+                NameById = new Dictionary<uint, string> { [1] = "project", [3] = "project-only" },
+                StateGroupsByDialogueEvent = new Dictionary<string, List<string>> { ["event"] = ["project-group"] },
+                StatesByStateGroup = new Dictionary<string, List<string>> { ["group"] = ["project-state"] }
+            };
+
+            var result = AudioRepository.MergeDatData([gameData, projectData]);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.NameById[1], Is.EqualTo("project"));
+                Assert.That(result.NameById[2], Is.EqualTo("game-only"));
+                Assert.That(result.NameById[3], Is.EqualTo("project-only"));
+                Assert.That(result.StateGroupsByDialogueEvent["event"], Is.EqualTo(new[] { "game-group", "project-group" }));
+                Assert.That(result.StatesByStateGroup["group"], Is.EqualTo(new[] { "game-state", "project-state" }));
+            });
+        }
+
+        [Test]
+        public void CreateCacheSources_ProjectCacheUsesOnlyProjectContainers()
+        {
+            var gameContainer = CreateContainer(true, []);
+            gameContainer.SetupGet(x => x.Name).Returns("game");
+            var projectBnk = PackFile.CreateFromBytes("project.bnk", CreateBnk(1, 1, 0));
+            var projectContainer = CreateContainer(false, [(@"audio\wwise\project.bnk", projectBnk)]);
+            projectContainer.SetupGet(x => x.Name).Returns("project");
+
+            var packFileService = new Mock<IPackFileService>();
+            packFileService.Setup(x => x.GetAllPackfileContainers()).Returns([gameContainer.Object, projectContainer.Object]);
+            packFileService.Setup(x => x.GetEditablePack()).Returns(projectContainer.Object);
+
+            var settings = new ApplicationSettingsService(GameTypeEnum.Warhammer3);
+            var bnkLoader = new BnkLoader(packFileService.Object);
+            var cacheHelper = new AudioCacheHelper(settings, new DatLoader(packFileService.Object, settings), bnkLoader);
+            var repository = new AudioRepository(settings, packFileService.Object, cacheHelper, bnkLoader);
+
+            var sources = repository.CreateCacheSources();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(sources, Has.Count.EqualTo(2));
+                Assert.That(sources[1].BnkContainers, Is.EqualTo(new[] { projectContainer.Object }));
+                Assert.That(sources[1].DatContainers, Is.EqualTo(new[] { projectContainer.Object }));
+                Assert.That(sources[1].Fingerprint, Is.EqualTo(cacheHelper.ComputeFingerprint([projectContainer.Object], "project files")));
+            });
+        }
+
         private static Mock<IPackFileContainer> CreateContainer(bool isCa, List<(string Path, PackFile File)> files)
         {
             var container = new Mock<IPackFileContainer>();
