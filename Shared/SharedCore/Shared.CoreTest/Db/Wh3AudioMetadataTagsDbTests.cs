@@ -100,22 +100,30 @@ namespace Shared.CoreTest.Db
             Assert.That(GetBool(row, "can_play_under_splice"), Is.True);
 
             var containers = new List<IPackFileContainer> { caContainer };
-            var variantRow = queryService.LoadTables("variants_tables", containers)
+            var tablesByName = queryService.LoadTables(
+                [
+                    "variants_tables",
+                    "unit_variants_tables",
+                    "land_units_tables",
+                    "unit_armour_types_tables"
+                ],
+                containers);
+            var variantRow = tablesByName["variants_tables"]
                 .SelectMany(x => x.Rows)
                 .Single(x => x.GetString("variant_name") == "wh2_dlc16_skv_throt");
             Assert.That(variantRow.GetString("variant_filename"), Is.EqualTo("skv_throt"));
 
-            var unitVariantRow = queryService.LoadTables("unit_variants_tables", containers)
+            var unitVariantRow = tablesByName["unit_variants_tables"]
                 .SelectMany(x => x.Rows)
                 .First(x => x.GetString("variant") == "wh2_dlc16_skv_throt");
             Assert.That(unitVariantRow.GetString("unit"), Is.EqualTo("wh2_dlc16_skv_cha_throt_the_unclean_0"));
 
-            var landUnitRow = queryService.LoadTables("land_units_tables", containers)
+            var landUnitRow = tablesByName["land_units_tables"]
                 .SelectMany(x => x.Rows)
                 .Single(x => x.GetString("key") == "wh2_dlc16_skv_cha_throt_the_unclean_0");
             Assert.That(landUnitRow.GetString("armour"), Is.EqualTo("wh2_main_body_45"));
 
-            var armourTypeRow = queryService.LoadTables("unit_armour_types_tables", containers)
+            var armourTypeRow = tablesByName["unit_armour_types_tables"]
                 .SelectMany(x => x.Rows)
                 .Single(x => x.GetString("key") == "wh2_main_body_45");
             Assert.That(armourTypeRow.GetString("audio_type"), Is.EqualTo("body"));

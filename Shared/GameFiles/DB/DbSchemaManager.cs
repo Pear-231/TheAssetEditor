@@ -34,7 +34,7 @@ namespace Shared.GameFormats.DB
 
         public DbSchemaManager()
         {
-            _cacheDirectory = Path.Combine(DirectoryHelper.Temp, "Db");
+            _cacheDirectory = DirectoryHelper.SchemaDirectory;
             _jsonOptions = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
@@ -83,13 +83,13 @@ namespace Shared.GameFormats.DB
 
         private async Task InitializeCoreAsync(CancellationToken cancellationToken)
         {
-            var hasCachedSchema = await TryLoadCacheAsync(cancellationToken);
+            var hasCachedSchema = await TryLoadCacheAsync(cancellationToken).ConfigureAwait(false);
             if (hasCachedSchema)
                 _schemaReady.TrySetResult();
 
             try
             {
-                await UpdateFromGitHubAsync(cancellationToken);
+                await UpdateFromGitHubAsync(cancellationToken).ConfigureAwait(false);
                 _schemaReady.TrySetResult();
             }
             catch (Exception exception)
@@ -116,7 +116,7 @@ namespace Shared.GameFormats.DB
                 var cache = await JsonSerializer.DeserializeAsync<DbSchemaCache>(
                     stream,
                     _jsonOptions,
-                    cancellationToken);
+                    cancellationToken).ConfigureAwait(false);
                 if (cache == null || cache.TableSchemas.Count == 0)
                     return false;
 
@@ -137,7 +137,7 @@ namespace Shared.GameFormats.DB
                 GitHubOwner,
                 GitHubRepository,
                 Wh3SchemaPath,
-                GitHubBranch);
+                GitHubBranch).ConfigureAwait(false);
             if (schemaContents.Count != 1)
                 throw new InvalidDataException($"Expected one '{Wh3SchemaPath}' entry from GitHub, found {schemaContents.Count}.");
 
@@ -152,11 +152,11 @@ namespace Shared.GameFormats.DB
                 GitHubOwner,
                 GitHubRepository,
                 Wh3SchemaPath,
-                GitHubBranch);
+                GitHubBranch).ConfigureAwait(false);
             var ron = Encoding.UTF8.GetString(schemaBytes);
             var schemas = await Task.Run(
                 () => new RonReader(ron).ReadTableSchemas(),
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
             Directory.CreateDirectory(_cacheDirectory);
             var cachePath = Path.Combine(_cacheDirectory, CacheFileName);
@@ -168,7 +168,7 @@ namespace Shared.GameFormats.DB
                     Sha = latestSchema.Sha,
                     TableSchemas = schemas
                 };
-                await JsonSerializer.SerializeAsync(stream, cache, _jsonOptions, cancellationToken);
+                await JsonSerializer.SerializeAsync(stream, cache, _jsonOptions, cancellationToken).ConfigureAwait(false);
             }
             File.Move(temporaryPath, cachePath, true);
 

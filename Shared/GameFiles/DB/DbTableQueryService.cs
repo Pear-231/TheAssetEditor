@@ -1,4 +1,4 @@
-using Shared.ByteParsing;
+﻿using Shared.ByteParsing;
 using Shared.Core.PackFiles.Models;
 
 namespace Shared.GameFormats.DB
@@ -7,6 +7,7 @@ namespace Shared.GameFormats.DB
     {
         DbTable LoadTable(PackFile packFile, string directory);
         List<DbTable> LoadTables(string directory, List<IPackFileContainer> containers);
+        IReadOnlyDictionary<string, List<DbTable>> LoadTables(List<string> directories, List<IPackFileContainer> containers);
     }
 
     public class DbTableQueryService(IDbSchemaManager schemaManager) : IDbTableQueryService
@@ -23,20 +24,37 @@ namespace Shared.GameFormats.DB
 
         public List<DbTable> LoadTables(string tablesDirectory, List<IPackFileContainer> containers)
         {
-            var tables = new List<DbTable>();
-            var directoryPrefix = $"db/{tablesDirectory.Trim('/', '\\')}/";
+            if (string.IsNullOrWhiteSpace(tablesDirectory))
+                return [];
+            var normalisedDirectory = NormaliseDirectory(tablesDirectory);
+            return LoadTables([normalisedDirectory], containers)[normalisedDirectory];
+        }
+
+        public IReadOnlyDictionary<string, List<DbTable>> LoadTables(List<string> directories, List<IPackFileContainer> containers)
+        {
+            ArgumentNullException.ThrowIfNull(directories);
+            ArgumentNullException.ThrowIfNull(containers);
+
+            var tablesByDirectory = directories
+                .Where(directory => !string.IsNullOrWhiteSpace(directory))
+                .Select(NormaliseDirectory)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(directory => directory, _ => new List<DbTable>(), StringComparer.OrdinalIgnoreCase);
+
+            if (tablesByDirectory.Count == 0)
+                return tablesByDirectory;
 
             foreach (var container in containers)
             {
-                var tableFiles = container.GetAllFiles()
-                    .Where(x => x.Key.Replace('\\', '/').StartsWith(directoryPrefix, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-
-                foreach (var (tablePath, tableFile) in tableFiles)
+                foreach (var (tablePath, tableFile) in container.GetAllFiles())
                 {
+                    var directory = GetTableDirectory(tablePath);
+                    if (directory == null || !tablesByDirectory.TryGetValue(directory, out var tables))
+                        continue;
+
                     try
                     {
-                        tables.Add(LoadTable(tableFile, tablesDirectory));
+                        tables.Add(LoadTable(tableFile, directory));
                     }
                     catch (Exception exception)
                     {
@@ -45,7 +63,23 @@ namespace Shared.GameFormats.DB
                 }
             }
 
-            return tables;
+            return tablesByDirectory;
+        }
+
+        private static string NormaliseDirectory(string directory) => directory.Trim('/', '\\');
+
+        private static string? GetTableDirectory(string path)
+        {
+            var normalisedPath = path.Replace('\\', '/');
+            var databasePrefix = "db/";
+            if (!normalisedPath.StartsWith(databasePrefix, StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            var directoryEnd = normalisedPath.IndexOf('/', databasePrefix.Length);
+            if (directoryEnd <= databasePrefix.Length)
+                return null;
+            else
+                return (string?)normalisedPath[databasePrefix.Length..directoryEnd];
         }
     }
 }
