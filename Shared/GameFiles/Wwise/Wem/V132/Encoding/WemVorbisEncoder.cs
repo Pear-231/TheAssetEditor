@@ -1,7 +1,6 @@
 ﻿using Shared.ByteParsing;
 using Shared.GameFormats.Audio.Containers.Ogg;
 using Shared.GameFormats.Audio.Containers.Wav;
-using Shared.GameFormats.Audio.Formats.Pcm;
 
 namespace Shared.GameFormats.Wwise.Wem.V132.Encoding
 {
@@ -17,7 +16,7 @@ namespace Shared.GameFormats.Wwise.Wem.V132.Encoding
         public WemFile EncodeFromWavBytes(byte[] wavBytes, WemEncodingSettings? encodingSettings = null)
         {
             var wavFile = WavFile.CreateFromBytes(wavBytes);
-            var perChannelSamples = ConvertPcmToPerChannelFloat(wavFile.Audio, wavFile.FmtChunk.FormatTag);
+            var perChannelSamples = wavFile.Audio.ToPerChannelSamples();
             return EncodeFloatSamplesToWem(perChannelSamples, checked(wavFile.Audio.Channels), checked((int)wavFile.Audio.SampleRate));
         }
 
@@ -649,63 +648,6 @@ namespace Shared.GameFormats.Wwise.Wem.V132.Encoding
             var quantValueCount = WwiseVorbisBitstreamTranscriber.ComputeMapType1QuantValues(entries, dimensions);
             for (var i = 0; i < quantValueCount; i++)
                 input.ReadBits(valueLength + 1);
-        }
-
-        private static float[][] ConvertPcmToPerChannelFloat(PcmAudio audio, ushort formatTag)
-        {
-            const ushort IeeeFloatFormatTag = 3;
-            const int Pcm8BitDepth = 8;
-            const int Pcm16BitDepth = 16;
-            const int Pcm24BitDepth = 24;
-            const int Pcm32BitDepth = 32;
-            const float Pcm16BitNormalizationDivisor = 32768.0f;
-            const float Pcm24BitNormalizationDivisor = 8388608.0f;
-            const float Pcm32BitNormalizationDivisor = 2147483648.0f;
-            const int Pcm8BitMidpoint = 128;
-            const float Pcm8BitNormalizationDivisor = 128.0f;
-
-            var channels = audio.Channels;
-            var sampleCount = audio.SampleCount;
-            var bytesPerSample = audio.BitsPerSample / BitHelper.BitsPerByte;
-
-            var perChannelSamples = new float[channels][];
-            for (var channelIndex = 0; channelIndex < channels; channelIndex++)
-                perChannelSamples[channelIndex] = new float[sampleCount];
-
-            for (var sampleIndex = 0; sampleIndex < sampleCount; sampleIndex++)
-            {
-                for (var channelIndex = 0; channelIndex < channels; channelIndex++)
-                {
-                    var byteOffset = (sampleIndex * channels + channelIndex) * bytesPerSample;
-                    float rawSample;
-
-                    if (audio.BitsPerSample == Pcm16BitDepth)
-                        rawSample = (short)(audio.Data[byteOffset] | (audio.Data[byteOffset + 1] << BitHelper.BitsPerByte)) / Pcm16BitNormalizationDivisor;
-                    else if (audio.BitsPerSample == Pcm8BitDepth)
-                        rawSample = (audio.Data[byteOffset] - Pcm8BitMidpoint) / Pcm8BitNormalizationDivisor;
-                    else if (audio.BitsPerSample == Pcm24BitDepth)
-                    {
-                        var sample24 = audio.Data[byteOffset] | (audio.Data[byteOffset + 1] << BitHelper.BitsPerByte) | (audio.Data[byteOffset + 2] << 16);
-                        if ((sample24 & 0x800000) != 0)
-                            sample24 |= unchecked((int)0xFF000000);
-
-                        rawSample = sample24 / Pcm24BitNormalizationDivisor;
-                    }
-                    else if (audio.BitsPerSample == Pcm32BitDepth)
-                    {
-                        if (formatTag == IeeeFloatFormatTag)
-                            rawSample = BitConverter.ToSingle(audio.Data, byteOffset);
-                        else
-                            rawSample = BitConverter.ToInt32(audio.Data, byteOffset) / Pcm32BitNormalizationDivisor;
-                    }
-                    else
-                        throw new InvalidDataException($"Unsupported WAV bits per sample: {audio.BitsPerSample}. Supported formats are 8-bit, 16-bit, 24-bit, and 32-bit PCM, plus 32-bit IEEE float.");
-
-                    perChannelSamples[channelIndex][sampleIndex] = rawSample;
-                }
-            }
-
-            return perChannelSamples;
         }
     }
 }

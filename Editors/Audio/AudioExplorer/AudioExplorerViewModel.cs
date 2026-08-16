@@ -131,6 +131,8 @@ namespace Editors.Audio.AudioExplorer
         {
             SelectedNodeText = string.Empty;
 
+            WaveformVisualiserViewModel.StopPlayback();
+
             if (selectedNode == null || selectedNode.Hirc == null)
                 return;
 
@@ -195,7 +197,7 @@ namespace Editors.Audio.AudioExplorer
                     var mediaInformation = soundV112.AkBankSourceData.AkMediaInformation;
                     return new WemWaveformSource(
                         $"data-wem:{mediaInformation.FileId}:{mediaInformation.FileOffset}:{mediaInformation.InMemoryMediaSize}",
-                        () => _audioRepository.FindDataWem(mediaInformation.FileId, (int)mediaInformation.FileOffset, (int)mediaInformation.InMemoryMediaSize));
+                        () => _audioRepository.FindDidxWem(mediaInformation.FileId, (int)mediaInformation.FileOffset, (int)mediaInformation.InMemoryMediaSize));
                 }
 
                 var sourceId = sound.GetSourceId();

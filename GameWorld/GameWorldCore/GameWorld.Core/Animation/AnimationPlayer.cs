@@ -1,10 +1,7 @@
-﻿using GameWorld.Core.Animation.AnimationChange;
+﻿using System.Windows;
+using GameWorld.Core.Animation.AnimationChange;
 using Microsoft.Xna.Framework;
 using Shared.Core.Misc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Windows;
 
 namespace GameWorld.Core.Animation
 {
@@ -53,9 +50,11 @@ namespace GameWorld.Core.Animation
 
 
     public delegate void FrameChanged(int currentFrame);
+    public delegate void PlaybackChanged(bool isPlaying);
     public class AnimationPlayer
     {
         public event FrameChanged OnFrameChanged;
+        public event PlaybackChanged OnPlaybackChanged;
 
         GameSkeleton _skeleton;
         TimeSpanExtension _timeSinceStart;
@@ -64,10 +63,11 @@ namespace GameWorld.Core.Animation
         GameSkeleton Skeleton { get { return _skeleton; } }
         public AnimationClip AnimationClip { get { return _animationClip; } }
 
-        public bool IsPlaying { get; private set; } = true;
+        public bool IsPlaying { get; private set; }
         public bool IsEnabled { get; set; } = false;
         public bool LoopAnimation { get; set; } = true;
         public bool MarkedForRemoval { get; set; } = false;
+        public Func<TimeSpan?>? PositionSource { get; set; }
 
         public List<IAnimationChangeRule> AnimationRules { get; set; } = new List<IAnimationChangeRule>();
 
@@ -105,6 +105,13 @@ namespace GameWorld.Core.Animation
             }
         }
 
+        public void Rewind()
+        {
+            _timeSinceStart = new TimeSpanExtension();
+            OnFrameChanged?.Invoke(CurrentFrame);
+            Refresh();
+        }
+
         public void SetAnimation(AnimationClip animation, GameSkeleton skeleton, bool allowAnimationsFromDifferentSkeletons = false)
         {
             if (allowAnimationsFromDifferentSkeletons == false && animation != null && _skeleton != null)
@@ -127,17 +134,18 @@ namespace GameWorld.Core.Animation
             var animationLengthUs = GetAnimationLengthUs();
             if (animationLengthUs != 0 && IsPlaying && IsEnabled)
             {
-                _timeSinceStart.TimeSpan += gameTime.ElapsedGameTime;
+                _timeSinceStart.TimeSpan = PositionSource?.Invoke() ?? _timeSinceStart.TimeSpan + gameTime.ElapsedGameTime;
                 if (_timeSinceStart.TotalMicrosecondsAsLong >= animationLengthUs)
                 {
                     if (LoopAnimation)
                     {
-                        _timeSinceStart = new TimeSpanExtension();
+                        _timeSinceStart = TimeSpanExtension.FromMicroseconds(_timeSinceStart.TotalMicrosecondsAsLong % animationLengthUs);
                     }
                     else
                     {
                         _timeSinceStart = TimeSpanExtension.FromMicroseconds(animationLengthUs);
                         IsPlaying = false;
+                        OnPlaybackChanged?.Invoke(false);
                     }
                 }
 
@@ -171,15 +179,25 @@ namespace GameWorld.Core.Animation
             }
         }
 
-        public void Play() { IsPlaying = true; IsEnabled = true; }
+        public void Play()
+        {
+            IsPlaying = true;
+            IsEnabled = true;
+            OnPlaybackChanged?.Invoke(true);
+        }
 
-        public void Pause() { IsPlaying = false; }
+        public void Pause()
+        {
+            IsPlaying = false;
+            OnPlaybackChanged?.Invoke(false);
+        }
         public void Stop()
         {
             IsPlaying = false;
             _currentAnimFrame = null;
             IsEnabled = false;
             _skeleton?.Update();
+            OnPlaybackChanged?.Invoke(false);
         }
 
         public int GetFps()
@@ -199,5 +217,7 @@ namespace GameWorld.Core.Animation
         public int FrameCount() => _animationClip != null ? _animationClip.DynamicFrames.Count() : 0;
         public long GetAnimationLengthUs() => _animationClip?.PlayTimeUs ?? 0;
         public long GetTimeUs() => _timeSinceStart.TotalMicrosecondsAsLong;
+        public TimeSpan GetAnimationLength() => TimeSpan.FromMicroseconds(GetAnimationLengthUs());
+        public TimeSpan GetTime() => _timeSinceStart.TimeSpan;
     }
 }

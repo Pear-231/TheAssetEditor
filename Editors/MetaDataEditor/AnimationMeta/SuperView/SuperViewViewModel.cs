@@ -1,16 +1,20 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using Editors.AnimationMeta.Presentation;
 using Editors.AnimationMeta.SuperView.Visualisation;
+using Editors.Audio.Shared.GameInformation.Warhammer3;
+using Editors.Audio.Shared.Storage;
 using Editors.Audio.Shared.Utilities;
-using Editors.Audio.Shared.Wwise.HircExploration;
+using Editors.Audio.Shared.Wwise.Engine;
+using Editors.Audio.Shared.Wwise.Engine.Cache;
 using Editors.Shared.Core.Common;
 using Editors.Shared.Core.Common.BaseControl;
 using Editors.Shared.Core.Common.ReferenceModel;
+using GameWorld.Core.Animation;
 using Microsoft.Xna.Framework;
-using System.IO;
 using Shared.Core.Events;
 using Shared.Core.Events.Scoped;
 using Shared.Core.PackFiles;
+using Shared.Core.PackFiles.Models;
 using Shared.Core.Settings;
 using Shared.Core.ToolCreation;
 using Shared.GameFormats.AnimationMeta.Definitions;
@@ -31,13 +35,20 @@ namespace Editors.AnimationMeta.SuperView
         private readonly IMetaDataBuilder _metaDataFactory;
         private readonly IPackFileService _packFileService;
         private readonly IDbTableQueryService _dbTableQueryService;
-        private readonly IActionEventSwitchGroupResolver _actionEventSwitchGroupResolver;
-        private readonly IUnitAudioSwitchResolver _unitAudioSwitchResolver;
+        private readonly ActionEventResolver _actionEventResolver;
+        private readonly UnitAudioSwitchResolver _unitAudioSwitchResolver;
+        private readonly ISoundEngine _soundEngine;
+        private readonly SoundEngineCache _soundEngineCache;
         private readonly ApplicationSettingsService _applicationSettingsService;
         private readonly IEventHub _eventHub;
         private readonly IUiCommandFactory _uiCommandFactory;
         private Dictionary<string, string>? _battleEventsByAudioMetadataTagKey;
+        private Dictionary<string, AnimationAudioResolution> _animationAudioBySoundEvent = new(StringComparer.OrdinalIgnoreCase);
+        private AnimationAudioTimeline _audioTimeline;
         private string _variantMeshName = "";
+        private PackFile? _animationAudioOwner;
+        private string _animationAudioVariantMeshName = "";
+        private GameTypeEnum? _animationAudioGame;
 
         [ObservableProperty] string _persistentMetaFilePath = "";
         [ObservableProperty] string _metaFilePath = "";
@@ -47,17 +58,17 @@ namespace Editors.AnimationMeta.SuperView
         [ObservableProperty] int _selectedTabControllerIndex = 0;
         public override Type EditorViewModelType => typeof(EditorView);
         public bool HasUnsavedChanges
-        { 
-            get 
+        {
+            get
             {
                 return PersistentMetaEditor.HasUnsavedChanges || MetaEditor.HasUnsavedChanges || AudioMetaEditor.HasUnsavedChanges;
             }
-            set 
+            set
             {
                 PersistentMetaEditor.HasUnsavedChanges = value;
                 MetaEditor.HasUnsavedChanges = value;
                 AudioMetaEditor.HasUnsavedChanges = value;
-            } 
+            }
         }
 
 
@@ -70,12 +81,15 @@ namespace Editors.AnimationMeta.SuperView
             MetaDataFileParser metaDataFileParser,
             IMetaDataBuilder metaDataFactory,
             IDbTableQueryService dbTableQueryService,
-            IActionEventSwitchGroupResolver actionEventSwitchGroupResolver,
-            IUnitAudioSwitchResolver unitAudioSwitchResolver,
+            IAudioRepository audioRepository,
+            ActionEventResolver actionEventResolver,
+            UnitAudioSwitchResolver unitAudioSwitchResolver,
+            ISoundEngine soundEngine,
+            SoundEngineCache soundEngineCache,
             ApplicationSettingsService applicationSettingsService)
             : base(editorHostParameters)
         {
-            DisplayName = "Super view";
+            DisplayName = "Super View";
             _packFileService = packFileService;
             _eventHub = eventHub;
             _uiCommandFactory = uiCommandFactory;
@@ -83,9 +97,12 @@ namespace Editors.AnimationMeta.SuperView
             _metaDataFileParser = metaDataFileParser;
             _metaDataFactory = metaDataFactory;
             _dbTableQueryService = dbTableQueryService;
-            _actionEventSwitchGroupResolver = actionEventSwitchGroupResolver;
+            _actionEventResolver = actionEventResolver;
             _unitAudioSwitchResolver = unitAudioSwitchResolver;
+            _soundEngine = soundEngine;
+            _soundEngineCache = soundEngineCache;
             _applicationSettingsService = applicationSettingsService;
+            audioRepository.Load([Wh3LanguageInformation.GetLanguageAsString(Wh3Language.EnglishUK)]);
             Initialize();
             eventHub.Register<ScopedFileSavedEvent>(this, OnFileSaved);
             eventHub.Register<SceneObjectUpdateEvent>(this, OnSceneObjectUpdated);
@@ -94,16 +111,25 @@ namespace Editors.AnimationMeta.SuperView
         }
 
         private void OnSelectedMetaDataAttributeChanged(SelecteMetaDataAttributeChangedEvent @event)
-        {
-            RecreateMetaDataInformation();
-            UpdateAudioSoundEventDatabaseKey();
-        }
+            => RefreshAfterMetaDataEdit();
+
         void OnMetaDataAttributeChanged(MetaDataAttributeChangedEvent @event)
+            => RefreshAfterMetaDataEdit();
+
+        private void RefreshAfterMetaDataEdit()
         {
             RecreateMetaDataInformation();
+            EnsureAnimationAudioCacheIsCurrent();
+            SynchroniseAudioTimeline();
             UpdateAudioSoundEventDatabaseKey();
         }
-        void OnMetaDataChanged(SceneObject sceneObject) => RecreateMetaDataInformation();
+        void OnMetaDataChanged(SceneObject sceneObject)
+        {
+            RecreateMetaDataInformation();
+            EnsureAnimationAudioCacheIsCurrent();
+            SynchroniseAudioTimeline();
+        }
+        void OnAnimationChanged(AnimationClip _) => SynchroniseAudioTimeline();
 
         partial void OnSelectedTabControllerIndexChanged(int value)
         {
@@ -124,34 +150,34 @@ namespace Editors.AnimationMeta.SuperView
 
             try
             {
-                _battleEventsByAudioMetadataTagKey ??= LoadBattleEventsByAudioMetadataTagKey();
-                _battleEventsByAudioMetadataTagKey.TryGetValue(soundTrigger.SoundEvent, out var battleEvent);
+                EnsureAnimationAudioCacheIsCurrent();
+                _animationAudioBySoundEvent.TryGetValue(soundTrigger.SoundEvent, out var animationAudio);
                 var soundEventVariable = AudioMetaEditor.SelectedTag?.Variables
-                    .FirstOrDefault(x => x.FieldName == "Sound Event");
+                    .FirstOrDefault(variable => variable.FieldName == "Sound Event");
                 if (soundEventVariable != null)
                 {
-                    var battleEventDisplay = battleEvent ?? "not found";
+                    var battleEventDisplay = animationAudio?.ActionEvent ?? "not found";
                     var relatedValues = new List<string> { $"Battle sound event: {battleEventDisplay}" };
 
-                    if (battleEvent != null)
+                    if (animationAudio?.ActionEvent != null)
                     {
-                        var switchGroups = _actionEventSwitchGroupResolver.GetSwitchGroups(battleEvent)
-                            .Select(x => x.Name)
-                            .ToArray();
-
-                        if (switchGroups.Length == 0)
+                        if (animationAudio.SwitchGroups.Count == 0)
                             relatedValues.Add("Switch group: not found");
                         else
                         {
-                            var currentGame = _applicationSettingsService.CurrentSettings.CurrentGame;
-                            var switchValues = _unitAudioSwitchResolver.Resolve(currentGame, _variantMeshName, switchGroups);
-                            relatedValues.AddRange(switchGroups.Select(group =>
-                                $"{group}: {(switchValues.TryGetValue(group, out var value) ? value : "not found")}"));
+                            relatedValues.AddRange(animationAudio.SwitchGroups.Select(switchGroupName =>
+                                $"{switchGroupName}: {(animationAudio.SwitchValues.TryGetValue(switchGroupName, out var switchValue) ? switchValue : "not found")}"));
                         }
                     }
                     else
                         relatedValues.Add("Switch group: not found");
 
+                    var wemDisplay = animationAudio?.WemId is uint wemId
+                        ? animationAudio.IsWemDidx
+                            ? $"{wemId}.wem embedded in {animationAudio.WemFilePath}"
+                            : animationAudio.WemFilePath
+                        : "not found";
+                    relatedValues.Add($"WEM: {wemDisplay}");
                     soundEventVariable.RelatedValue = string.Join("\n", relatedValues);
                 }
             }
@@ -163,27 +189,149 @@ namespace Editors.AnimationMeta.SuperView
 
         private Dictionary<string, string> LoadBattleEventsByAudioMetadataTagKey()
         {
-            var battleEventsByKey = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            var tables = _dbTableQueryService.LoadTables("audio_metadata_tags_tables", _packFileService.GetAllPackfileContainers());
+            var battleEventsByAudioMetadataTagKey = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var audioMetadataTagTables = _dbTableQueryService.LoadTables("audio_metadata_tags_tables", _packFileService.GetAllPackfileContainers());
 
-            foreach (var row in tables.SelectMany(x => x.Rows))
+            foreach (var audioMetadataTagRow in audioMetadataTagTables.SelectMany(table => table.Rows))
             {
-                var key = row.GetString("key");
-                var battleEvent = row.GetString("sound_event_battle_start");
-                if (!string.IsNullOrWhiteSpace(battleEvent) && !string.IsNullOrWhiteSpace(key))
-                    battleEventsByKey.TryAdd(key, battleEvent);
+                var audioMetadataTagKey = audioMetadataTagRow.GetString("key");
+                var battleActionEventName = audioMetadataTagRow.GetString("sound_event_battle_start");
+                if (!string.IsNullOrWhiteSpace(battleActionEventName) && !string.IsNullOrWhiteSpace(audioMetadataTagKey))
+                    battleEventsByAudioMetadataTagKey.TryAdd(audioMetadataTagKey, battleActionEventName);
             }
 
-            return battleEventsByKey;
+            return battleEventsByAudioMetadataTagKey;
         }
 
-        private static string NormaliseVariantMeshName(string? variantMeshFilename)
+        private void EnsureAnimationAudioCacheIsCurrent()
         {
-            if (string.IsNullOrWhiteSpace(variantMeshFilename))
-                return "";
+            var audioMetaFile = AudioMetaEditor.CurrentFile;
+            var parsedAudioMeta = AudioMetaEditor.ParsedFile;
+            var game = _applicationSettingsService.CurrentSettings.CurrentGame;
+            var soundEvents = (parsedAudioMeta?.GetItemsOfType<SoundTrigger_v10>() ?? [])
+                .Select(soundTrigger => soundTrigger.SoundEvent)
+                .Where(soundEvent => !string.IsNullOrWhiteSpace(soundEvent))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var isCurrent = _animationAudioOwner != null
+                && ReferenceEquals(_animationAudioOwner, audioMetaFile)
+                && string.Equals(_animationAudioVariantMeshName, _variantMeshName, StringComparison.OrdinalIgnoreCase)
+                && _animationAudioGame == game
+                && soundEvents.SetEquals(_animationAudioBySoundEvent.Keys);
+            if (isCurrent)
+                return;
 
-            var filename = Path.GetFileName(variantMeshFilename.Replace('\\', '/'));
-            return Path.GetFileNameWithoutExtension(filename);
+            ClearAnimationAudioCache();
+            if (audioMetaFile == null
+                || parsedAudioMeta == null
+                || string.IsNullOrWhiteSpace(_variantMeshName))
+                return;
+
+            try
+            {
+                _animationAudioBySoundEvent = ResolveAnimationAudio(soundEvents, game, _variantMeshName);
+
+                _animationAudioOwner = audioMetaFile;
+                _animationAudioVariantMeshName = _variantMeshName;
+                _animationAudioGame = game;
+                var playableAudioCount = _animationAudioBySoundEvent.Values.Count(animationAudio => animationAudio.Audio != null);
+                _logger.Here().Information(
+                    $"Prepared animation audio for variant mesh '{_variantMeshName}': {_animationAudioBySoundEvent.Count} sound events, {playableAudioCount} with playable audio");
+            }
+            catch (Exception exception)
+            {
+                _logger.Here().Error(exception, $"Unable to prepare animation audio for variant mesh '{_variantMeshName}'");
+            }
+        }
+
+        private Dictionary<string, AnimationAudioResolution> ResolveAnimationAudio(
+            HashSet<string> soundEvents,
+            GameTypeEnum game,
+            string variantMeshName)
+        {
+            _battleEventsByAudioMetadataTagKey ??= LoadBattleEventsByAudioMetadataTagKey();
+
+            var actionEventNameBySoundEventName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var soundEventName in soundEvents)
+            {
+                if (_battleEventsByAudioMetadataTagKey.TryGetValue(soundEventName, out var actionEventName))
+                    actionEventNameBySoundEventName[soundEventName] = actionEventName;
+                else
+                    _logger.Here().Warning($"Sound event '{soundEventName}' has no battle action event mapping, so it cannot be played");
+            }
+
+            var switchGroupNamesByActionEventName = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
+            foreach (var actionEventName in actionEventNameBySoundEventName.Values.Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                switchGroupNamesByActionEventName[actionEventName] = _actionEventResolver
+                    .GetSwitchGroups(actionEventName)
+                    .Select(switchGroup => switchGroup.Name)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+            }
+
+            var allSwitchGroupNames = switchGroupNamesByActionEventName.Values
+                .SelectMany(switchGroupNames => switchGroupNames)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+            var resolvedSwitchValuesByGroupName = _unitAudioSwitchResolver.Resolve(game, variantMeshName, allSwitchGroupNames);
+
+            var animationAudioByActionEventName = new Dictionary<string, AnimationAudioResolution>(StringComparer.OrdinalIgnoreCase);
+            foreach (var (actionEventName, switchGroupNames) in switchGroupNamesByActionEventName)
+            {
+                var switchValuesByGroupName = switchGroupNames
+                    .Where(resolvedSwitchValuesByGroupName.ContainsKey)
+                    .ToDictionary(switchGroupName => switchGroupName, switchGroupName => resolvedSwitchValuesByGroupName[switchGroupName], StringComparer.OrdinalIgnoreCase);
+                var resolvedWem = _actionEventResolver.ResolveFirstSound(actionEventName, switchValuesByGroupName);
+                var audio = resolvedWem != null
+                    ? _soundEngineCache.GetWem(resolvedWem.Data)
+                    : null;
+                animationAudioByActionEventName[actionEventName] = new AnimationAudioResolution(
+                    actionEventName,
+                    switchGroupNames,
+                    switchValuesByGroupName,
+                    resolvedWem?.Id,
+                    resolvedWem?.FilePath,
+                    resolvedWem?.IsDidx ?? false,
+                    audio);
+            }
+
+            return soundEvents.ToDictionary(
+                soundEventName => soundEventName,
+                soundEventName => actionEventNameBySoundEventName.TryGetValue(soundEventName, out var actionEventName)
+                    ? animationAudioByActionEventName[actionEventName]
+                    : new AnimationAudioResolution(null, [], new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase), null, null, false, null),
+                StringComparer.OrdinalIgnoreCase);
+        }
+
+        private void ClearAnimationAudioCache()
+        {
+            _audioTimeline?.StopAndRelease();
+            _animationAudioBySoundEvent.Clear();
+            _animationAudioOwner = null;
+            _animationAudioVariantMeshName = "";
+            _animationAudioGame = null;
+            _battleEventsByAudioMetadataTagKey = null;
+        }
+
+        private void SynchroniseAudioTimeline()
+        {
+            if (_audioTimeline == null)
+                return;
+
+            var soundTriggers = AudioMetaEditor.ParsedFile?.GetItemsOfType<SoundTrigger_v10>() ?? [];
+            var audioCues = soundTriggers
+                .Select(soundTrigger => (
+                    soundTrigger.SoundEvent,
+                    soundTrigger.StartTime,
+                    _animationAudioBySoundEvent.GetValueOrDefault(soundTrigger.SoundEvent)?.Audio))
+                .Where(triggeredAudio => triggeredAudio.Audio != null)
+                .Select(triggeredAudio => new AnimationAudioTimeline.AudioCue(
+                    triggeredAudio.SoundEvent,
+                    TimeSpan.FromSeconds(triggeredAudio.StartTime),
+                    triggeredAudio.Audio!))
+                .ToArray();
+
+            _audioTimeline.Synchronise(audioCues);
         }
 
         private void OnFileSaved(ScopedFileSavedEvent evnt)
@@ -204,14 +352,43 @@ namespace Editors.AnimationMeta.SuperView
             PersistentMetaEditor = new MetaDataEditorViewModel(_uiCommandFactory, _metaDataFileParser, _eventHub);
             MetaEditor = new MetaDataEditorViewModel(_uiCommandFactory, _metaDataFileParser, _eventHub);
             AudioMetaEditor = new MetaDataEditorViewModel(_uiCommandFactory, _metaDataFileParser, _eventHub);
-            
-            var assetViewModel = _sceneObjectViewModelBuilder.CreateAsset("SuperViewRoot", true, "Root", Color.Black,null);
+
+            var assetViewModel = _sceneObjectViewModelBuilder.CreateAsset("SuperViewRoot", true, "Root", Color.Black, null);
             SceneObjects.Add(assetViewModel);
 
             assetViewModel.Data.MetaDataChanged += OnMetaDataChanged;
+            assetViewModel.Data.AnimationChanged += OnAnimationChanged;
 
             _asset = assetViewModel;
+            _audioTimeline = new AnimationAudioTimeline(_soundEngine, _asset.Data);
+            _asset.Data.Player.OnFrameChanged += OnAnimationFrameChanged;
+            _asset.Data.Player.OnPlaybackChanged += OnAnimationPlaybackChanged;
             OnSceneObjectUpdated(new SceneObjectUpdateEvent(_asset.Data, false, false, false, true));
+        }
+
+        private void OnAnimationPlaybackChanged(bool isPlaying)
+        {
+            // Another editor may have taken the sound engine over since this timeline was
+            // built, in which case it has to be rebuilt before it can be started.
+            if (isPlaying && !_audioTimeline.IsCurrent)
+            {
+                _audioTimeline.Release();
+                SynchroniseAudioTimeline();
+                return;
+            }
+
+            _audioTimeline.OnAnimationPlaybackChanged(isPlaying);
+        }
+
+        private void OnAnimationFrameChanged(int currentFrame)
+        {
+            // Looping and animation length are inputs to the scheduled timeline that nothing
+            // raises an event for, so a stale timeline is noticed here rather than left until
+            // some unrelated edit happens to rebuild it.
+            if (_audioTimeline.NeedsResynchronisation)
+                SynchroniseAudioTimeline();
+
+            _audioTimeline.OnAnimationFrameChanged();
         }
 
         void RecreateMetaDataInformation()
@@ -234,17 +411,25 @@ namespace Editors.AnimationMeta.SuperView
 
         private void OnSceneObjectUpdated(SceneObjectUpdateEvent e)
         {
+            if (!ReferenceEquals(AudioMetaEditor.CurrentFile, e.Owner.AudioMetaData))
+                ClearAnimationAudioCache();
             PersistentMetaEditor.LoadFile(e.Owner.PersistMetaData);
             MetaEditor.LoadFile(e.Owner.MetaData);
             AudioMetaEditor.LoadFile(e.Owner.AudioMetaData);
 
             RecreateMetaDataInformation();
+            EnsureAnimationAudioCacheIsCurrent();
+            SynchroniseAudioTimeline();
         }
 
         public void Load(AnimationToolInput debugDataToLoad)
         {
-            _variantMeshName = NormaliseVariantMeshName(debugDataToLoad.Mesh.Name);
+            var variantMeshName = VariantMeshName.Normalise(debugDataToLoad.Mesh.Name);
+            if (!string.Equals(_variantMeshName, variantMeshName, StringComparison.OrdinalIgnoreCase))
+                ClearAnimationAudioCache();
+            _variantMeshName = variantMeshName;
             _sceneObjectBuilder.SetMesh(_asset.Data, debugDataToLoad.Mesh);
+            EnsureAnimationAudioCacheIsCurrent();
 
             // Hack :(
             if (debugDataToLoad.AnimationSlot != null)
@@ -255,6 +440,7 @@ namespace Editors.AnimationMeta.SuperView
                 var slot = _asset.FragAndSlotSelection.FragmentSlotList.PossibleValues.First(x => x.SlotName == debugDataToLoad.AnimationSlot.Value);
                 _asset.FragAndSlotSelection.FragmentSlotList.SelectedItem = slot;
             }
+            SynchroniseAudioTimeline();
         }
 
 
@@ -262,6 +448,11 @@ namespace Editors.AnimationMeta.SuperView
 
         public override void Close()
         {
+            _asset.Data.Player.OnFrameChanged -= OnAnimationFrameChanged;
+            _asset.Data.Player.OnPlaybackChanged -= OnAnimationPlaybackChanged;
+            _asset.Data.AnimationChanged -= OnAnimationChanged;
+            _asset.Data.MetaDataChanged -= OnMetaDataChanged;
+            ClearAnimationAudioCache();
             _eventHub?.UnRegister(this);
             base.Close();
         }

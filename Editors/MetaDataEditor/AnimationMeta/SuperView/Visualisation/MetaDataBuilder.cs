@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using Editors.AnimationMeta.SuperView.Visualisation.Instances;
 using Editors.AnimationMeta.SuperView.Visualisation.Rules;
 using Editors.Shared.Core.Common;
@@ -195,6 +195,17 @@ namespace Editors.AnimationMeta.SuperView.Visualisation
             // Add the animation rules
             var animationRule = new CopyRootTransform(rootSkeleton, animatedPropMeta.BoneId, animatedPropMeta.Position, new Quaternion(animatedPropMeta.Orientation));
             propPlayer.AnimationRules.Add(animationRule);
+
+            // A prop is authored to run against its parent, so it takes its position from the
+            // parent rather than keeping a clock of its own, and looping belongs to the parent
+            // rather than to the prop. Once past its own end it holds its final pose, and the
+            // parent wrapping back to the start begins it again.
+            // This reads the parent's position within the same update, so it depends on the
+            // parent being updated first. It is, because the parent was registered with the
+            // animations container before this prop was, and they are updated in that order.
+            propPlayer.LoopAnimation = false;
+            propPlayer.PositionSource = () => ClampToAnimation(rootPlayer.GetTime(), propPlayer);
+
             if(rootPlayer.IsPlaying)
                 propPlayer.Play();
             propPlayer.Refresh();
@@ -203,6 +214,14 @@ namespace Editors.AnimationMeta.SuperView.Visualisation
             root.AddObject(loadedNode);
 
             return new AnimatedPropInstance(loadedNode, propPlayer);
+        }
+
+        // Held a moment short of the end rather than at it, because a player that reaches its
+        // own length stops there and would never resume when the parent came back around.
+        private static TimeSpan ClampToAnimation(TimeSpan position, AnimationPlayer player)
+        {
+            var lastPosition = player.GetAnimationLength() - TimeSpan.FromMicroseconds(1);
+            return position < lastPosition ? position : lastPosition;
         }
 
         private IMetaDataInstance CreateStaticLocator(DecodedMetaEntryBase metaData, SceneNode root, Vector3 position, string displayName, ParsedMetadataAttribute? selectedMetaDataAttribute, float scale = 0.3f)

@@ -28,6 +28,9 @@ using Editors.Audio.Shared.Storage;
 using Editors.Audio.Shared.Storage.CacheDatabase;
 using Editors.Audio.Shared.Utilities;
 using Editors.Audio.Shared.Wwise;
+using Editors.Audio.Shared.Wwise.Engine;
+using Editors.Audio.Shared.Wwise.Engine.Cache;
+using Editors.Audio.Shared.Wwise.Engine.Output;
 using Editors.Audio.Shared.Wwise.Generators;
 using Editors.Audio.Shared.Wwise.HircExploration;
 using Editors.Audio.WaveformVisualiser.Presentation;
@@ -109,9 +112,10 @@ namespace Editors.Audio
             serviceCollection.AddScoped<IViewerTableService, ViewerStateGroupTableService>();
 
             // Waveform Visualiser services
-            serviceCollection.AddSingleton<IWaveformVisualisationCacheService, WaveformVisualisationCacheService>();
-            serviceCollection.AddTransient<IWaveformRendererService, WaveformRendererService>();
-            serviceCollection.AddTransient<ISoundEngine, SoundEngine>();
+            serviceCollection.AddSingleton<WaveformVisualisationService>();
+            serviceCollection.AddSingleton<SoundEngineCache>();
+            serviceCollection.AddSingleton<ISoundEngine>(_ => new SoundEngine(
+                new AudioOutputDevice()));
 
             // Audio Project
             serviceCollection.AddScoped<IAudioProjectFileService, AudioProjectFileService>();
@@ -136,7 +140,7 @@ namespace Editors.Audio
             serviceCollection.AddScoped<IAudioRepository, AudioRepository>();
             serviceCollection.AddScoped<IAudioCacheHelper, AudioCacheHelper>();
             serviceCollection.AddScoped<IHircGraphService, HircGraphService>();
-            serviceCollection.AddScoped<IActionEventSwitchGroupResolver, ActionEventSwitchGroupResolver>();
+            serviceCollection.AddScoped<ActionEventResolver>();
             serviceCollection.AddScoped<IMovieAudioResolver, MovieAudioResolver>();
             serviceCollection.AddSingleton<BnkLoader>();
             serviceCollection.AddSingleton<DatLoader>();

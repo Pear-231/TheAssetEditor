@@ -70,6 +70,7 @@ namespace Shared.GameFormats.Audio.Containers.Wav
                 Channels = fmtChunk.Channels,
                 Data = dataChunk.Data,
                 SampleRate = fmtChunk.SampleRate,
+                SampleFormat = fmtChunk.SampleFormat,
             };
         }
 
@@ -80,7 +81,7 @@ namespace Shared.GameFormats.Audio.Containers.Wav
             FmtChunk.BitsPerSample = Audio.BitsPerSample;
             FmtChunk.Channels = Audio.Channels;
             FmtChunk.SampleRate = Audio.SampleRate;
-            FmtChunk.FormatTag = FmtChunk.PcmFormatTag;
+            FmtChunk.FormatTag = FmtChunk.GetFormatTag(Audio.SampleFormat);
             DataChunk.Data = Audio.Data;
 
             var bitsPerSample = Audio.BitsPerSample;

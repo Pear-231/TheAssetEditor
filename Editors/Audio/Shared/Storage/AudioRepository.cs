@@ -7,6 +7,7 @@ using Shared.Core.PackFiles;
 using Shared.Core.PackFiles.Events;
 using Shared.Core.PackFiles.Models;
 using Shared.Core.Settings;
+using Shared.GameFormats.Wwise;
 using Shared.GameFormats.Wwise.Didx;
 using Shared.GameFormats.Wwise.Enums;
 using Shared.GameFormats.Wwise.Hirc;
@@ -18,7 +19,7 @@ namespace Editors.Audio.Shared.Storage
     public interface IAudioRepository
     {
         Dictionary<uint, List<HircItem>> HircsById { get; }
-        Dictionary<uint, List<DidxAudio>> DidxAudioListById { get; }
+        Dictionary<uint, List<DidxAudio>> DidxAudioById { get; }
         Dictionary<string, PackFile> PackFileByBnkName { get; }
         Dictionary<uint, string> NameById { get; }
         Dictionary<string, List<string>> StateGroupsByDialogueEvent { get; }
@@ -42,8 +43,10 @@ namespace Editors.Audio.Shared.Storage
         Dictionary<string, Dictionary<string, List<HircItem>>> GetModdedHircsByBnkByLanguage();
         Dictionary<string, List<HircItem>> GetModdedDialogueEventsByLanguage(List<string> moddedSoundBanks);
         List<string> GetModdedSoundBankFilePaths(string bnkNameSubstring);
+        HircItem FindActionEvent(string actionEventName);
         PackFile FindWem(string wemId);
-        byte[] FindDataWem(uint dataSoundbankId, int fileOffset, int byteCount);
+        List<DidxAudio> FindDidxWem(uint id);
+        byte[] FindDidxWem(uint dataSoundbankId, int fileOffset, int byteCount);
     }
 
     internal class AudioRepository : IAudioRepository, IDisposable
@@ -64,10 +67,10 @@ namespace Editors.Audio.Shared.Storage
         private Dictionary<uint, Dictionary<string, HircItem>> _hircByBnkPathById = [];
         private Dictionary<uint, Dictionary<string, HircItem>> _resolvedHircByReferringBnkPathById = [];
         private Dictionary<AkBkHircType, List<HircItem>> _hircsByType = [];
-        private Dictionary<uint, List<DidxAudio>> _didxAudioListById = [];
+        private Dictionary<uint, List<DidxAudio>> _didxAudioById = [];
 
         public Dictionary<uint, List<HircItem>> HircsById => GetAllCachedHircs();
-        public Dictionary<uint, List<DidxAudio>> DidxAudioListById => GetAllCachedDidx();
+        public Dictionary<uint, List<DidxAudio>> DidxAudioById => GetAllCachedDidx();
         public Dictionary<string, PackFile> PackFileByBnkName { get; private set; } = [];
         public Dictionary<uint, string> NameById { get; private set; } = [];
         public Dictionary<string, List<string>> StateGroupsByDialogueEvent { get; private set; } = [];
@@ -199,7 +202,7 @@ namespace Editors.Audio.Shared.Storage
             _hircByBnkPathById = [];
             _resolvedHircByReferringBnkPathById = [];
             _hircsByType = [];
-            _didxAudioListById = [];
+            _didxAudioById = [];
             PackFileByBnkName = [];
             NameById = [];
             StateGroupsByDialogueEvent = [];
@@ -426,6 +429,15 @@ namespace Editors.Audio.Shared.Storage
                 .ToList();
         }
 
+        public HircItem FindActionEvent(string actionEventName)
+        {
+            if (string.IsNullOrWhiteSpace(actionEventName))
+                return null;
+
+            var actionEventId = WwiseHash.Compute(actionEventName);
+            return GetHircs(actionEventId).FirstOrDefault(hircItem => hircItem is ICAkEvent);
+        }
+
         public PackFile FindWem(string wemId)
         {
             var wemFile = _packFileService.FindFile($"audio\\wwise\\{wemId}.wem");
@@ -442,7 +454,29 @@ namespace Editors.Audio.Shared.Storage
             return null;
         }
 
-        public byte[] FindDataWem(uint dataSoundbankId, int fileOffset, int byteCount)
+        public List<DidxAudio> FindDidxWem(uint id)
+        {
+            if (_didxAudioById.TryGetValue(id, out var didxEntries))
+                return didxEntries;
+
+            if (_loadedLayers.Count != 0 && !_allCachedDidxLoaded)
+            {
+                var references = new List<BnkDidxReference>();
+                foreach (var layer in _loadedLayers)
+                    references.AddRange(layer.AudioCache.FindDidx(id, layer.ResolvedBnkPaths));
+
+                didxEntries = references
+                    .Select(_bnkLoader.LoadDidx)
+                    .Where(didx => didx != null)
+                    .ToList();
+                _didxAudioById[id] = didxEntries;
+                return didxEntries;
+            }
+
+            return [];
+        }
+
+        public byte[] FindDidxWem(uint dataSoundbankId, int fileOffset, int byteCount)
         {
             var dataSoundbankName = GetNameFromId(dataSoundbankId, out var found);
             if (!found)
@@ -503,7 +537,7 @@ namespace Editors.Audio.Shared.Storage
             _hircByBnkPathById = [];
             _resolvedHircByReferringBnkPathById = [];
             _hircsByType = [];
-            _didxAudioListById = [];
+            _didxAudioById = [];
             _allCachedHircsLoaded = false;
             _allCachedDidxLoaded = false;
             NameById = datData.NameById;
@@ -620,14 +654,14 @@ namespace Editors.Audio.Shared.Storage
                 }
             }
 
-            _didxAudioListById = didxById;
+            _didxAudioById = didxById;
             _allCachedDidxLoaded = true;
         }
 
         private Dictionary<uint, List<DidxAudio>> GetAllCachedDidx()
         {
             EnsureAllCachedDidxLoaded();
-            return _didxAudioListById;
+            return _didxAudioById;
         }
 
         private static string CreateCombinedFingerprint(List<AudioCacheSource> sources)

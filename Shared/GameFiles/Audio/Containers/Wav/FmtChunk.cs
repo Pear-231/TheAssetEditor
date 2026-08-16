@@ -1,4 +1,5 @@
 ﻿using Shared.ByteParsing;
+using Shared.GameFormats.Audio.Formats.Pcm;
 
 namespace Shared.GameFormats.Audio.Containers.Wav
 {
@@ -7,6 +8,7 @@ namespace Shared.GameFormats.Audio.Containers.Wav
         public const int ChunkSize = 16;
         public const string ChunkTag = "fmt ";
         public const ushort PcmFormatTag = 1;
+        public const ushort IeeeFloatFormatTag = 3;
 
         public int Size { get; set; } = ChunkSize;
         public ushort FormatTag { get; set; } = PcmFormatTag;
@@ -15,6 +17,8 @@ namespace Shared.GameFormats.Audio.Containers.Wav
         public uint ByteRate { get; set; }
         public ushort BlockAlign { get; set; }
         public ushort BitsPerSample { get; set; }
+
+        public SampleFormat SampleFormat => FormatTag == IeeeFloatFormatTag ? SampleFormat.Float : SampleFormat.Integer;
 
         public FmtChunk()
         {
@@ -45,5 +49,7 @@ namespace Shared.GameFormats.Audio.Containers.Wav
             stream.Write(ByteParsers.UShort.EncodeValue(BitsPerSample, out _));
             return stream.ToArray();
         }
+
+        public static ushort GetFormatTag(SampleFormat sampleFormat) => sampleFormat == SampleFormat.Float ? IeeeFloatFormatTag : PcmFormatTag;
     }
 }

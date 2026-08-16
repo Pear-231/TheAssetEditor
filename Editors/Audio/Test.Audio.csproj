@@ -23,6 +23,7 @@
   <ItemGroup>
     <Compile Include="AudioCacheTests.cs" />
     <Compile Include="AudioExplorerTests.cs" />
+    <Compile Include="SoundEngineTests.cs" />
     <Using Include="NUnit.Framework" />
   </ItemGroup>
 

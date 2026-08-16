@@ -27,7 +27,7 @@ namespace Editors.AnimationMeta.DevConfig
         public void OverrideSettings(ApplicationSettings currentSettings)
         {
             currentSettings.CurrentGame = GameTypeEnum.Warhammer3;
-            currentSettings.LoadCaPacksByDefault = false;
+            currentSettings.LoadCaPacksByDefault = true;
             var packFile = ResourceLoader.GetDevelopmentDataFolder() + "\\Throt.pack";
             var container = _packFileContainerLoader.CreateFromPackFile(PackFileContainerType.Normal, packFile, true);
             container!.IsCaPackFile = true;
