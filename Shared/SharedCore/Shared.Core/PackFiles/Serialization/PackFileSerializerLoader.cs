@@ -16,7 +16,6 @@ namespace Shared.Core.PackFiles.Serialization
             (PackFileVersion.PFH3,  "PFH3"),
             (PackFileVersion.PFH4,  "PFH4"),
             (PackFileVersion.PFH5,  "PFH5"),
-            (PackFileVersion.PFH6,  "PFH6"),
         };
 
         public static string ToString(PackFileVersion versionEnum) => s_values.First(x => x.EnumValue == versionEnum).StringValue;
@@ -150,15 +149,6 @@ namespace Shared.Core.PackFiles.Serialization
 
                 // Uint32 timestamp
                 // output.HasExtendedHeader 20 bytes missing? Used by Arena, we dont care
-            }
-            else if (header.Version == PackFileVersion.PFH6)
-            {
-                header.Buffer = reader.ReadBytes(284);
-
-                // game_version u32
-                // build_number u32
-                // authoring_tool char 44
-                // extra_subheader_data u32, not used 
             }
             else
             {

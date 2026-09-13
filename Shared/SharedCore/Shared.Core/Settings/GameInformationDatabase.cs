@@ -40,8 +40,7 @@ namespace Shared.Core.Settings
         PFH2,
         PFH3,
         PFH4,
-        PFH5,
-        PFH6
+        PFH5
     }
 
     public enum WsModelVersion
