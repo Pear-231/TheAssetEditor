@@ -147,12 +147,12 @@ namespace Shared.Core.PackFiles.Serialization
                     break;
                 case PackFileVersion.PFH4:
                 case PackFileVersion.PFH5:
-                    if (header.HasExtendedHeader)
-                        throw new Exception("Not supported packfile type");
-
+                    // As detailed in PackFileSerializerLoader, no real packs in any game
+                    // add any extra bytes when HasExtendedHeader is set so commenting out.
+                    // if (header.HasExtendedHeader)
+                    //     throw new Exception("Not supported packfile type");
                     writer.Write(PFHeader.DefaultTimeStamp);
                     break;
-
                 default:
                     throw new Exception("Not supported packfile type");
             }

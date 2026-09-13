@@ -15,7 +15,7 @@ namespace Shared.Core.PackFiles.Serialization
             (PackFileVersion.PFH2,  "PFH2"),
             (PackFileVersion.PFH3,  "PFH3"),
             (PackFileVersion.PFH4,  "PFH4"),
-            (PackFileVersion.PFH5,  "PFH5"),
+            (PackFileVersion.PFH5,  "PFH5")
         };
 
         public static string ToString(PackFileVersion versionEnum) => s_values.First(x => x.EnumValue == versionEnum).StringValue;
@@ -137,23 +137,27 @@ namespace Shared.Core.PackFiles.Serialization
                 header.Buffer = new byte[0];
             else if (header.Version == PackFileVersion.PFH2 || header.Version == PackFileVersion.PFH3)
             {
-                header.Buffer = reader.ReadBytes(8);
-                // Uint64 timestamp
+                var timestamp = reader.ReadBytes(8);
+                header.Buffer = timestamp;
             }
             else if (header.Version == PackFileVersion.PFH4 || header.Version == PackFileVersion.PFH5)
             {
-                if (header.HasExtendedHeader)
-                    header.Buffer = reader.ReadBytes(24);
-                else
-                    header.Buffer = reader.ReadBytes(4);
-
-                // Uint32 timestamp
-                // output.HasExtendedHeader 20 bytes missing? Used by Arena, we dont care
+                // When HasExtendedHeader is set in PFH4 packs RPFM reads 20 more bytes. I've checked all packs in
+                // all PFH4 games (Warhammer, Attila, Rome II, Thrones of Britannia), and none have HasExtendedHeader
+                // set so have not been able to verify this so commenting it out.
+                // When HasExtendedHeader is set in PFH5 packs RPFM does not read any extra bytes. I've checked all
+                // packs in all PFH5 games (Warhammer II, Warhammer III, Three Kingdoms, Troy, Pharaoh) and the only
+                // pack where HasExtendedHeader is set is Pharaoh's data_special.pack. In this pack, weirdly there are
+                // no extra bytes in the header so commenting it out.
+                // if (header.HasExtendedHeader)
+                //     header.Buffer = reader.ReadBytes(24);
+                // else
+                //     header.Buffer = reader.ReadBytes(4);
+                var timestamp = reader.ReadBytes(4);
+                header.Buffer = timestamp;
             }
             else
-            {
                 throw new Exception($"Unknown packfile type {header.PackFileType}");
-            }
 
             for (var i = 0; i < header.ReferenceFileCount; i++)
                 header.DependantFiles.Add(IOFunctions.ReadZeroTerminatedAscii(reader, fileNameBuffer));
