@@ -183,5 +183,50 @@ namespace Shared.CoreTest.PackFiles.Utility
             Assert.That(waitCursorCreated, Is.True, "Wait cursor should have been created");
             Assert.That(waitCursorDisposed, Is.True, "Wait cursor should have been disposed");
         }
+
+        [Test]
+        public void LoadPackFromDifferentPfhVersion_ShowsGameMismatch()
+        {
+            var loader = CreateLoader();
+
+            loader.CreateFromPackFile(
+                PackFileContainerType.Normal,
+                PathHelper.GetDataFile("EncryptionTests/pfh4_32_bit_keystream.pack"),
+                true);
+
+            _dialogs.Verify(d => d.ShowDialogBox(
+                It.Is<string>(message => message.Contains("does not appear to be for the active game in the settings (Warhammer III)")),
+                "Error"), Times.Once);
+        }
+
+        [Test]
+        public void LoadEncryptedPackWithDifferentKeystream_ShowsGameMismatch()
+        {
+            _settingsService.CurrentSettings.CurrentGame = GameTypeEnum.Warhammer;
+            var loader = CreateLoader();
+
+            loader.CreateFromPackFile(
+                PackFileContainerType.Normal,
+                PathHelper.GetDataFile("EncryptionTests/pfh4_32_bit_keystream.pack"),
+                true);
+
+            _dialogs.Verify(d => d.ShowDialogBox(
+                It.Is<string>(message => message.Contains("does not appear to be for the active game in the settings (Warhammer)")),
+                "Error"), Times.Once);
+        }
+
+        [Test]
+        public void LoadCompatibleEncryptedPack_DoesNotShowGameMismatch()
+        {
+            _settingsService.CurrentSettings.CurrentGame = GameTypeEnum.Attila;
+            var loader = CreateLoader();
+
+            loader.CreateFromPackFile(
+                PackFileContainerType.Normal,
+                PathHelper.GetDataFile("EncryptionTests/pfh4_32_bit_keystream.pack"),
+                true);
+
+            _dialogs.Verify(d => d.ShowDialogBox(It.Is<string>(message => message.Contains("does not appear to be for")), "Error"), Times.Never);
+        }
     }
 }

@@ -4,6 +4,7 @@ using System.Text;
 using Shared.Core.PackFiles.ErrorHandling;
 using Shared.Core.PackFiles.Models;
 using Shared.Core.PackFiles.Models.Containers;
+using Shared.Core.PackFiles.Models.FileSources;
 using Shared.Core.PackFiles.Serialization;
 using Shared.Core.PackFiles.Serialization.CacheDatabase;
 using Shared.Core.Services;
@@ -50,7 +51,12 @@ namespace Shared.Core.PackFiles.Utility
         private readonly IPackFileContainerCacheHelper _packFileContainerCacheHelper;
         private readonly ISystemFolderContainerFactory _systemFolderContainerFactory;
 
-        public PackFileContainerLoader(ApplicationSettingsService settingsService, IStandardDialogs standardDialogs, LocalizationManager localizationManager, IPackFileContainerCacheHelper packFileContainerCacheHelper, ISystemFolderContainerFactory systemFolderContainerFactory)
+        public PackFileContainerLoader(
+            ApplicationSettingsService settingsService,
+            IStandardDialogs standardDialogs,
+            LocalizationManager localizationManager,
+            IPackFileContainerCacheHelper packFileContainerCacheHelper,
+            ISystemFolderContainerFactory systemFolderContainerFactory)
         {
             _settingsService = settingsService;
             _standardDialogs = standardDialogs;
@@ -82,9 +88,65 @@ namespace Shared.Core.PackFiles.Utility
             var packfileName = Path.GetFileNameWithoutExtension(packFilePath);
             var game = _settingsService.CurrentSettings.CurrentGame;
             var container = CreateFromCollection(type, packFilePath, [packFilePath], packfileName, loadAsReadOnly, new CustomPackDuplicateFileResolver(), game);
+            
+            // For all supported games, packs with the HasEncryptedData flag set contain only encrypted files
+            if (container is PackFileContainer { Header.HasEncryptedData: true } packContainer)
+                ValidateGameCompatibility(packContainer, game, packFilePath);
+            
             container.PackFileSettings.GameVersion = game;
             container.SaveSettings();
             return container;
+        }
+
+        private void ValidateGameCompatibility(PackFileContainer packContainer, GameTypeEnum game, string packFilePath)
+        {
+            var gameInformation = GameInformationDatabase.GetGameById(game);
+            var appearsCompatible = true;
+
+            if (packContainer.Header.Version != gameInformation.PackFileVersion)
+                appearsCompatible = false;
+            else
+            {
+                // Because the keystream cannot be derived from the pack and has to be figured out manually
+                // encrypted packs may not be loaded correctly if the loaded pack does not match the active game.
+                // This may work fine coincidentally if both the active game and the game the pack is intended for
+                // share the same encryption keystream, however if they don't e.g. the active game is Attila
+                // (32-bit keystream) but the pack is intended for Warhammer III (64-bit keystream), then the
+                // encrypted files will not decrypt correctly.
+                appearsCompatible = HasValidEncryptedContent(packContainer);
+            }
+
+            if (appearsCompatible)
+                return;
+
+            _standardDialogs.ShowDialogBox(
+                $"{Path.GetFileName(packFilePath)} does not appear to be for the active game in the settings " +
+                $"({gameInformation.DisplayName}). Set the active game to the game the pack file is intended for.");
+        }
+
+        private static bool HasValidEncryptedContent(IPackFileContainer container)
+        {
+            foreach (var (path, file) in container.GetAllFiles())
+            {
+                if (file.DataSource is not PackedFileSource { IsEncrypted: true } source)
+                    continue;
+
+                if (source.IsCompressed && source.CompressionFormat == CompressionFormat.None)
+                    return false;
+
+                try
+                {
+                    var bytes = source.ReadData();
+                    if (FileEncryption.TryValidateDecryptedContent(path, bytes, out var error) && error != null)
+                        return false;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         public IPackFileContainer? CreateFromGameEnum(PackFileContainerType type, GameTypeEnum gameEnum)
