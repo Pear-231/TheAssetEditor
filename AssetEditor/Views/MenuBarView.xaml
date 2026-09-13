@@ -116,6 +116,7 @@
                 <MenuItem Header="{loc:Loc MenuBar.Reports.DialogueEventsStateGroups}" Command="{Binding MenuBar.GenerateDialogueEventInfoPrinterReportCommand}"/>
                 <MenuItem Header="{loc:Loc MenuBar.Reports.DialogueEventNames}" Command="{Binding MenuBar.GenerateDialogueEventAndEventNamePrinterReportCommand}"/>
                 <MenuItem Header="{loc:Loc MenuBar.Reports.DatDump}" Command="{Binding MenuBar.GenerateDatDumperReportCommand}"/>
+                <MenuItem Header="{loc:Loc MenuBar.Reports.CompressionAndEncryption}" Command="{Binding MenuBar.GenerateCompressionAndEncryptionReportCommand}"/>
                 <Separator/>
                 <MenuItem Header="{loc:Loc MenuBar.Reports.Search}" Command="{Binding MenuBar.SearchCommand}"/>
                 <Separator/>

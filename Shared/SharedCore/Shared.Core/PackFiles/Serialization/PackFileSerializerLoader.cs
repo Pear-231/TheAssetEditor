@@ -22,11 +22,11 @@ namespace Shared.Core.PackFiles.Serialization
         public static PackFileVersion GetEnum(string versionStr) => s_values.First(x => x.StringValue == versionStr.ToUpper()).EnumValue;
     }
 
-    static class PackFileSerializerLoader
+    public static class PackFileSerializerLoader
     {
         static readonly ILogger s_logger = Logging.CreateStatic(typeof(PackFileSerializerLoader));
 
-        public static PackFileContainer Load(string packFileSystemPath, long packFileSize, BinaryReader reader, IDuplicateFileResolver duplicatePackFileResolver, GameTypeEnum game)
+        internal static PackFileContainer Load(string packFileSystemPath, long packFileSize, BinaryReader reader, IDuplicateFileResolver duplicatePackFileResolver, GameTypeEnum game)
         {
             try
             {
@@ -113,7 +113,7 @@ namespace Shared.Core.PackFiles.Serialization
             }
         }
 
-        static PFHeader ReadHeader(BinaryReader reader)
+        public static PFHeader ReadHeader(BinaryReader reader)
         {
             var fileNameBuffer = new byte[1024];
 
@@ -167,6 +167,7 @@ namespace Shared.Core.PackFiles.Serialization
 
             return header;
         }
+
         private static byte[] DetectCompressionInfo(BinaryReader reader, long dataOffset, uint entrySize, bool isEncrypted, GameTypeEnum game)
         {
             if (entrySize <= 8 || !isEncrypted && entrySize == 0)
