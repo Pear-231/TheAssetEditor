@@ -187,5 +187,91 @@ namespace Shared.Core.PackFiles.Utility
 
             throw new InvalidOperationException($"{gameInfo.DisplayName} encryption keystream ({gameInfo.EncryptionKeystream}) is unsupported.");
         }
+
+        // File types known to be encrypted in games. Not all files of a type are
+        // encrypted, for example encrypted WEM files are normally only music WEMs.
+        private static readonly Dictionary<GameTypeEnum, string[]> s_encryptedFileTypesByGame = new()
+        {
+            [GameTypeEnum.Attila] = [".bnk", ".wem"],
+            [GameTypeEnum.Rome2] = [".bnk", ".wem"],
+            [GameTypeEnum.Troy] = [".wem"],
+            [GameTypeEnum.Warhammer2] = [".wem"],
+            [GameTypeEnum.Warhammer3] = [".wem"],
+            [GameTypeEnum.Pharaoh] = [".wem", ".dds", ".rigid_model_v2", ".material", ".variantmeshdefinition", ".wsmodel", ".xml"],
+        };
+
+        private static readonly HashSet<string> s_encryptedFileTypes = s_encryptedFileTypesByGame.Values
+            .SelectMany(extensions => extensions)
+            .Append(".txt") // We use .txt in EncryptionTests, it's not actually a file known to be encrypted in games
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        // This checks that decrypted bytes look right for their file type.
+        // A mismatch usually means the wrong keystream was used to decrypt them.
+        public static bool TryValidateDecryptedContent(string path, byte[] bytes, out string? error)
+        {
+            error = null;
+            if (bytes.Length == 0)
+                return false;
+
+            var extension = Path.GetExtension(path).ToLowerInvariant();
+            if (!s_encryptedFileTypes.Contains(extension))
+                return false;
+
+            var expectedMagic = extension switch
+            {
+                ".bnk" => "BKHD",
+                ".wem" => "RIFF",
+                ".rigid_model_v2" => "RMV2",
+                ".dds" => "DDS ",
+                _ => null,
+            };
+
+            if (expectedMagic != null)
+            {
+                if (bytes.Length < expectedMagic.Length)
+                    return false;
+
+                var actualMagic = Encoding.ASCII.GetString(bytes, 0, expectedMagic.Length);
+                if (actualMagic != expectedMagic)
+                {
+                    error = $"expected {expectedMagic} header, got {actualMagic}";
+                    return true;
+                }
+
+                // The magic alone can't tell keystream width apart, since it lives entirely in the low 32
+                // bits of the first block, which are identical either way. These fields sit in the high 32
+                // bits, which do differ, so they're what actually catches decryption with the wrong keystream.
+                if (expectedMagic == "RIFF" && bytes.Length >= 8)
+                {
+                    var chunkSize = BinaryPrimitives.ReadUInt32LittleEndian(bytes.AsSpan(4, 4));
+                    var expectedChunkSize = bytes.Length - 8;
+                    if (chunkSize != expectedChunkSize)
+                        error = $"expected RIFF chunk size {expectedChunkSize}, got {chunkSize}";
+                }
+                else if (extension == ".dds" && bytes.Length >= 8)
+                {
+                    var headerSize = BinaryPrimitives.ReadUInt32LittleEndian(bytes.AsSpan(4, 4));
+                    if (headerSize != 124)
+                        error = $"expected DDS header size 124, got {headerSize}";
+                }
+
+                return true;
+            }
+
+            try
+            {
+                var text = new UTF8Encoding(false, true).GetString(bytes).TrimStart('﻿', ' ', '\t', '\r', '\n');
+                if (extension != ".txt" && !text.StartsWith('<'))
+                    error = $"expected content starting with '<', got \"{text[..Math.Min(text.Length, 20)]}\"";
+                else if (text.Any(character => char.IsControl(character) && character is not ('\r' or '\n' or '\t')))
+                    error = "expected readable text";
+            }
+            catch (DecoderFallbackException)
+            {
+                error = "expected valid UTF-8 text";
+            }
+
+            return true;
+        }
     }
 }

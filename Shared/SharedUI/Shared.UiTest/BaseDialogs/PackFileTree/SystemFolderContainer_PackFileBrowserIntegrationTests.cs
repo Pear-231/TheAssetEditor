@@ -477,8 +477,8 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree
         // Step 14: Save the SystemFolderContainer as .pack, reload and verify
         // ──────────────────────────────────────────────────────────────────────
 
-        [Test]
-        public void Step14_SaveToPack_ReloadAndVerify()
+        [TestCaseSource(nameof(SupportedGames))]
+        public void Step14_SaveToPack_ReloadAndVerify(GameTypeEnum game)
         {
             CreateSystemFolderContainer();
             SeedFile(@"animations\idle.anim", "anim data");
@@ -488,7 +488,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree
 
             // Save to .pack
             var packPath = Path.Combine(_tempDir, "output.pack");
-            var gameInfo = GameInformationDatabase.GetGameById(GameTypeEnum.Warhammer3);
+            var gameInfo = GameInformationDatabase.GetGameById(game);
             _packFileService.SavePackContainer(_container, packPath, false, gameInfo);
 
             Assert.That(File.Exists(packPath), Is.True);
@@ -496,7 +496,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree
             // Load the saved pack and verify
             using var fs = File.OpenRead(packPath);
             using var reader = new BinaryReader(fs);
-            var loaded = PackFileSerializerLoader.Load(packPath, fs.Length, reader, new CaPackDuplicateFileResolver());
+            var loaded = PackFileSerializerLoader.Load(packPath, fs.Length, reader, new CaPackDuplicateFileResolver(), game);
 
             Assert.That(loaded.GetFileCount(), Is.EqualTo(3));
             Assert.That(loaded.FindFile(@"animations\idle.anim"), Is.Not.Null);
@@ -508,6 +508,8 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree
             var animData = animFile.DataSource.ReadData();
             Assert.That(System.Text.Encoding.ASCII.GetString(animData), Is.EqualTo("anim data"));
         }
+
+        private static IEnumerable<GameTypeEnum> SupportedGames() => GameInformationDatabase.GetSupportedGames();
 
         // ──────────────────────────────────────────────────────────────────────
         // B1 — Duplicate filenames in different folders. Renaming / moving /
