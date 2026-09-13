@@ -34,7 +34,7 @@ namespace Shared.CoreTest.PackFiles.Serialization
 
             using var readMs = new MemoryStream(writeMs.ToArray());
             using var reader = new BinaryReader(readMs);
-            var loadedPack = PackFileSerializerLoader.Load(outputContainerName, readMs.Length, reader, new CaPackDuplicateFileResolver());
+            var loadedPack = PackFileSerializerLoader.Load(outputContainerName, readMs.Length, reader, new CaPackDuplicateFileResolver(), gameInfo.Type);
 
             Assert.That(loadedPack.GetFileCount(), Is.EqualTo(1));
             Assert.That(loadedPack.FindFile("folder\\keep.txt"), Is.Not.Null);
@@ -57,7 +57,7 @@ namespace Shared.CoreTest.PackFiles.Serialization
             using var writer = new BinaryWriter(writeMs);
             PackFileSerializerWriter.SaveToByteArray(outputContainerName, container, writer, gameInfo);
 
-            var loadedPack = LoadFromMemory(outputContainerName, writeMs.ToArray());
+            var loadedPack = LoadFromMemory(outputContainerName, writeMs.ToArray(), gameInfo.Type);
 
             Assert.That(loadedPack.FindFile("folder\\keep.txt"), Is.Not.Null);
             AssertCorruptionDetectionFiles(loadedPack, writeMs);
@@ -78,7 +78,7 @@ namespace Shared.CoreTest.PackFiles.Serialization
             using var writer = new BinaryWriter(writeMs);
             PackFileSerializerWriter.SaveToByteArray(outputContainerName, container, writer, gameInfo);
 
-            var loadedPack = LoadFromMemory(outputContainerName, writeMs.ToArray());
+            var loadedPack = LoadFromMemory(outputContainerName, writeMs.ToArray(), gameInfo.Type);
 
             AssertCorruptionDetectionFiles(loadedPack, writeMs);
         }
@@ -154,7 +154,7 @@ namespace Shared.CoreTest.PackFiles.Serialization
             //  Load the file and assert
             using var readBackMs = new MemoryStream(data);
             var reader = new BinaryReader(readBackMs);
-            var loadedPackFile = PackFileSerializerLoader.Load(outputContainerName, data.LongLength, reader, new CaPackDuplicateFileResolver());
+            var loadedPackFile = PackFileSerializerLoader.Load(outputContainerName, data.LongLength, reader, new CaPackDuplicateFileResolver(), gameInfo.Type);
 
             for (var i = 0; i < expectedFileInfo.Count; i++)
             {
@@ -189,11 +189,11 @@ namespace Shared.CoreTest.PackFiles.Serialization
 
         }
 
-        private static PackFileContainer LoadFromMemory(string outputContainerName, byte[] data)
+        private static PackFileContainer LoadFromMemory(string outputContainerName, byte[] data, GameTypeEnum game)
         {
             using var readMs = new MemoryStream(data);
             using var reader = new BinaryReader(readMs);
-            return PackFileSerializerLoader.Load(outputContainerName, data.LongLength, reader, new CaPackDuplicateFileResolver());
+            return PackFileSerializerLoader.Load(outputContainerName, data.LongLength, reader, new CaPackDuplicateFileResolver(), game);
         }
 
         private static void AssertCorruptionDetectionFiles(PackFileContainer loadedPack, Stream? sourceStream = null)

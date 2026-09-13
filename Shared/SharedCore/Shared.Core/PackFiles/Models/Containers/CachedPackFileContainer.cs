@@ -288,9 +288,9 @@ namespace Shared.Core.PackFiles.Models.Containers
             string? dbFilePath = null,
             string systemFilePath = "",
             string? sourcePackFilePath = null,
-            GameTypeEnum? gameVersion = null)
+            GameTypeEnum gameVersion = GameTypeEnum.Warhammer3)
         {
-            var packParent = new PackedFileSourceParent { FilePath = sourcePackFilePath ?? @"c:\game\data\pack1.pack" };
+            var packParent = new PackedFileSourceParent { FilePath = sourcePackFilePath ?? @"c:\game\data\pack1.pack", GameType = gameVersion };
 
             var source = PackFileContainer.CreateReadOnlyPackFile(containerName, systemFilePath);
             source.PackFileSettings.GameVersion = gameVersion;
@@ -473,6 +473,13 @@ namespace Shared.Core.PackFiles.Models.Containers
             }
         }
 
+        // A cache is only ever saved with the game it was built for (see Save above), and a load
+        // missing that value is rejected as stale by PackFileContainerLoader before reaching here --
+        // so this should never actually throw. It exists to fail loudly if that invariant is ever
+        // broken, rather than let decryption silently guess a keystream.
+        private GameTypeEnum RequireGameVersion() =>
+            PackFileSettings.GameVersion ?? throw new InvalidOperationException($"Cached container '{Name}' has no GameVersion recorded; it should have been treated as a stale cache and rebuilt.");
+
         public Dictionary<string, PackFile> GetAllFiles()
         {
             var time = Stopwatch.StartNew();
@@ -490,7 +497,7 @@ namespace Shared.Core.PackFiles.Models.Containers
             {
                 if (!parentCache.TryGetValue(entry.SourcePackFilePath, out var parent))
                 {
-                    parent = new PackedFileSourceParent { FilePath = entry.SourcePackFilePath };
+                    parent = new PackedFileSourceParent { FilePath = entry.SourcePackFilePath, GameType = RequireGameVersion() };
                     parentCache[entry.SourcePackFilePath] = parent;
                 }
 
@@ -537,7 +544,7 @@ namespace Shared.Core.PackFiles.Models.Containers
                 {
                     if (!packedFileSourceParentCache.TryGetValue(f.SourcePackFilePath, out var parent))
                     {
-                        parent = new PackedFileSourceParent { FilePath = f.SourcePackFilePath };
+                        parent = new PackedFileSourceParent { FilePath = f.SourcePackFilePath, GameType = RequireGameVersion() };
                         packedFileSourceParentCache[f.SourcePackFilePath] = parent;
                     }
 
@@ -578,9 +585,9 @@ namespace Shared.Core.PackFiles.Models.Containers
         public void SaveToDisk(string path, bool createBackup, GameInformation gameInformation) =>
             throw new InvalidOperationException("Cannot modify a cached CA pack file container.");
 
-        private static PackFile ToPackFile(CachedFileEntity entry)
+        private PackFile ToPackFile(CachedFileEntity entry)
         {
-            var parent = new PackedFileSourceParent { FilePath = entry.SourcePackFilePath };
+            var parent = new PackedFileSourceParent { FilePath = entry.SourcePackFilePath, GameType = RequireGameVersion() };
             var source = new PackedFileSource(
                 parent, entry.Offset, entry.Size,
                 entry.IsEncrypted, entry.IsCompressed,

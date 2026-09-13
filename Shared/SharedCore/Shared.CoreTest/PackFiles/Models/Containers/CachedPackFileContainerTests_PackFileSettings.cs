@@ -1,4 +1,5 @@
-using Shared.Core.PackFiles.Models.Containers;
+﻿using Shared.Core.PackFiles.Models.Containers;
+using Shared.Core.PackFiles.Models.FileSources;
 using Shared.Core.Settings;
 
 namespace Shared.CoreTest.PackFiles.Models.Containers
@@ -29,6 +30,23 @@ namespace Shared.CoreTest.PackFiles.Models.Containers
                 if (File.Exists(dbFilePath))
                     File.Delete(dbFilePath);
             }
+        }
+
+        [Test]
+        public void GetAllFiles_ReturnsSourcesWhoseParentCarriesTheContainersGameVersion()
+        {
+            using var container = CachedPackFileContainer.CreateFromFileList(
+                "TestCache",
+                PackFileContainerTests_TestBase.TestFiles,
+                useInMemoryDb: true,
+                sourcePackFilePath: @"c:\game\data\pack1.pack",
+                gameVersion: GameTypeEnum.Warhammer);
+
+            var files = container.GetAllFiles();
+
+            Assert.That(files, Is.Not.Empty);
+            Assert.That(files.Values, Has.All.Matches<Shared.Core.PackFiles.Models.PackFile>(
+                file => file.DataSource is PackedFileSource source && source.Parent.GameType == GameTypeEnum.Warhammer));
         }
     }
 }

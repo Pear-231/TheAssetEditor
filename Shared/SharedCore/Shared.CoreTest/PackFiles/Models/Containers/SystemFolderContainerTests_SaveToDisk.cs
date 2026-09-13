@@ -80,7 +80,7 @@ namespace Shared.CoreTest.PackFiles.Models.Containers
             // Verify the .pack can be reloaded
             using var fileStream = File.OpenRead(outputPath);
             using var reader = new BinaryReader(fileStream);
-            var loaded = PackFileSerializerLoader.Load(outputPath, fileStream.Length, reader, new CaPackDuplicateFileResolver());
+            var loaded = PackFileSerializerLoader.Load(outputPath, fileStream.Length, reader, new CaPackDuplicateFileResolver(), _gameInfo.Type);
 
             Assert.That(loaded.GetFileCount(), Is.EqualTo(5));
             Assert.That(loaded.FindFile(@"folder\filea.txt"), Is.Not.Null);
@@ -98,7 +98,7 @@ namespace Shared.CoreTest.PackFiles.Models.Containers
 
             using var fileStream = File.OpenRead(outputPath);
             using var reader = new BinaryReader(fileStream);
-            var loaded = PackFileSerializerLoader.Load(outputPath, fileStream.Length, reader, new CaPackDuplicateFileResolver());
+            var loaded = PackFileSerializerLoader.Load(outputPath, fileStream.Length, reader, new CaPackDuplicateFileResolver(), _gameInfo.Type);
 
             Assert.That(loaded.GetFileCount(), Is.EqualTo(2));
             foreach (var detectionFile in CorruptionDetectionFiles)
@@ -121,7 +121,7 @@ namespace Shared.CoreTest.PackFiles.Models.Containers
 
             using var fileStream = File.OpenRead(outputPath);
             using var reader = new BinaryReader(fileStream);
-            var loaded = PackFileSerializerLoader.Load(outputPath, fileStream.Length, reader, new CaPackDuplicateFileResolver());
+            var loaded = PackFileSerializerLoader.Load(outputPath, fileStream.Length, reader, new CaPackDuplicateFileResolver(), _gameInfo.Type);
 
             AssertCorruptionDetectionFiles(loaded);
         }
@@ -188,7 +188,7 @@ namespace Shared.CoreTest.PackFiles.Models.Containers
 
             using var fileStream = File.OpenRead(outputPath);
             using var reader = new BinaryReader(fileStream);
-            var loaded = PackFileSerializerLoader.Load(outputPath, fileStream.Length, reader, new CaPackDuplicateFileResolver());
+            var loaded = PackFileSerializerLoader.Load(outputPath, fileStream.Length, reader, new CaPackDuplicateFileResolver(), _gameInfo.Type);
 
             var fileA = loaded.FindFile(@"folder\filea.txt");
             Assert.That(fileA, Is.Not.Null);
@@ -255,7 +255,7 @@ namespace Shared.CoreTest.PackFiles.Models.Containers
 
             using var fileStream = File.OpenRead(outputPath);
             using var reader = new BinaryReader(fileStream);
-            var loaded = PackFileSerializerLoader.Load(outputPath, fileStream.Length, reader, new CaPackDuplicateFileResolver());
+            var loaded = PackFileSerializerLoader.Load(outputPath, fileStream.Length, reader, new CaPackDuplicateFileResolver(), _gameInfo.Type);
 
             Assert.That(loaded.Header, Is.Not.Null);
             Assert.That(loaded.Header!.Version, Is.EqualTo(PackFileVersion.PFH5));

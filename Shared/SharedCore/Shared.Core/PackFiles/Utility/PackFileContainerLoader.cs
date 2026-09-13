@@ -1,7 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Reflection;
 using System.Text;
-using Shared.Core.Events;
 using Shared.Core.PackFiles.ErrorHandling;
 using Shared.Core.PackFiles.Models;
 using Shared.Core.PackFiles.Models.Containers;
@@ -81,8 +80,9 @@ namespace Shared.Core.PackFiles.Utility
         public IPackFileContainer CreateFromPackFile(PackFileContainerType type, string packFilePath, bool loadAsReadOnly)
         {
             var packfileName = Path.GetFileNameWithoutExtension(packFilePath);
-            var container = CreateFromCollection(type, packFilePath, [packFilePath], packfileName, loadAsReadOnly, new CustomPackDuplicateFileResolver());
-            container.PackFileSettings.GameVersion = _settingsService.CurrentSettings.CurrentGame;
+            var game = _settingsService.CurrentSettings.CurrentGame;
+            var container = CreateFromCollection(type, packFilePath, [packFilePath], packfileName, loadAsReadOnly, new CustomPackDuplicateFileResolver(), game);
+            container.PackFileSettings.GameVersion = game;
             container.SaveSettings();
             return container;
         }
@@ -103,9 +103,9 @@ namespace Shared.Core.PackFiles.Utility
             var gameDataFolder = gamePathInfo.Path;
             var fullPackFilePaths = ManifestHelper.GetPackFilesFromManifest(gameDataFolder, out var manifestFileFound);
 
-            // When loading ca pack packs, we want to use the CA resolver as its faster. 
+            // When loading ca pack packs, we want to use the CA resolver as its faster.
             // If there is no manifest file, we need to use the duplicate resolver as it loads all file in the folder.
-            // There might be custom mods in there that does not follow the rules! 
+            // There might be custom mods in there that does not follow the rules!
             IDuplicateFileResolver packfileResolver = new CaPackDuplicateFileResolver();
             if (manifestFileFound == false)
             {
@@ -113,19 +113,18 @@ namespace Shared.Core.PackFiles.Utility
                 packfileResolver = new CustomPackDuplicateFileResolver();
             }
 
-            var container = CreateFromCollection(PackFileContainerType.Database, gameDataFolder, fullPackFilePaths, $"All Game Packs - {gameName}", true, packfileResolver);
+            var container = CreateFromCollection(PackFileContainerType.Database, gameDataFolder, fullPackFilePaths, $"All Game Packs - {gameName}", true, packfileResolver, gameEnum);
             container.IsCaPackFile = true;
             container.PackFileSettings.GameVersion = gameEnum;
             container.SaveSettings();
             return container;
         }
 
-
-        public IPackFileContainer CreateFromCollection(PackFileContainerType type, string packFileSystemPath, List<string> fullPackFilePaths, string createdPackFileName, bool loadAsReadOnly, IDuplicateFileResolver duplicateFileResolver)
+        public IPackFileContainer CreateFromCollection(PackFileContainerType type, string packFileSystemPath, List<string> fullPackFilePaths, string createdPackFileName, bool loadAsReadOnly, IDuplicateFileResolver duplicateFileResolver, GameTypeEnum game)
         {
-            if(type == PackFileContainerType.Database && loadAsReadOnly == false)
+            if (type == PackFileContainerType.Database && loadAsReadOnly == false)
                 throw new InvalidOperationException($"Cannot load as writable if loading from cache. Caching is only supported for read-only containers. PackFile {createdPackFileName}");
-       
+
             var fingerprint = string.Empty;
             var cacheFilePath = string.Empty;
             if (type == PackFileContainerType.Database)
@@ -135,7 +134,7 @@ namespace Shared.Core.PackFiles.Utility
                 cacheFilePath = _packFileContainerCacheHelper.GetCacheFilePath(cachePrefix, fingerprint);
 
                 var cached = _packFileContainerCacheHelper.TryLoadFromCache(cacheFilePath, fingerprint);
-                if (cached != null)
+                if (cached != null && cached.PackFileSettings.GameVersion == game)
                     return cached;
 
                 //var cacheInvalidReason = GetCacheInvalidReason(cacheFilePath, fingerprint);
@@ -148,10 +147,11 @@ namespace Shared.Core.PackFiles.Utility
 
             using (_standardDialogs.ShowWaitCursor())
             {
-                var container = LoadPackFilesFromDisk(createdPackFileName, fullPackFilePaths, duplicateFileResolver);
+                var container = LoadPackFilesFromDisk(createdPackFileName, fullPackFilePaths, duplicateFileResolver, game);
                 container.Name = createdPackFileName;
                 container.IsReadOnly = loadAsReadOnly;
                 container.SystemFilePath = packFileSystemPath;
+                container.PackFileSettings.GameVersion = game;
 
                 if (type == PackFileContainerType.Database)
                 {
@@ -162,14 +162,7 @@ namespace Shared.Core.PackFiles.Utility
             }
         }
 
-
-
-
-
-
-
-
-        private static PackFileContainer LoadPackFilesFromDisk(string createdPackFileName, List<string> fullPackFilePaths, IDuplicateFileResolver packfileResolver)
+        private static PackFileContainer LoadPackFilesFromDisk(string createdPackFileName, List<string> fullPackFilePaths, IDuplicateFileResolver packfileResolver, GameTypeEnum game)
         {
             var packList = new ConcurrentBag<PackFileContainer>();
             var packsCompressionStats = new ConcurrentDictionary<CompressionFormat, CompressionInformation>();
@@ -183,7 +176,7 @@ namespace Shared.Core.PackFiles.Utility
                     using var reader = new BinaryReader(fileStream, Encoding.ASCII);
 
                     var packFileSize = new FileInfo(path).Length;
-                    var pack = PackFileSerializerLoader.Load(path, packFileSize, reader, packfileResolver);
+                    var pack = PackFileSerializerLoader.Load(path, packFileSize, reader, packfileResolver, game);
                     packList.Add(pack);
 
                     PackFileLog.LogPackCompression(pack);
@@ -205,7 +198,7 @@ namespace Shared.Core.PackFiles.Utility
 
             PackFileLog.LogPacksCompression(packsCompressionStats);
 
-            // If there is only one packfile - we dont need to sort. Just return it. 
+            // If there is only one packfile - we dont need to sort. Just return it.
             // Be aware, that when we create a new PackFileContainer in the case of multiple packfiles, we will lose the original header information of the first packfile.
             // This is because we need to create a new header for the new container. This should not be an issue, but its something to be aware of.
             if (packList.Count == 1)

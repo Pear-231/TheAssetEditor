@@ -143,7 +143,7 @@ namespace Shared.CoreTest.PackFiles.Models.Containers
             using (var fs = File.OpenRead(karlPackPath))
             using (var reader = new BinaryReader(fs))
             {
-                karlContainer = PackFileSerializerLoader.Load(karlPackPath, fs.Length, reader, new CustomPackDuplicateFileResolver());
+                karlContainer = PackFileSerializerLoader.Load(karlPackPath, fs.Length, reader, new CustomPackDuplicateFileResolver(), GameTypeEnum.Warhammer3);
             }
             karlContainer.IsCaPackFile = true;
             karlContainer.IsReadOnly = true;
@@ -189,7 +189,7 @@ namespace Shared.CoreTest.PackFiles.Models.Containers
             using (var outFs = File.OpenRead(outputPackPath))
             using (var outReader = new BinaryReader(outFs))
             {
-                reloadedPack = PackFileSerializerLoader.Load(outputPackPath, outFs.Length, outReader, new CaPackDuplicateFileResolver());
+                reloadedPack = PackFileSerializerLoader.Load(outputPackPath, outFs.Length, outReader, new CaPackDuplicateFileResolver(), GameTypeEnum.Warhammer3);
             }
 
             // Assert: version comes from project settings (Warhammer3 -> PFH5)
@@ -238,7 +238,7 @@ namespace Shared.CoreTest.PackFiles.Models.Containers
             using (var fs = File.OpenRead(sourcePackPath))
             using (var reader = new BinaryReader(fs))
             {
-                sourcePack = PackFileSerializerLoader.Load(sourcePackPath, fs.Length, reader, new CustomPackDuplicateFileResolver());
+                sourcePack = PackFileSerializerLoader.Load(sourcePackPath, fs.Length, reader, new CustomPackDuplicateFileResolver(), GameTypeEnum.Warhammer3);
             }
 
             var projectDir = Path.Combine(_tempDir, "project_from_pack");
@@ -288,7 +288,7 @@ namespace Shared.CoreTest.PackFiles.Models.Containers
             // Reload and verify
             using var outFs = File.OpenRead(outputPackPath);
             using var outReader = new BinaryReader(outFs);
-            var loaded = PackFileSerializerLoader.Load(outputPackPath, outFs.Length, outReader, new CaPackDuplicateFileResolver());
+            var loaded = PackFileSerializerLoader.Load(outputPackPath, outFs.Length, outReader, new CaPackDuplicateFileResolver(), GameTypeEnum.Warhammer3);
 
             var expectedVersion = GameInformationDatabase.GetGameById(GameTypeEnum.Warhammer3).PackFileVersion;
             Assert.That(loaded.Header.Version, Is.EqualTo(expectedVersion));
@@ -342,7 +342,7 @@ namespace Shared.CoreTest.PackFiles.Models.Containers
 
             using var fs = File.OpenRead(outputPackPath);
             using var reader = new BinaryReader(fs);
-            var loaded = PackFileSerializerLoader.Load(outputPackPath, fs.Length, reader, new CaPackDuplicateFileResolver());
+            var loaded = PackFileSerializerLoader.Load(outputPackPath, fs.Length, reader, new CaPackDuplicateFileResolver(), GameTypeEnum.Warhammer3);
 
             // Assert
             Assert.That(loaded.ContainsFile(@"foldera\mixedcase.txt"), Is.False);
@@ -387,7 +387,7 @@ namespace Shared.CoreTest.PackFiles.Models.Containers
 
             using var fs = File.OpenRead(overridePackPath);
             using var reader = new BinaryReader(fs);
-            var loaded = PackFileSerializerLoader.Load(overridePackPath, fs.Length, reader, new CaPackDuplicateFileResolver());
+            var loaded = PackFileSerializerLoader.Load(overridePackPath, fs.Length, reader, new CaPackDuplicateFileResolver(), GameTypeEnum.Warhammer3);
 
             Assert.That(loaded.ContainsFile(@"data\seed.txt"), Is.True);
             var expectedVersion = GameInformationDatabase.GetGameById(GameTypeEnum.Warhammer3).PackFileVersion;
@@ -431,7 +431,7 @@ namespace Shared.CoreTest.PackFiles.Models.Containers
 
             using var fs = File.OpenRead(outputPackPath);
             using var reader = new BinaryReader(fs);
-            var loaded = PackFileSerializerLoader.Load(outputPackPath, fs.Length, reader, new CaPackDuplicateFileResolver());
+            var loaded = PackFileSerializerLoader.Load(outputPackPath, fs.Length, reader, new CaPackDuplicateFileResolver(), GameTypeEnum.Warhammer3);
             Assert.That(loaded.ContainsFile(@"locked\file.txt"), Is.True);
         }
 
@@ -485,7 +485,7 @@ namespace Shared.CoreTest.PackFiles.Models.Containers
             // Verify the pack file is valid and contains only the added file
             using var fs = File.OpenRead(packPath);
             using var reader = new BinaryReader(fs);
-            var loaded = PackFileSerializerLoader.Load(packPath, fs.Length, reader, new CaPackDuplicateFileResolver());
+            var loaded = PackFileSerializerLoader.Load(packPath, fs.Length, reader, new CaPackDuplicateFileResolver(), GameTypeEnum.Warhammer3);
             Assert.That(loaded.GetFileCount(), Is.EqualTo(1));
             Assert.That(loaded.FindFile(@"scripts\added.bin"), Is.Not.Null);
 
@@ -593,7 +593,7 @@ namespace Shared.CoreTest.PackFiles.Models.Containers
 
             using var fs = File.OpenRead(packPath);
             using var reader = new BinaryReader(fs);
-            var loaded = PackFileSerializerLoader.Load(packPath, fs.Length, reader, new CaPackDuplicateFileResolver());
+            var loaded = PackFileSerializerLoader.Load(packPath, fs.Length, reader, new CaPackDuplicateFileResolver(), GameTypeEnum.Warhammer3);
             Assert.That(loaded.GetFileCount(), Is.EqualTo(1));
             Assert.That(loaded.FindFile("renamed.txt"), Is.Not.Null);
         }
@@ -665,7 +665,7 @@ namespace Shared.CoreTest.PackFiles.Models.Containers
             // Assert: load the saved pack and verify both files are present
             using var fs = File.OpenRead(packPath);
             using var reader = new BinaryReader(fs);
-            var loaded = PackFileSerializerLoader.Load(packPath, fs.Length, reader, new CaPackDuplicateFileResolver());
+            var loaded = PackFileSerializerLoader.Load(packPath, fs.Length, reader, new CaPackDuplicateFileResolver(), GameTypeEnum.Warhammer3);
 
             Assert.That(loaded.GetFileCount(), Is.EqualTo(5));
             Assert.That(loaded.FindFile(@"initial.txt"), Is.Not.Null);
@@ -726,11 +726,11 @@ namespace Shared.CoreTest.PackFiles.Models.Containers
             // Load both and compare file order
             using var sysFs = File.OpenRead(sysPackPath);
             using var sysReader = new BinaryReader(sysFs);
-            var loadedSys = PackFileSerializerLoader.Load(sysPackPath, sysFs.Length, sysReader, new CaPackDuplicateFileResolver());
+            var loadedSys = PackFileSerializerLoader.Load(sysPackPath, sysFs.Length, sysReader, new CaPackDuplicateFileResolver(), GameTypeEnum.Warhammer3);
 
             using var normFs = File.OpenRead(normalPackPath);
             using var normReader = new BinaryReader(normFs);
-            var loadedNorm = PackFileSerializerLoader.Load(normalPackPath, normFs.Length, normReader, new CaPackDuplicateFileResolver());
+            var loadedNorm = PackFileSerializerLoader.Load(normalPackPath, normFs.Length, normReader, new CaPackDuplicateFileResolver(), GameTypeEnum.Warhammer3);
 
             // Both should have the same files in the same order
             var sysKeys = loadedSys.GetAllFiles().Keys.ToList();
@@ -802,7 +802,7 @@ namespace Shared.CoreTest.PackFiles.Models.Containers
 
             using var fs = File.OpenRead(packPath);
             using var reader = new BinaryReader(fs);
-            var loaded = PackFileSerializerLoader.Load(packPath, fs.Length, reader, new CaPackDuplicateFileResolver());
+            var loaded = PackFileSerializerLoader.Load(packPath, fs.Length, reader, new CaPackDuplicateFileResolver(), GameTypeEnum.Warhammer3);
             var savedOrder = loaded.GetAllFiles().Keys.ToList();
 
             Assert.That(directoryOrder, Is.EqualTo(savedOrder),
@@ -889,7 +889,7 @@ namespace Shared.CoreTest.PackFiles.Models.Containers
 
             using var fs = File.OpenRead(packPath);
             using var reader = new BinaryReader(fs);
-            var loaded = PackFileSerializerLoader.Load(packPath, fs.Length, reader, new CaPackDuplicateFileResolver());
+            var loaded = PackFileSerializerLoader.Load(packPath, fs.Length, reader, new CaPackDuplicateFileResolver(), GameTypeEnum.Warhammer3);
 
             Assert.That(loaded.FindFile(@"my folder\renamed file.txt"), Is.Not.Null);
             Assert.That(loaded.FindFile(@"a\b\c\d\e\f\leaf.bin"), Is.Not.Null);
