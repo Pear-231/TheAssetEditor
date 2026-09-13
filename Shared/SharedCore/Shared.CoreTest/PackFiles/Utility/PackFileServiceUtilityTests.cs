@@ -2,6 +2,7 @@
 using Shared.Core.PackFiles.Models.Containers;
 using Shared.Core.PackFiles.Models.FileSources;
 using Shared.Core.PackFiles.Utility;
+using Shared.Core.Settings;
 
 namespace Shared.CoreTest.PackFiles.Utility
 {
@@ -49,7 +50,7 @@ namespace Shared.CoreTest.PackFiles.Utility
         private static PackFileContainer CreateContainer()
         {
             var container = PackFileContainer.CreatePackFile("Test");
-            var parent = new PackedFileSourceParent { FilePath = @"c:\game\p.pack" };
+            var parent = new PackedFileSourceParent { FilePath = @"c:\game\p.pack", GameType = GameTypeEnum.Warhammer3 };
 
             container.AddOrUpdateFile(@"root.txt", new PackFile("root.txt", new PackedFileSource(parent, 0, 1, false, false, CompressionFormat.None, 0)));
             container.AddOrUpdateFile(@"audio\a.wem", new PackFile("a.wem", new PackedFileSource(parent, 1, 1, false, false, CompressionFormat.None, 0)));

@@ -52,6 +52,14 @@ namespace Shared.Core.Settings
         Version3,
     }
 
+    public enum EncryptionKeystream
+    {
+        Unsupported = 0,
+        None,
+        ThirtyTwoBitComplement,
+        SixtyFourBitComplement,
+    }
+
     public class GameInformation(
         GameTypeEnum gameType,
         string displayName,
@@ -59,7 +67,8 @@ namespace Shared.Core.Settings
         GameBnkVersion bankGeneratorVersion,
         WwiseProjectId wwiseProjectId,
         WsModelVersion wsModelVersion,
-        List<CompressionFormat> compressionFormats)
+        List<CompressionFormat> compressionFormats,
+        EncryptionKeystream encryptionKeystream)
     {
         public GameTypeEnum Type { get; } = gameType;
         public string DisplayName { get; } = displayName;
@@ -68,6 +77,7 @@ namespace Shared.Core.Settings
         public WwiseProjectId WwiseProjectId { get; } = wwiseProjectId;
         public WsModelVersion WsModelVersion { get; } = wsModelVersion;
         public List<CompressionFormat> CompressionFormats { get; } = compressionFormats;
+        public EncryptionKeystream EncryptionKeystream { get; } = encryptionKeystream;
     }
 
     public static class GameInformationDatabase
@@ -83,7 +93,8 @@ namespace Shared.Core.Settings
                 GameBnkVersion.Unsupported,
                 WwiseProjectId.Unsupported,
                 WsModelVersion.Unknown,
-                [CompressionFormat.None]);
+                [CompressionFormat.None],
+                EncryptionKeystream.SixtyFourBitComplement);
 
             var warhammer2 = new GameInformation(
                 GameTypeEnum.Warhammer2,
@@ -92,7 +103,8 @@ namespace Shared.Core.Settings
                 GameBnkVersion.Unsupported,
                 WwiseProjectId.Unsupported,
                 WsModelVersion.Version1,
-                [CompressionFormat.Lzma1]);
+                [CompressionFormat.Lzma1],
+                EncryptionKeystream.SixtyFourBitComplement);
 
             var warhammer3 = new GameInformation(
                 GameTypeEnum.Warhammer3,
@@ -101,7 +113,8 @@ namespace Shared.Core.Settings
                 GameBnkVersion.Warhammer3,
                 WwiseProjectId.Warhammer3,
                 WsModelVersion.Version3,
-                [CompressionFormat.Lzma1, CompressionFormat.Lz4, CompressionFormat.Zstd]);
+                [CompressionFormat.Lzma1, CompressionFormat.Lz4, CompressionFormat.Zstd],
+                EncryptionKeystream.SixtyFourBitComplement);
 
             var troy = new GameInformation(
                 GameTypeEnum.Troy,
@@ -110,7 +123,8 @@ namespace Shared.Core.Settings
                 GameBnkVersion.Unsupported,
                 WwiseProjectId.Unsupported,
                 WsModelVersion.Unknown,
-                [CompressionFormat.Lzma1]);
+                [CompressionFormat.Lzma1],
+                EncryptionKeystream.SixtyFourBitComplement);
 
             var threeKingdoms = new GameInformation(
                 GameTypeEnum.ThreeKingdoms,
@@ -119,7 +133,8 @@ namespace Shared.Core.Settings
                 GameBnkVersion.Unsupported,
                 WwiseProjectId.Unsupported,
                 WsModelVersion.Version1,
-                [CompressionFormat.Lzma1]);
+                [CompressionFormat.Lzma1],
+                EncryptionKeystream.None);
 
             var rome2 = new GameInformation(
                 GameTypeEnum.Rome2,
@@ -128,7 +143,8 @@ namespace Shared.Core.Settings
                 GameBnkVersion.Unsupported,
                 WwiseProjectId.Unsupported,
                 WsModelVersion.Unknown,
-                [CompressionFormat.None]);
+                [CompressionFormat.None],
+                EncryptionKeystream.ThirtyTwoBitComplement);
 
             var attila = new GameInformation(
                 GameTypeEnum.Attila,
@@ -137,7 +153,8 @@ namespace Shared.Core.Settings
                 GameBnkVersion.Attila,
                 WwiseProjectId.Unsupported,
                 WsModelVersion.Unknown,
-                [CompressionFormat.None]);
+                [CompressionFormat.None],
+                EncryptionKeystream.ThirtyTwoBitComplement);
 
             var pharaoh = new GameInformation(
                 GameTypeEnum.Pharaoh,
@@ -146,7 +163,8 @@ namespace Shared.Core.Settings
                 GameBnkVersion.Unsupported,
                 WwiseProjectId.Unsupported,
                 WsModelVersion.Unknown,
-                [CompressionFormat.Lzma1]);
+                [CompressionFormat.Lzma1],
+                EncryptionKeystream.SixtyFourBitComplement);
 
             Games = new Dictionary<GameTypeEnum, GameInformation>
             {
@@ -164,6 +182,13 @@ namespace Shared.Core.Settings
         public static GameInformation GetGameById(GameTypeEnum type)
         {
             return Games[type];
+        }
+
+        public static IEnumerable<GameTypeEnum> GetSupportedGames()
+        {
+            return Games.Values
+                .Where(game => game.EncryptionKeystream != EncryptionKeystream.Unsupported)
+                .Select(game => game.Type);
         }
 
         public static string GetEnumAsString(GameTypeEnum game)

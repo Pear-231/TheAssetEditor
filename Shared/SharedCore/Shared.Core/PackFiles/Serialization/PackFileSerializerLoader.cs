@@ -27,7 +27,7 @@ namespace Shared.Core.PackFiles.Serialization
     {
         static readonly ILogger s_logger = Logging.CreateStatic(typeof(PackFileSerializerLoader));
 
-        public static PackFileContainer Load(string packFileSystemPath, long packFileSize, BinaryReader reader, IDuplicateFileResolver duplicatePackFileResolver)
+        public static PackFileContainer Load(string packFileSystemPath, long packFileSize, BinaryReader reader, IDuplicateFileResolver duplicatePackFileResolver, GameTypeEnum game)
         {
             try
             {
@@ -46,6 +46,7 @@ namespace Shared.Core.PackFiles.Serialization
                 var packedFileSourceParent = new PackedFileSourceParent()
                 {
                     FilePath = packFileSystemPath,
+                    GameType = game,
                 };
 
                 var offset = output.Header.DataStart;
@@ -73,7 +74,7 @@ namespace Shared.Core.PackFiles.Serialization
                     uint uncompressedSize = 0;
                     if (isCompressed)
                     {
-                        var fileHeader = DetectCompressionInfo(reader, offset, size, isEncrypted);
+                        var fileHeader = DetectCompressionInfo(reader, offset, size, isEncrypted, game);
                         using var compressionStream = new MemoryStream(fileHeader, false);
                         using var compressionReader = new BinaryReader(compressionStream);
                         uncompressedSize = compressionReader.ReadUInt32();
@@ -148,7 +149,7 @@ namespace Shared.Core.PackFiles.Serialization
                     header.Buffer = reader.ReadBytes(4);
 
                 // Uint32 timestamp
-                // output.HasExtendedHeader 20 bytes missing? Used by Arena, we dont care 
+                // output.HasExtendedHeader 20 bytes missing? Used by Arena, we dont care
             }
             else if (header.Version == PackFileVersion.PFH6)
             {
@@ -172,10 +173,7 @@ namespace Shared.Core.PackFiles.Serialization
 
             return header;
         }
-
- 
-
-        private static byte[] DetectCompressionInfo(BinaryReader reader, long dataOffset, uint entrySize, bool isEncrypted)
+        private static byte[] DetectCompressionInfo(BinaryReader reader, long dataOffset, uint entrySize, bool isEncrypted, GameTypeEnum game)
         {
             if (entrySize <= 8 || !isEncrypted && entrySize == 0)
                 return [];
@@ -183,14 +181,14 @@ namespace Shared.Core.PackFiles.Serialization
             var headerLen = 8;
             var header = new byte[headerLen];
 
-            var savedPos = reader.BaseStream.Position; 
+            var savedPos = reader.BaseStream.Position;
 
             reader.BaseStream.Seek(dataOffset, SeekOrigin.Begin);
             reader.Read(header, 0, headerLen);
             reader.BaseStream.Seek(savedPos, SeekOrigin.Begin);
 
             if (isEncrypted)
-                FileEncryption.DecryptInPlace(header, entrySize);
+                FileEncryption.DecryptInPlace(header, entrySize, game: game);
 
             return header;
         }

@@ -56,7 +56,7 @@ namespace AssetEditor.ViewModels
             _logger.Information($"Updating AssetEditor from version {currentVersion} to version {latestVersion}");
 
             DeleteUpdateDirectory();
-
+            DeleteCacheDirectory();
             LaunchUpdater();
 
             Application.Current.Shutdown();
@@ -67,6 +67,13 @@ namespace AssetEditor.ViewModels
             var updateDirectory = DirectoryHelper.UpdateDirectory;
             if (Directory.Exists(updateDirectory))
                 Directory.Delete(updateDirectory, true);
+        }
+
+        public static void DeleteCacheDirectory()
+        {
+            var cacheDirectory = DirectoryHelper.CacheDirectory;
+            if (Directory.Exists(cacheDirectory))
+                Directory.Delete(cacheDirectory, true);
         }
 
         public static void LaunchUpdater()

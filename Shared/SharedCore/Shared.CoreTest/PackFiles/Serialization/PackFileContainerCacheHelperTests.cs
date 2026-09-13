@@ -5,6 +5,7 @@ using Shared.Core.PackFiles.Models.Containers;
 using Shared.Core.PackFiles.Models.FileSources;
 using Shared.Core.PackFiles.Serialization.CacheDatabase;
 using Shared.Core.PackFiles.Utility;
+using Shared.Core.Settings;
 
 namespace Shared.CoreTest.PackFiles.Serialization
 {
@@ -61,6 +62,7 @@ namespace Shared.CoreTest.PackFiles.Serialization
 
         private static void SaveCache(string fingerprint, PackFileContainer container, DbContextOptions<CacheDbContext> dbOptions)
         {
+            container.PackFileSettings.GameVersion ??= GameTypeEnum.Warhammer3;
             using var cached = new CachedPackFileContainer(container.Name, dbOptions);
             cached.Save(fingerprint, container);
         }
@@ -73,8 +75,8 @@ namespace Shared.CoreTest.PackFiles.Serialization
             container.SourcePackFilePaths.Add(@"c:\game\data\pack1.pack");
             container.SourcePackFilePaths.Add(@"c:\game\data\pack2.pack");
 
-            var parent1 = new PackedFileSourceParent { FilePath = @"c:\game\data\pack1.pack" };
-            var parent2 = new PackedFileSourceParent { FilePath = @"c:\game\data\pack2.pack" };
+            var parent1 = new PackedFileSourceParent { FilePath = @"c:\game\data\pack1.pack", GameType = GameTypeEnum.Warhammer3 };
+            var parent2 = new PackedFileSourceParent { FilePath = @"c:\game\data\pack2.pack", GameType = GameTypeEnum.Warhammer3 };
 
             var source1 = new PackedFileSource(parent1, 100, 500, false, false, CompressionFormat.None, 0);
             var source2 = new PackedFileSource(parent2, 200, 1000, false, true, CompressionFormat.Lz4, 2000);
@@ -102,7 +104,7 @@ namespace Shared.CoreTest.PackFiles.Serialization
             var container = PackFileContainer.CreateCaPackFile("Test Container", @"c:\game\data");
             container.SourcePackFilePaths.Add(@"c:\game\data\pack1.pack");
 
-            var parent = new PackedFileSourceParent { FilePath = @"c:\game\data\pack1.pack" };
+            var parent = new PackedFileSourceParent { FilePath = @"c:\game\data\pack1.pack", GameType = GameTypeEnum.Warhammer3 };
             container.AddOrUpdateFile("folder\\file.txt", new PackFile("file.txt",
                 new PackedFileSource(parent, 512, 1024, false, false, CompressionFormat.None, 0)));
             container.AddOrUpdateFile("other\\data.bin", new PackFile("data.bin",
@@ -142,7 +144,7 @@ namespace Shared.CoreTest.PackFiles.Serialization
         public void LoadCache_PreservesSourcePackFilePath()
         {
             var container = PackFileContainer.CreatePackFile("Test", @"c:\game");           
-            var parent = new PackedFileSourceParent { FilePath = @"c:\pack.pack" };
+            var parent = new PackedFileSourceParent { FilePath = @"c:\pack.pack", GameType = GameTypeEnum.Warhammer3 };
             container.AddOrUpdateFile("a.txt", new PackFile("a.txt",
                 new PackedFileSource(parent, 0, 10, false, false, CompressionFormat.None, 0)));
             container.AddOrUpdateFile("b.txt", new PackFile("b.txt",
@@ -214,7 +216,7 @@ namespace Shared.CoreTest.PackFiles.Serialization
             // Arrange
             var container = PackFileContainer.CreateCaPackFile("Full Cycle Test", @"c:\game\data");
 
-            var parent = new PackedFileSourceParent { FilePath = @"c:\game\data\main.pack" };
+            var parent = new PackedFileSourceParent { FilePath = @"c:\game\data\main.pack", GameType = GameTypeEnum.Warhammer3 };
             container.SourcePackFilePaths.Add(parent.FilePath);
 
             container.AddOrUpdateFile("db\\units.bin", new PackFile("units.bin",
@@ -250,7 +252,7 @@ namespace Shared.CoreTest.PackFiles.Serialization
         {
             var container = PackFileContainer.CreatePackFile("TryLoad Test", @"c:\game\data");
 
-            var parent = new PackedFileSourceParent { FilePath = @"c:\game\data\pack.pack" };
+            var parent = new PackedFileSourceParent { FilePath = @"c:\game\data\pack.pack", GameType = GameTypeEnum.Warhammer3 };
             container.AddOrUpdateFile("test\\file.txt", new PackFile("file.txt",
                 new PackedFileSource(parent, 0, 100, false, false, CompressionFormat.None, 0)));
 
@@ -283,7 +285,7 @@ namespace Shared.CoreTest.PackFiles.Serialization
         {
             var container = PackFileContainer.CreatePackFile("Encrypted Test", @"c:\game");
 
-            var parent = new PackedFileSourceParent { FilePath = @"c:\game\encrypted.pack" };
+            var parent = new PackedFileSourceParent { FilePath = @"c:\game\encrypted.pack", GameType = GameTypeEnum.Warhammer3 };
             container.AddOrUpdateFile("secret\\data.bin", new PackFile("data.bin",
                 new PackedFileSource(parent, 0, 500, isEncrypted: true, isCompressed: false, CompressionFormat.None, 0)));
             var dbOptions = CreateTestDbOptions();
@@ -310,7 +312,7 @@ namespace Shared.CoreTest.PackFiles.Serialization
         [Test]
         public void SaveCache_OverwritesExistingCache()
         {
-            var parent = new PackedFileSourceParent { FilePath = @"c:\game\pack.pack" };
+            var parent = new PackedFileSourceParent { FilePath = @"c:\game\pack.pack", GameType = GameTypeEnum.Warhammer3 };
             var dbOptions = CreateFileDbOptions();
             // Save first version
             var container1 = PackFileContainer.CreatePackFile("Version1", @"c:\game");
@@ -341,7 +343,7 @@ namespace Shared.CoreTest.PackFiles.Serialization
         {
             var container = PackFileContainer.CreatePackFile("FolderPath Test", @"c:\game");
 
-            var parent = new PackedFileSourceParent { FilePath = @"c:\game\pack.pack" };
+            var parent = new PackedFileSourceParent { FilePath = @"c:\game\pack.pack", GameType = GameTypeEnum.Warhammer3 };
             container.AddOrUpdateFile("a\\folder_marker.txt", new PackFile("folder_marker.txt",
                 new PackedFileSource(parent, 0, 10, false, false, CompressionFormat.None, 0)));
             container.AddOrUpdateFile("a\\b\\c\\file.txt", new PackFile("file.txt",
@@ -368,7 +370,7 @@ namespace Shared.CoreTest.PackFiles.Serialization
         {
             var container = PackFileContainer.CreatePackFile("Mixed Sources", @"c:\game");
 
-            var parent = new PackedFileSourceParent { FilePath = @"c:\game\pack.pack" };
+            var parent = new PackedFileSourceParent { FilePath = @"c:\game\pack.pack", GameType = GameTypeEnum.Warhammer3 };
             container.AddOrUpdateFile("packed.txt", new PackFile("packed.txt",
                 new PackedFileSource(parent, 0, 10, false, false, CompressionFormat.None, 0)));
             container.AddOrUpdateFile("memory.txt", new PackFile("memory.txt",

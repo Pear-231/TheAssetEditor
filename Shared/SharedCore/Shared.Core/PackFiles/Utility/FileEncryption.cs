@@ -1,5 +1,6 @@
 ﻿using System.Buffers.Binary;
 using System.Text;
+using Shared.Core.Settings;
 
 namespace Shared.Core.PackFiles.Utility
 {
@@ -9,7 +10,7 @@ namespace Shared.Core.PackFiles.Utility
         private const uint INDEX_U32_KEY = 0xE10B_73F4;
         private const ulong DATA_KEY = 0x8FEB_2A67_40A6_920E;
 
-        public static byte[] Decrypt(byte[] ciphertext)
+        public static byte[] Decrypt(byte[] ciphertext, GameTypeEnum game)
         {
             // First, make sure the file ends in a multiple of 8. If not, extend it with zeros.
             // We need it because the decoding is done in packs of 8 bytes.
@@ -18,10 +19,13 @@ namespace Shared.Core.PackFiles.Utility
             if (padding < 8)
                 Array.Resize(ref ciphertext, size + padding);
 
-            // Then decrypt the file in packs of 8. It's faster than in packs of 4.
+            // Then decrypt the file in packs of 8 as it's faster than in packs of 4
             var plaintext = new byte[ciphertext.Length];
             ulong edi = 0;
             var chunks = ciphertext.Length / 8;
+            var hasPartialChunk = size % 8 != 0;
+            var encryptedBlockCount = hasPartialChunk ? chunks - 1 : chunks;
+            var keystream = encryptedBlockCount > 0 ? GetKeystream(game) : EncryptionKeystream.None;
 
             using (var memStream = new MemoryStream(ciphertext))
             using (var reader = new BinaryReader(memStream))
@@ -29,53 +33,57 @@ namespace Shared.Core.PackFiles.Utility
             {
                 for (var i = 0; i < chunks; i++)
                 {
-                    if (i == chunks - 1)
-                        writer.Write(reader.ReadBytes(8));  // The last chunk is not encrypted.
+                    if (hasPartialChunk && i == chunks - 1)
+                    {
+                        // A final partial chunk is not encrypted
+                        writer.Write(reader.ReadBytes(8));
+                    }
                     else
                     {
                         var esi = edi;
                         memStream.Seek((long)esi, SeekOrigin.Begin);
-                        var prod = DATA_KEY * ~edi;
+                        var blockKey = GetBlockKey(edi, keystream);
                         var data = reader.ReadUInt64();
-                        prod ^= data;
+                        var plaintextBlock = blockKey ^ data;
                         writer.Seek((int)esi, SeekOrigin.Begin);
-                        writer.Write(prod);
+                        writer.Write(plaintextBlock);
                     }
                     edi += 8;
                 }
             }
 
-            // Remove the extra bytes we added in the first step.
+            // Remove the extra bytes we added in the first step
             Array.Resize(ref plaintext, size);
             return plaintext;
         }
 
-        public static void DecryptInPlace(Span<byte> buffer, long entrySize, long entryRelativeOffset = 0)
+        public static void DecryptInPlace(Span<byte> buffer, long entrySize, GameTypeEnum game, long entryRelativeOffset = 0)
         {
-            // We need it because the decoding is done in packs of 8 bytes.
-            if (entrySize <= 8)
+            // We need it because the decoding is done in packs of 8 bytes
+            if (entrySize < 8)
                 return;
 
+            var keystream = GetKeystream(game);
             for (var off = 0; off + 8 <= buffer.Length; off += 8)
             {
                 var edi = entryRelativeOffset + off;
-                if (edi + 8 > entrySize - 8)
+                if (edi + 8 > entrySize)
                     break;
 
                 var cipher = BinaryPrimitives.ReadUInt64LittleEndian(buffer.Slice(off, 8));
-                var plain = DATA_KEY * ~((ulong)edi) ^ cipher;
+                var plain = GetBlockKey((ulong)edi, keystream) ^ cipher;
                 BinaryPrimitives.WriteUInt64LittleEndian(buffer.Slice(off, 8), plain);
             }
         }
 
-        // This function decrypts the size of a PackedFile.
+        // This function decrypts the size of a PackedFile
         public static uint DecryptAndReadU32(BinaryReader reader, uint secondKey)
         {
             var ciphertext = reader.ReadUInt32();
             return ciphertext ^ INDEX_U32_KEY ^ ~secondKey;
         }
 
-        // This function decrypts the path of a PackedFile.
+        // This function decrypts the path of a PackedFile
         public static string DecryptAndReadString(Stream stream, uint secondKey)
         {
             StringBuilder path = new();
@@ -94,9 +102,9 @@ namespace Shared.Core.PackFiles.Utility
             return path.ToString();
         }
 
-        public static byte[] Encrypt(byte[] plaintext)
+        public static byte[] Encrypt(byte[] plaintext, GameTypeEnum game)
         {
-            // Ensure the plaintext is a multiple of 8 bytes by padding with zeros if necessary.
+            // Ensure the plaintext is a multiple of 8 bytes by padding with zeros if necessary
             var size = plaintext.Length;
             var padding = 8 - size % 8;
             if (padding < 8)
@@ -105,6 +113,9 @@ namespace Shared.Core.PackFiles.Utility
             var ciphertext = new byte[plaintext.Length];
             ulong edi = 0;
             var chunks = plaintext.Length / 8;
+            var hasPartialChunk = size % 8 != 0;
+            var encryptedBlockCount = hasPartialChunk ? chunks - 1 : chunks;
+            var keystream = encryptedBlockCount > 0 ? GetKeystream(game) : EncryptionKeystream.None;
 
             using (var memStream = new MemoryStream(plaintext))
             using (var reader = new BinaryReader(memStream))
@@ -112,14 +123,17 @@ namespace Shared.Core.PackFiles.Utility
             {
                 for (var i = 0; i < chunks; i++)
                 {
-                    if (i == chunks - 1)
-                        writer.Write(reader.ReadBytes(8));  // Do not encrypt the last chunk.
+                    if (hasPartialChunk && i == chunks - 1)
+                    {
+                        // Do not encrypt a final partial chunk
+                        writer.Write(reader.ReadBytes(8));
+                    }
                     else
                     {
                         var esi = edi;
                         memStream.Seek((long)esi, SeekOrigin.Begin);
                         var data = reader.ReadUInt64();
-                        var encrypted = data ^ (DATA_KEY * ~edi);
+                        var encrypted = data ^ GetBlockKey(edi, keystream);
                         writer.Seek((int)esi, SeekOrigin.Begin);
                         writer.Write(encrypted);
                     }
@@ -127,22 +141,23 @@ namespace Shared.Core.PackFiles.Utility
                 }
             }
 
-            // Remove extra padding for accurate file representation.
+            // Remove extra padding for accurate file representation
             Array.Resize(ref ciphertext, size);
             return ciphertext;
         }
 
-        // This function encrypts a uint32 value (like the PackedFile size).
+        // This function encrypts a uint32 value (like the PackedFile size)
         public static uint EncryptU32(uint plaintext, uint secondKey)
         {
             return plaintext ^ INDEX_U32_KEY ^ ~secondKey;
         }
 
-        // This function encrypts a file path into the pack file.
+        // This function encrypts a file path into the pack file
         public static byte[] EncryptString(string path, uint secondKey)
         {
             var pathBytes = Encoding.ASCII.GetBytes(path);
-            var encrypted = new byte[pathBytes.Length + 1];  // +1 for null terminator
+            // +1 for null terminator
+            var encrypted = new byte[pathBytes.Length + 1];
             var index = 0;
 
             for (var i = 0; i < pathBytes.Length; i++)
@@ -151,8 +166,26 @@ namespace Shared.Core.PackFiles.Utility
                 index++;
             }
 
-            encrypted[pathBytes.Length] = 0;  // Null terminator
+            // Null terminator
+            encrypted[pathBytes.Length] = 0;
             return encrypted;
+        }
+
+        private static ulong GetBlockKey(ulong blockOffset, EncryptionKeystream keystream)
+        {
+            if (keystream == EncryptionKeystream.ThirtyTwoBitComplement)
+                return DATA_KEY * ~(uint)blockOffset;
+            else
+                return DATA_KEY * ~blockOffset;
+        }
+
+        private static EncryptionKeystream GetKeystream(GameTypeEnum game)
+        {
+            var gameInfo = GameInformationDatabase.GetGameById(game);
+            if (gameInfo.EncryptionKeystream is EncryptionKeystream.ThirtyTwoBitComplement or EncryptionKeystream.SixtyFourBitComplement)
+                return gameInfo.EncryptionKeystream;
+
+            throw new InvalidOperationException($"{gameInfo.DisplayName} encryption keystream ({gameInfo.EncryptionKeystream}) is unsupported.");
         }
     }
 }

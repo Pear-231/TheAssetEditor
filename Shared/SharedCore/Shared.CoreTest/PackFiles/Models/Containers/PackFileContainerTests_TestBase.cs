@@ -3,6 +3,7 @@ using Shared.Core.PackFiles.Models.Containers;
 using Shared.Core.PackFiles.Models.FileSources;
 using Shared.Core.PackFiles.Utility;
 using Shared.Core.Services;
+using Shared.Core.Settings;
 
 namespace Shared.CoreTest.PackFiles.Models.Containers
 {
@@ -69,7 +70,7 @@ namespace Shared.CoreTest.PackFiles.Models.Containers
             }
             else
             {
-                var parent = new PackedFileSourceParent { FilePath = @"c:\game\data\pack1.pack" };
+                var parent = new PackedFileSourceParent { FilePath = @"c:\game\data\pack1.pack", GameType = GameTypeEnum.Warhammer3 };
                 var sourceContainer = PackFileContainer.CreateCaPackFile("TestCache", @"c:\game\data");
                 sourceContainer.SourcePackFilePaths.Add(@"c:\game\data\pack1.pack");
 

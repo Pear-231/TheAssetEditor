@@ -62,10 +62,10 @@ namespace Shared.Core.PackFiles.Serialization
             // Write the core of the file
             var fileMetaDataTable = BuildMetaDataTable(sortedFiles, container, currentGameInformation);
             SerializeFileTable(fileMetaDataTable, container, writer);
-            SerializeFileBlob(outputFileName, fileMetaDataTable, container, writer);
+            SerializeFileBlob(outputFileName, fileMetaDataTable, container, writer, currentGameInformation.Type);
 
             if (enableCorruptionDetection)
-                ValidateCorruptionDetectionFiles(outputFileName, writer);
+                ValidateCorruptionDetectionFiles(outputFileName, writer, currentGameInformation.Type);
             
             stopWatch.Stop();
             _logger.Here().Information("Saving packfile {PackFileName} completed in {ElapsedMilliseconds} ms", packFileName, stopWatch.ElapsedMilliseconds);
@@ -92,7 +92,7 @@ namespace Shared.Core.PackFiles.Serialization
             sortedFiles.Sort((left, right) => PackFileSortHelper.PathComparer.Compare(left.Key, right.Key));
         }
 
-        private static void ValidateCorruptionDetectionFiles(string outputFileName, BinaryWriter writer)
+        private static void ValidateCorruptionDetectionFiles(string outputFileName, BinaryWriter writer, GameTypeEnum game)
         {
             writer.Flush();
             var stream = writer.BaseStream;
@@ -101,7 +101,7 @@ namespace Shared.Core.PackFiles.Serialization
 
             var originalPosition = stream.Position;
             stream.Position = 0;
-            var loadedPack = PackFileSerializerLoader.Load(outputFileName, stream.Length, new BinaryReader(stream, Encoding.UTF8, leaveOpen: true), new CustomPackDuplicateFileResolver());
+            var loadedPack = PackFileSerializerLoader.Load(outputFileName, stream.Length, new BinaryReader(stream, Encoding.UTF8, leaveOpen: true), new CustomPackDuplicateFileResolver(), game);
             stream.Position = originalPosition;
 
             foreach (var detectionFile in PackFileCorruptionDetectionFiles)
@@ -286,7 +286,7 @@ namespace Shared.Core.PackFiles.Serialization
             _logger.Here().Information("Finished SerializeFileTable");
         }
 
-        static void SerializeFileBlob(string outputFileName, List<PackFileWriteInformation> fileMetaDataTabel, PackFileContainer container, BinaryWriter writer)
+        static void SerializeFileBlob(string outputFileName, List<PackFileWriteInformation> fileMetaDataTabel, PackFileContainer container, BinaryWriter writer, GameTypeEnum game)
         {
             _logger.Here().Information("Starting SerializeFileBlob");
 
@@ -330,7 +330,7 @@ namespace Shared.Core.PackFiles.Serialization
                 writer.BaseStream.Position = currentPosition;
 
                 // Update DataSource
-                var packedFileSourceParent = new PackedFileSourceParent { FilePath = outputFileName };
+                var packedFileSourceParent = new PackedFileSourceParent { FilePath = outputFileName, GameType = game };
                 packFile.DataSource = new PackedFileSource(
                     packedFileSourceParent,
                     offset,

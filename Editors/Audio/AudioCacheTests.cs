@@ -264,10 +264,10 @@ namespace Test.Audio
             Assert.That(forwardFingerprint, Is.EqualTo(reversedFingerprint));
         }
 
-        [Test]
-        public void ComputeFingerprint_MissingBackingFile()
+        [TestCaseSource(typeof(GameInformationDatabase), nameof(GameInformationDatabase.GetSupportedGames))]
+        public void ComputeFingerprint_MissingBackingFile(GameTypeEnum game)
         {
-            var packParent = new PackedFileSourceParent { FilePath = Path.Combine(_tempDir, "missing.pack") };
+            var packParent = new PackedFileSourceParent { FilePath = Path.Combine(_tempDir, "missing.pack"), GameType = game };
             var bnk = new PackFile("missing.bnk", new PackedFileSource(packParent, 0, 100, false, false, CompressionFormat.None, 0));
             var container = CreateContainer(true, [(@"audio\wwise\missing.bnk", bnk)]);
 

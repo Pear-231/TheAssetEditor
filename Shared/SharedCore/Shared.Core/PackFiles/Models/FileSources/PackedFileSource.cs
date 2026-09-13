@@ -1,11 +1,13 @@
 ﻿using Shared.ByteParsing;
 using Shared.Core.PackFiles.Utility;
+using Shared.Core.Settings;
 
 namespace Shared.Core.PackFiles.Models.FileSources
 {
     public class PackedFileSourceParent
     {
         public required string FilePath { get; set; }
+        public required GameTypeEnum GameType { get; set; }
     }
 
     public record PackedFileSource : IDataSource
@@ -49,7 +51,7 @@ namespace Shared.Core.PackFiles.Models.FileSources
             knownStream.ReadExactly(data, 0, (int)Size);
 
             if (IsEncrypted)
-                data = FileEncryption.Decrypt(data);
+                data = FileEncryption.Decrypt(data, Parent.GameType);
 
             if (IsCompressed)
             {
@@ -80,7 +82,7 @@ namespace Shared.Core.PackFiles.Models.FileSources
                     stream.ReadExactly(data);
 
                     if (IsEncrypted)
-                        data = FileEncryption.Decrypt(data);
+                        data = FileEncryption.Decrypt(data, Parent.GameType);
 
                     if (IsCompressed)
                     {
@@ -105,7 +107,7 @@ namespace Shared.Core.PackFiles.Models.FileSources
             }
 
             if (IsEncrypted)
-                data = FileEncryption.Decrypt(data);
+                data = FileEncryption.Decrypt(data, Parent.GameType);
 
             return data;
         }
