@@ -157,7 +157,7 @@
   "MenuBar.Reports.DialogueEventsStateGroups": "带状态组的对话事件",
   "MenuBar.Reports.DialogueEventNames": "对话事件和事件名称",
   "MenuBar.Reports.DatDump": "Dat 导出",
-  "MenuBar.Reports.CompressionAndEncryption": "压缩与加密",
+  "MenuBar.Reports.GamePacks": "游戏包文件",
   "MenuBar.Reports.Search": "搜索",
   "MenuBar.Reports.TouchedFiles": "已访问文件",
   "MenuBar.Reports.TouchedFiles.StartRecorder": "开始记录",
