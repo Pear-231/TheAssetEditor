@@ -52,8 +52,8 @@ namespace Editors.Reports
             serviceCollection.AddTransient<GenerateDatDumperReportCommand>();
             serviceCollection.AddTransient<DatDumper>();
 
-            serviceCollection.AddTransient<GenerateCompressionAndEncryptionReportCommand>();
-            serviceCollection.AddTransient<CompressionAndEncryptionReportGenerator>();
+            serviceCollection.AddTransient<GenerateGamePacksReportCommand>();
+            serviceCollection.AddTransient<GamePacksReportGenerator>();
         }
     }
 

@@ -8,18 +8,16 @@ using Shared.Core.PackFiles.Serialization;
 using Shared.Core.PackFiles.Utility;
 using Shared.Core.Settings;
 
-namespace Editors.Reports.Audio
+namespace Editors.Reports.Files
 {
-    public class GenerateCompressionAndEncryptionReportCommand(
-        CompressionAndEncryptionReportGenerator generator,
-        ApplicationSettingsService settingsService) : IAeCommand
+    public class GenerateGamePacksReportCommand(GamePacksReportGenerator generator, ApplicationSettingsService settingsService) : IAeCommand
     {
         public void Execute() => generator.Create(settingsService.CurrentSettings.CurrentGame);
     }
 
-    public class CompressionAndEncryptionReportGenerator(IPackFileContainerLoader containerLoader)
+    public class GamePacksReportGenerator(IPackFileContainerLoader containerLoader)
     {
-        private readonly ILogger _logger = Logging.Create<CompressionAndEncryptionReportGenerator>();
+        private readonly ILogger _logger = Logging.Create<GamePacksReportGenerator>();
         private readonly IPackFileContainerLoader _containerLoader = containerLoader;
 
         public string Create(GameTypeEnum game)
@@ -29,12 +27,12 @@ namespace Editors.Reports.Audio
             if (container == null)
                 throw new InvalidOperationException($"Unable to load pack files for {gameName} because no game directory is configured.");
 
-            var outputFolder = Path.Combine(DirectoryHelper.ReportsDirectory, "CompressionAndEncryption");
+            var outputFolder = Path.Combine(DirectoryHelper.ReportsDirectory, "GamePacks");
             DirectoryHelper.EnsureCreated(outputFolder);
             var timeStamp = DateTime.Now.ToString("yyyyMMddHHmmssfff");
             var outputJsonPath = Path.Combine(outputFolder, $"{gameName}_{timeStamp}.json");
 
-            _logger.Here().Information("Creating compression and encryption report for {Game}. Result will be saved at {OutputPath}.", gameName, outputJsonPath);
+            _logger.Here().Information("Creating game packs report for {Game}. Result will be saved at {OutputPath}.", gameName, outputJsonPath);
 
             var result = BuildResult(gameName, container);
 
@@ -45,16 +43,9 @@ namespace Editors.Reports.Audio
 
         private static GameResult BuildResult(string gameName, IPackFileContainer container)
         {
-            var packedFiles = new List<(string Path, PackedFileSource Source)>();
-            var nonPackedFiles = 0;
-
-            foreach (var (path, file) in container.GetAllFiles())
-            {
-                if (file.DataSource is PackedFileSource source)
-                    packedFiles.Add((path, source));
-                else
-                    nonPackedFiles++;
-            }
+            var packedFiles = container.GetAllFiles()
+                .Where(x => x.Value.DataSource is PackedFileSource)
+                .Select(x => (Path: x.Key, Source: (PackedFileSource)x.Value.DataSource));
 
             var packResults = packedFiles
                 .GroupBy(x => Path.GetFileName(x.Source.Parent.FilePath), StringComparer.OrdinalIgnoreCase)
@@ -62,14 +53,14 @@ namespace Editors.Reports.Audio
                 .OrderBy(x => x.Pack, StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            return new GameResult(gameName, nonPackedFiles, packResults);
+            return new GameResult(gameName, packResults);
         }
 
         private static PackResult BuildPackResult(string packName, IEnumerable<(string Path, PackedFileSource Source)> files)
         {
             var fileList = files.ToList();
             var firstSource = fileList[0].Source;
-            var packResult = new PackResult(packName, ReadPackVersion(firstSource.Parent.FilePath).ToString(), firstSource.IsEncrypted)
+            var packResult = new PackResult(packName, ReadPackHeader(firstSource.Parent.FilePath))
             {
                 Files = fileList.Count
             };
@@ -86,11 +77,11 @@ namespace Editors.Reports.Audio
 
                 if (source.IsCompressed)
                 {
-                    var compressedResult = GetOrAdd(compressedByExtension, extension, e => new CompressedFileTypeResult(e));
+                    var compressedResult = GetOrAdd(compressedByExtension, extension, () => new CompressedFileTypeResult());
                     compressedResult.Count++;
 
-                    var formats = GetOrAdd(compressionFormatsByExtension, extension, _ => new Dictionary<string, CompressionFormatResult>(StringComparer.OrdinalIgnoreCase));
-                    var formatResult = GetOrAdd(formats, source.CompressionFormat.ToString(), format => new CompressionFormatResult(format));
+                    var formats = GetOrAdd(compressionFormatsByExtension, extension, () => new Dictionary<string, CompressionFormatResult>(StringComparer.OrdinalIgnoreCase));
+                    var formatResult = GetOrAdd(formats, source.CompressionFormat.ToString(), () => new CompressionFormatResult());
                     formatResult.Count++;
                     formatResult.FilePaths.Add(internalPath);
                 }
@@ -98,14 +89,13 @@ namespace Editors.Reports.Audio
                 if (!source.IsEncrypted)
                     continue;
 
-                var encryptedResult = GetOrAdd(encryptedByExtension, extension, e => new FileTypeResult(e));
+                var encryptedResult = GetOrAdd(encryptedByExtension, extension, () => new FileTypeResult());
                 encryptedResult.Count++;
                 encryptedResult.FilePaths.Add(internalPath);
 
                 try
                 {
                     var bytes = source.ReadData();
-                    packResult.DecryptedBytes += bytes.LongLength;
                     FileEncryption.TryValidateDecryptedContent(internalPath, bytes, out var error);
                     if (error != null)
                         encryptedResult.Failures.Add($"{internalPath}: {error}");
@@ -117,63 +107,86 @@ namespace Editors.Reports.Audio
                 }
             }
 
-            packResult.EncryptedFiles = encryptedByExtension.Values.OrderBy(x => x.Extension, StringComparer.OrdinalIgnoreCase).ToList();
+            packResult.EncryptedFiles = encryptedByExtension
+                .OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase);
 
-            var compressedResults = compressedByExtension.Values.OrderBy(x => x.Extension, StringComparer.OrdinalIgnoreCase).ToList();
-            foreach (var compressedResult in compressedResults)
-                compressedResult.CompressionFormats = compressionFormatsByExtension[compressedResult.Extension].Values.OrderBy(x => x.Format, StringComparer.OrdinalIgnoreCase).ToList();
-            packResult.CompressedFiles = compressedResults;
+            packResult.CompressedFiles = compressedByExtension
+                .OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var (extension, compressedResult) in packResult.CompressedFiles)
+                compressedResult.CompressionFormats = compressionFormatsByExtension[extension]
+                    .OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase);
 
             return packResult;
         }
 
-        private static PackFileVersion ReadPackVersion(string filePath)
+        private static PackHeaderInfo ReadPackHeader(string filePath)
         {
             using var stream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             using var reader = new BinaryReader(stream);
-            return PackFileSerializerLoader.ReadHeader(reader).Version;
+            var header = PackFileSerializerLoader.ReadHeader(reader);
+
+            return new PackHeaderInfo(
+                header.Version.ToString(),
+                header.ByteMask,
+                header.PackFileType.ToString(),
+                header.HasExtendedHeader,
+                header.HasEncryptedData,
+                header.HasEncryptedIndex,
+                header.HasIndexWithTimeStamp,
+                header.ReferenceFileCount,
+                header.FileCount);
         }
 
-        private static T GetOrAdd<T>(Dictionary<string, T> map, string key, Func<string, T> factory)
+        private static T GetOrAdd<T>(Dictionary<string, T> map, string key, Func<T> factory)
         {
             if (!map.TryGetValue(key, out var value))
             {
-                value = factory(key);
+                value = factory();
                 map[key] = value;
             }
             return value;
         }
 
-        public sealed record GameResult(string Game, int NonPackedFiles, IReadOnlyList<PackResult> Packs);
-        public sealed class PackResult(string pack, string pfhVersion, bool isEncrypted)
+        public sealed record GameResult(string Game, IReadOnlyList<PackResult> Packs);
+        public sealed record PackHeaderInfo(
+            string PfhVersion,
+            int ByteMask,
+            string PackFileType,
+            bool HasExtendedHeader,
+            bool HasEncryptedData,
+            bool HasEncryptedIndex,
+            bool HasIndexWithTimeStamp,
+            uint ReferenceFileCount,
+            uint FileCount);
+
+        public sealed class PackResult(string pack, PackHeaderInfo header)
         {
             public string Pack { get; } = pack;
-            public string PfhVersion { get; } = pfhVersion;
-            public bool IsEncrypted { get; } = isEncrypted;
+            public PackHeaderInfo Header { get; } = header;
             public int Files { get; set; }
-            public long DecryptedBytes { get; set; }
-            public List<FileTypeResult> EncryptedFiles { get; set; } = [];
-            public List<CompressedFileTypeResult> CompressedFiles { get; set; } = [];
+            public Dictionary<string, FileTypeResult> EncryptedFiles { get; set; } = [];
+            public Dictionary<string, CompressedFileTypeResult> CompressedFiles { get; set; } = [];
         }
 
-        public sealed class FileTypeResult(string extension)
+        public sealed class FileTypeResult
         {
-            public string Extension { get; } = extension;
             public int Count { get; set; }
             public List<string> FilePaths { get; } = [];
             public List<string> Failures { get; } = [];
         }
 
-        public sealed class CompressedFileTypeResult(string extension)
+        public sealed class CompressedFileTypeResult
         {
-            public string Extension { get; } = extension;
             public int Count { get; set; }
-            public List<CompressionFormatResult> CompressionFormats { get; set; } = [];
+            public Dictionary<string, CompressionFormatResult> CompressionFormats { get; set; } = [];
         }
 
-        public sealed class CompressionFormatResult(string format)
+        public sealed class CompressionFormatResult
         {
-            public string Format { get; } = format;
             public int Count { get; set; }
             public List<string> FilePaths { get; } = [];
         }
