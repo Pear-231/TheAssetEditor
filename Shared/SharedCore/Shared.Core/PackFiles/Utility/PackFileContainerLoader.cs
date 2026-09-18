@@ -5,6 +5,7 @@ using Shared.Core.Events;
 using Shared.Core.PackFiles.ErrorHandling;
 using Shared.Core.PackFiles.Models;
 using Shared.Core.PackFiles.Models.Containers;
+using Shared.Core.PackFiles.Models.FileSources;
 using Shared.Core.PackFiles.Serialization;
 using Shared.Core.PackFiles.Serialization.CacheDatabase;
 using Shared.Core.Services;
@@ -75,15 +76,18 @@ namespace Shared.Core.PackFiles.Utility
                 container.PackFileSettings.GameVersion = _settingsService.CurrentSettings.CurrentGame;
                 container.SaveSettings();
             }
+            StampGameType(container, container.PackFileSettings.GameVersion.Value);
             return container;
         }
 
         public IPackFileContainer CreateFromPackFile(PackFileContainerType type, string packFilePath, bool loadAsReadOnly)
         {
             var packfileName = Path.GetFileNameWithoutExtension(packFilePath);
-            var container = CreateFromCollection(type, packFilePath, [packFilePath], packfileName, loadAsReadOnly, new CustomPackDuplicateFileResolver());
-            container.PackFileSettings.GameVersion = _settingsService.CurrentSettings.CurrentGame;
+            var game = _settingsService.CurrentSettings.CurrentGame;
+            var container = CreateFromCollection(type, packFilePath, [packFilePath], packfileName, loadAsReadOnly, new CustomPackDuplicateFileResolver(), game);
+            container.PackFileSettings.GameVersion = game;
             container.SaveSettings();
+            StampGameType(container, container.PackFileSettings.GameVersion.Value);
             return container;
         }
 
@@ -103,9 +107,9 @@ namespace Shared.Core.PackFiles.Utility
             var gameDataFolder = gamePathInfo.Path;
             var fullPackFilePaths = ManifestHelper.GetPackFilesFromManifest(gameDataFolder, out var manifestFileFound);
 
-            // When loading ca pack packs, we want to use the CA resolver as its faster. 
+            // When loading ca pack packs, we want to use the CA resolver as its faster.
             // If there is no manifest file, we need to use the duplicate resolver as it loads all file in the folder.
-            // There might be custom mods in there that does not follow the rules! 
+            // There might be custom mods in there that does not follow the rules!
             IDuplicateFileResolver packfileResolver = new CaPackDuplicateFileResolver();
             if (manifestFileFound == false)
             {
@@ -113,15 +117,27 @@ namespace Shared.Core.PackFiles.Utility
                 packfileResolver = new CustomPackDuplicateFileResolver();
             }
 
-            var container = CreateFromCollection(PackFileContainerType.Database, gameDataFolder, fullPackFilePaths, $"All Game Packs - {gameName}", true, packfileResolver);
+            var container = CreateFromCollection(PackFileContainerType.Database, gameDataFolder, fullPackFilePaths, $"All Game Packs - {gameName}", true, packfileResolver, gameEnum);
             container.IsCaPackFile = true;
             container.PackFileSettings.GameVersion = gameEnum;
             container.SaveSettings();
+            StampGameType(container, gameEnum);
             return container;
         }
 
+        // Decryption needs to know which game a pack belongs to -- see FileEncryption.BlockKey. Every
+        // path here already resolves a GameTypeEnum for PackFileSettings.GameVersion (explicitly for
+        // CreateFromGameEnum, or from the user's current-game Settings otherwise), so the same value is
+        // carried one step further, onto each loaded file's PackedFileSourceParent.
+        private static void StampGameType(IPackFileContainer container, GameTypeEnum game)
+        {
+            foreach (var packFile in container.GetAllFiles().Values)
+                if (packFile.DataSource is PackedFileSource source)
+                    source.Parent.GameType = game;
+        }
 
-        public IPackFileContainer CreateFromCollection(PackFileContainerType type, string packFileSystemPath, List<string> fullPackFilePaths, string createdPackFileName, bool loadAsReadOnly, IDuplicateFileResolver duplicateFileResolver)
+
+        public IPackFileContainer CreateFromCollection(PackFileContainerType type, string packFileSystemPath, List<string> fullPackFilePaths, string createdPackFileName, bool loadAsReadOnly, IDuplicateFileResolver duplicateFileResolver, GameTypeEnum? game = null)
         {
             if(type == PackFileContainerType.Database && loadAsReadOnly == false)
                 throw new InvalidOperationException($"Cannot load as writable if loading from cache. Caching is only supported for read-only containers. PackFile {createdPackFileName}");
@@ -148,7 +164,7 @@ namespace Shared.Core.PackFiles.Utility
 
             using (_standardDialogs.ShowWaitCursor())
             {
-                var container = LoadPackFilesFromDisk(createdPackFileName, fullPackFilePaths, duplicateFileResolver);
+                var container = LoadPackFilesFromDisk(createdPackFileName, fullPackFilePaths, duplicateFileResolver, game);
                 container.Name = createdPackFileName;
                 container.IsReadOnly = loadAsReadOnly;
                 container.SystemFilePath = packFileSystemPath;
@@ -169,7 +185,7 @@ namespace Shared.Core.PackFiles.Utility
 
 
 
-        private static PackFileContainer LoadPackFilesFromDisk(string createdPackFileName, List<string> fullPackFilePaths, IDuplicateFileResolver packfileResolver)
+        private static PackFileContainer LoadPackFilesFromDisk(string createdPackFileName, List<string> fullPackFilePaths, IDuplicateFileResolver packfileResolver, GameTypeEnum? game = null)
         {
             var packList = new ConcurrentBag<PackFileContainer>();
             var packsCompressionStats = new ConcurrentDictionary<CompressionFormat, CompressionInformation>();
@@ -183,7 +199,7 @@ namespace Shared.Core.PackFiles.Utility
                     using var reader = new BinaryReader(fileStream, Encoding.ASCII);
 
                     var packFileSize = new FileInfo(path).Length;
-                    var pack = PackFileSerializerLoader.Load(path, packFileSize, reader, packfileResolver);
+                    var pack = PackFileSerializerLoader.Load(path, packFileSize, reader, packfileResolver, game);
                     packList.Add(pack);
 
                     PackFileLog.LogPackCompression(pack);

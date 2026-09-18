@@ -1,8 +1,8 @@
-﻿using Shared.ByteParsing;
+using Shared.ByteParsing;
 
 namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
 {
-    public class AkRtpcGraphPoint_V136
+    public class AkRtpcGraphPoint_V136 : ICAkLayerCntr.IAkRtpcGraphPoint
     {
         public float From { get; set; }
         public float To { get; set; }

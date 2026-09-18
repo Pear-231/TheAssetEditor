@@ -49,8 +49,11 @@ namespace Shared.Core.PackFiles.Serialization
             var packFileName = container.Name;
             _logger.Here().Information("Saving packfile {PackFileName} v={PackFileVersion} with {NumFiles} files to {OutputFileName}. Current game = {Game}", packFileName, container.Header.Version, numFiles, outputFileName, currentGameInformation.DisplayName);
 
-            if (container.Header.HasEncryptedData || container.Header.HasEncryptedIndex)
-                throw new InvalidOperationException("Saving encrypted packs is not supported.");
+            // The index (file paths and sizes) uses a different, older encryption scheme (Arena-era) that
+            // is not implemented here and has no known real-world evidence to build against. Data
+            // encryption (FileEncryption, keyed by GameInformationDatabase) is supported below.
+            if (container.Header.HasEncryptedIndex)
+                throw new InvalidOperationException("Saving packs with an encrypted index is not supported.");
 
             var headerSpecificBytes = ComputeFileHeaderSpecificByte(container);
             var fileNamesOffset = ComputeFileNameOffset(headerSpecificBytes, sortedFiles);
@@ -62,10 +65,10 @@ namespace Shared.Core.PackFiles.Serialization
             // Write the core of the file
             var fileMetaDataTable = BuildMetaDataTable(sortedFiles, container, currentGameInformation);
             SerializeFileTable(fileMetaDataTable, container, writer);
-            SerializeFileBlob(outputFileName, fileMetaDataTable, container, writer);
+            SerializeFileBlob(outputFileName, fileMetaDataTable, container, writer, currentGameInformation);
 
             if (enableCorruptionDetection)
-                ValidateCorruptionDetectionFiles(outputFileName, writer);
+                ValidateCorruptionDetectionFiles(outputFileName, writer, currentGameInformation);
             
             stopWatch.Stop();
             _logger.Here().Information("Saving packfile {PackFileName} completed in {ElapsedMilliseconds} ms", packFileName, stopWatch.ElapsedMilliseconds);
@@ -92,7 +95,7 @@ namespace Shared.Core.PackFiles.Serialization
             sortedFiles.Sort((left, right) => PackFileSortHelper.PathComparer.Compare(left.Key, right.Key));
         }
 
-        private static void ValidateCorruptionDetectionFiles(string outputFileName, BinaryWriter writer)
+        private static void ValidateCorruptionDetectionFiles(string outputFileName, BinaryWriter writer, GameInformation currentGameInformation)
         {
             writer.Flush();
             var stream = writer.BaseStream;
@@ -101,7 +104,7 @@ namespace Shared.Core.PackFiles.Serialization
 
             var originalPosition = stream.Position;
             stream.Position = 0;
-            var loadedPack = PackFileSerializerLoader.Load(outputFileName, stream.Length, new BinaryReader(stream, Encoding.UTF8, leaveOpen: true), new CustomPackDuplicateFileResolver());
+            var loadedPack = PackFileSerializerLoader.Load(outputFileName, stream.Length, new BinaryReader(stream, Encoding.UTF8, leaveOpen: true), new CustomPackDuplicateFileResolver(), currentGameInformation.Type);
             stream.Position = originalPosition;
 
             foreach (var detectionFile in PackFileCorruptionDetectionFiles)
@@ -109,9 +112,12 @@ namespace Shared.Core.PackFiles.Serialization
                 var packFile = loadedPack.FindFile(detectionFile.Path)
                     ?? throw new InvalidDataException($"Packfile corruption detection failed. Missing validation file '{detectionFile.Path}'.");
 
-                var actualContent = Encoding.UTF8.GetString(packFile.DataSource is PackedFileSource packedFileSource
-                    ? packedFileSource.ReadData(stream)
-                    : packFile.DataSource.ReadData());
+                string actualContent;
+                if (packFile.DataSource is PackedFileSource packedFileSource)
+                    actualContent = Encoding.UTF8.GetString(packedFileSource.ReadData(stream));
+                else
+                    actualContent = Encoding.UTF8.GetString(packFile.DataSource.ReadData());
+
                 if (!string.Equals(actualContent, detectionFile.Content, StringComparison.Ordinal))
                     throw new InvalidDataException($"Packfile corruption detection failed. Validation file '{detectionFile.Path}' had unexpected content.");
             }
@@ -286,9 +292,11 @@ namespace Shared.Core.PackFiles.Serialization
             _logger.Here().Information("Finished SerializeFileTable");
         }
 
-        static void SerializeFileBlob(string outputFileName, List<PackFileWriteInformation> fileMetaDataTabel, PackFileContainer container, BinaryWriter writer)
+        static void SerializeFileBlob(string outputFileName, List<PackFileWriteInformation> fileMetaDataTabel, PackFileContainer container, BinaryWriter writer, GameInformation currentGameInformation)
         {
             _logger.Here().Information("Starting SerializeFileBlob");
+
+            var isEncrypted = container.Header.HasEncryptedData;
 
             foreach (var fileMetaData in fileMetaDataTabel)
             {
@@ -319,6 +327,12 @@ namespace Shared.Core.PackFiles.Serialization
                         throw new InvalidDataException($"Decompressed bytes {decompressedData.Length:N0} does not match the expected uncompressed bytes {uncompressedData.Length:N0}.");
                 }
 
+                // Encrypt last, mirroring PackedFileSource.ReadData's order in reverse (it decrypts before
+                // decompressing, so writing must compress before encrypting). Keyed by the same
+                // GameInformationDatabase-resolved keystream the read side uses -- see FileEncryption.
+                if (isEncrypted)
+                    data = FileEncryption.Encrypt(data, container.Header.Version, currentGameInformation.Type);
+
                 // Write the data
                 var offset = writer.BaseStream.Position;
                 writer.Write(data);
@@ -330,12 +344,12 @@ namespace Shared.Core.PackFiles.Serialization
                 writer.BaseStream.Position = currentPosition;
 
                 // Update DataSource
-                var packedFileSourceParent = new PackedFileSourceParent { FilePath = outputFileName };
+                var packedFileSourceParent = new PackedFileSourceParent { FilePath = outputFileName, GameType = currentGameInformation.Type };
                 packFile.DataSource = new PackedFileSource(
                     packedFileSourceParent,
                     offset,
                     data.Length,
-                    false,     // We do not encrypt
+                    isEncrypted,
                     shouldCompress,
                     fileMetaData.CompressionInfo.IntendedCompressionFormat,
                     uncompressedSize);

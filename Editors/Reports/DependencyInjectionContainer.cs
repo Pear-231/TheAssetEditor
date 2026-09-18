@@ -49,6 +49,9 @@ namespace Editors.Reports
             serviceCollection.AddTransient<GenerateDialogueEventAndEventNamePrinterReportCommand>();
             serviceCollection.AddTransient<DialogueEventAndEventNamePrinter>();
 
+            serviceCollection.AddTransient<GenerateWwiseBankAuditReportCommand>();
+            serviceCollection.AddTransient<WwiseBankAuditReport>();
+
             serviceCollection.AddTransient<GenerateDatDumperReportCommand>();
             serviceCollection.AddTransient<DatDumper>();
         }

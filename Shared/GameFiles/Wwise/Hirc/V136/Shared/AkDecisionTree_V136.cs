@@ -1,4 +1,4 @@
-﻿using Shared.ByteParsing;
+using Shared.ByteParsing;
 using static Shared.GameFormats.Wwise.Hirc.ICAkDialogueEvent;
 
 namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
@@ -12,46 +12,77 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
 
         public void ReadData(ByteChunk chunk, uint treeDataSize, uint maxTreeDepth)
         {
-            Nodes = [];
-            uint currentDepth = 0;
-            var countMax = treeDataSize / new Node_V136().GetSize();
+            var countMax = (ushort)(treeDataSize / new Node_V136().GetSize());
 
+            // Every node is the same width regardless of whether its union field turns out to be a leaf's
+            // AudioNodeId or a branch's ChildrenIdx/ChildrenCount, so the whole flat array can be read
+            // positionally, with that decision deferred to the tree-build pass below. Deciding it here from
+            // read order (or from a guess local to one node) is the defect this replaces: only real tree
+            // depth, and consistency with the rest of the tree, can settle it.
+            Nodes = new List<Node_V136>(countMax);
             for (var i = 0; i < countMax; i++)
-            {
-                Nodes.Add(Node_V136.ReadData(chunk, countMax, currentDepth, maxTreeDepth));
-                currentDepth++;
-            }
+                Nodes.Add(Node_V136.ReadRaw(chunk));
 
-            ushort childrenCount = 1;
-            var startIndex = 0;
-            uint startDepth = 0;
-            DecisionTree = ReadDecisionTree(Nodes, startIndex, maxTreeDepth, startDepth, ref childrenCount, (ushort)countMax);
+            var claimedByAChild = new bool[countMax];
+            if (countMax > 0)
+                claimedByAChild[0] = true;
+            DecisionTree = ResolveNode(Nodes, 0, 0, maxTreeDepth, countMax, claimedByAChild);
         }
 
-        private static Node_V136 ReadDecisionTree(List<Node_V136> nodes, int index, uint maxDepth, uint currentDepth, ref ushort count, ushort countMax)
+        // Resolves each node's union field by walking the real tree from the root, so "is this node at
+        // maximum depth" reflects its actual position rather than its position in read order. Below maximum
+        // depth, a candidate branch is only accepted if its children occupy flat-array slots that are in
+        // bounds and not already claimed by another node's children: a global partition-consistency check,
+        // rather than a guess local to the one node, for the rare case (early-terminated trees; wwiser
+        // documents these) where a real leaf sits above maximum depth.
+        private static Node_V136 ResolveNode(List<Node_V136> nodes, int index, uint currentDepth, uint maxDepth, ushort countMax, bool[] claimedByAChild)
         {
             if (index >= nodes.Count)
-                throw new ArgumentOutOfRangeException("Something went wrong with the number of Decision Tree nodes");
+                throw new ArgumentOutOfRangeException(nameof(index), "Something went wrong with the number of Decision Tree nodes");
 
             var node = nodes[index];
-
-            var isOver = node.ChildrenIdx + node.ChildrenCount > countMax;
-            var isAudioNode = node.ChildrenIdx > countMax || node.ChildrenCount > countMax || isOver;
             var isMax = currentDepth == maxDepth;
-            if (!(isAudioNode || isMax))
+
+            if (!isMax && TryClaimChildRange(claimedByAChild, node.RawUnion, countMax, out var childrenIdx, out var childrenCount))
             {
-                var treeNodeChildren = new List<Node_V136>();
-                for (var i = 0; i < node.ChildrenCount; i++)
-                {
-                    var childNode = ReadDecisionTree(nodes, node.ChildrenIdx + i, maxDepth, currentDepth + 1, ref count, countMax);
-                    if (childNode != null)
-                        treeNodeChildren.Add(childNode);
-                }
+                node.ChildrenIdx = childrenIdx;
+                node.ChildrenCount = childrenCount;
+                node.AudioNodeId = 0;
+
+                var treeNodeChildren = new List<Node_V136>(childrenCount);
+                for (var i = 0; i < childrenCount; i++)
+                    treeNodeChildren.Add(ResolveNode(nodes, childrenIdx + i, currentDepth + 1, maxDepth, countMax, claimedByAChild));
                 node.Nodes = treeNodeChildren;
             }
+            else
+            {
+                node.AudioNodeId = node.RawUnion;
+                node.ChildrenIdx = 0;
+                node.ChildrenCount = 0;
+                node.Nodes = [];
+            }
 
-            count += (ushort)node.Nodes.Count;
             return node;
+        }
+
+        private static bool TryClaimChildRange(bool[] claimedByAChild, uint rawUnion, ushort countMax, out ushort childrenIdx, out ushort childrenCount)
+        {
+            childrenIdx = (ushort)((rawUnion >> 0) & 0xFFFF);
+            childrenCount = (ushort)((rawUnion >> 16) & 0xFFFF);
+
+            if (childrenCount == 0 || childrenIdx + childrenCount > countMax)
+                return false;
+
+            for (var i = 0; i < childrenCount; i++)
+            {
+                if (claimedByAChild[childrenIdx + i])
+                    return false;
+            }
+
+            for (var i = 0; i < childrenCount; i++)
+                claimedByAChild[childrenIdx + i] = true;
+
+            return true;
         }
 
         public byte[] WriteData()
@@ -211,26 +242,15 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
             public ushort Probability { get; set; }
             public List<Node_V136> Nodes { get; set; } = [];
 
-            public static Node_V136 ReadData(ByteChunk chunk, uint countMax, uint currentDepth, uint maxDepth)
+            // The raw, undecided leaf/branch union field. Only meaningful between ReadRaw and the
+            // tree-build pass that resolves AudioNodeId/ChildrenIdx/ChildrenCount from it.
+            internal uint RawUnion { get; private set; }
+
+            public static Node_V136 ReadRaw(ByteChunk chunk)
             {
                 var node = new Node_V136();
                 node.Key = chunk.ReadUInt32();
-
-                var idChildrenPeek = chunk.PeakUint32();
-                node.ChildrenIdx = (ushort)((idChildrenPeek >> 0) & 0xFFFF);
-                node.ChildrenCount = (ushort)((idChildrenPeek >> 16) & 0xFFFF);
-
-                var isOver = node.ChildrenIdx + node.ChildrenCount > countMax;
-                var isAudioNode = node.ChildrenIdx > countMax || node.ChildrenCount > countMax || isOver;
-                var isMax = currentDepth == maxDepth;
-                if (isAudioNode || isMax)
-                    node.AudioNodeId = chunk.ReadUInt32();
-                else
-                {
-                    node.ChildrenIdx = chunk.ReadUShort();
-                    node.ChildrenCount = chunk.ReadUShort();
-                }
-
+                node.RawUnion = chunk.ReadUInt32();
                 node.Weight = chunk.ReadUShort();
                 node.Probability = chunk.ReadUShort();
                 return node;

@@ -1,4 +1,4 @@
-﻿using Shared.ByteParsing;
+using Shared.ByteParsing;
 
 namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
 {
@@ -52,7 +52,7 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
                 RtpcId = chunk.ReadUInt32();
                 RtpcType = chunk.ReadByte();
                 RtpcAccum = chunk.ReadByte();
-                ParamId = chunk.ReadByte();
+                ParamId = checked((byte)WwiseVariableUInt32Parser.Read(chunk));
                 RtpcCurveId = chunk.ReadUInt32();
                 Scaling = chunk.ReadByte();
                 Size = chunk.ReadUShort();

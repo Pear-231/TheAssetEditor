@@ -22,7 +22,7 @@ namespace Editors.AnimationMeta
 
             serviceCollection.AddScoped<EditorHost<SuperViewViewModel>>();
             serviceCollection.AddScoped<SuperViewViewModel>();
-            serviceCollection.AddScoped<IUnitAudioSwitchResolver, UnitAudioSwitchResolver>();
+            serviceCollection.AddScoped<UnitAudioSwitchResolver>();
 
             serviceCollection.AddScoped<IMetaDataBuilder, MetaDataBuilder>(); // Needs heavy refactorying!
 
@@ -44,7 +44,7 @@ namespace Editors.AnimationMeta
                 .Build(factory);
 
             EditorInfoBuilder
-                .Create<MetaDataEditorViewModel, MainEditorView> (EditorEnums.Meta_Editor)
+                .Create<MetaDataEditorViewModel, MainEditorView>(EditorEnums.Meta_Editor)
                 .AddExtention(".anm.meta", EditorPriorites.High)
                 .AddExtention(".meta", EditorPriorites.High)
                 .AddExtention(".snd.meta", EditorPriorites.High)

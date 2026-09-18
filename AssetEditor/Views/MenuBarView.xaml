@@ -41,7 +41,7 @@
                     <MenuItem Header="{loc:Loc MenuBar.File.GameWarhammer3}" Command="{Binding MenuBar.OpenWarhammer3PacksCommand}"/>
                     <MenuItem Header="{loc:Loc MenuBar.File.GameTroy}" Command="{Binding MenuBar.OpenTroyPacksCommand}"/>
                 </MenuItem>
-                
+
                 <MenuItem Header="{loc:Loc MenuBar.File.OpenRecentPacks}" ItemsSource="{Binding MenuBar.RecentPackFiles}">
                     <MenuItem.Style>
                         <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Type MenuItem}}">
@@ -115,6 +115,8 @@
                 <MenuItem Header="{loc:Loc MenuBar.Reports.Materials}" Command="{Binding MenuBar.GenerateMaterialReportCommand}"/>
                 <MenuItem Header="{loc:Loc MenuBar.Reports.DialogueEventsStateGroups}" Command="{Binding MenuBar.GenerateDialogueEventInfoPrinterReportCommand}"/>
                 <MenuItem Header="{loc:Loc MenuBar.Reports.DialogueEventNames}" Command="{Binding MenuBar.GenerateDialogueEventAndEventNamePrinterReportCommand}"/>
+                <MenuItem Header="Wwise Bank Audit (Warhammer III)" Command="{Binding MenuBar.GenerateWarhammerThreeWwiseBankAuditReportCommand}"/>
+                <MenuItem Header="Wwise Bank Audit (Attila)" Command="{Binding MenuBar.GenerateAttilaWwiseBankAuditReportCommand}"/>
                 <MenuItem Header="{loc:Loc MenuBar.Reports.DatDump}" Command="{Binding MenuBar.GenerateDatDumperReportCommand}"/>
                 <Separator/>
                 <MenuItem Header="{loc:Loc MenuBar.Reports.Search}" Command="{Binding MenuBar.SearchCommand}"/>

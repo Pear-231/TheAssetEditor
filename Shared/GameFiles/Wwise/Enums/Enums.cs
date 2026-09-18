@@ -1,4 +1,4 @@
-﻿namespace Shared.GameFormats.Wwise.Enums
+namespace Shared.GameFormats.Wwise.Enums
 {
     public static class BankChunkTypes
     {
@@ -9,7 +9,10 @@
         public const string STID = "STID"; // The STID (String Table ID) section contains a list of all project Banks referenced in the HIRC section (including the current SoundBank) with info on their IDs and file names. 
         public const string DIDX = "DIDX"; // The DIDX (Data Index) section contains the references to the .wem files embedded in the SoundBank.
         public const string DATA = "DATA"; // The DATA section contains the .wem files data, not encoded, and immediately following each other or alternatively pre-fetch data for streaming.
-        public const string INIT = "INIT"; // The INIT (Initialisation) section contains the game's global config such as busses, states, plugins etc.
+        public const string INIT = "INIT"; // The INIT (Initialisation) section lists the plug-ins the game registers. Bank version 118 and later.
+        public const string STMG = "STMG"; // The STMG (Settings Manager) section holds the project-wide state groups, switch groups, game parameters, voice limits and acoustic textures.
+        public const string ENVS = "ENVS"; // The ENVS (Environment Settings) section holds the obstruction and occlusion curves.
+        public const string PLAT = "PLAT"; // The PLAT (Platform) section names the custom platform the bank was built for. Bank version 113 and later.
     }
 
     // TODO: need to account for the different hirc types in different versions, hmm
@@ -38,7 +41,8 @@
         Envelope = 0x14,
         AudioDevice = 0x15,
         TimeMod = 0x16,
-        Didx_Audio = 0x17
+        FeedbackBus = 0x18,
+        FeedbackNode = 0x19
     }
 
     public enum AkActionType : ushort

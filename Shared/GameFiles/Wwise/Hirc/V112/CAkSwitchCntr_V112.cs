@@ -5,7 +5,7 @@ using static Shared.GameFormats.Wwise.Hirc.ICAkSwitchCntr;
 
 namespace Shared.GameFormats.Wwise.Hirc.V112
 {
-    public class CAkSwitchCntr_V112 : HircItem, ICAkSwitchCntr
+    public class CAkSwitchCntr_V112 : HircItem, ICAkSwitchCntr, ICAkParameterNode
     {
         public NodeBaseParams_V112 NodeBaseParams { get; set; } = new NodeBaseParams_V112();
         public AkGroupType GroupType { get; set; }
@@ -37,6 +37,9 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
         public override byte[] WriteData() => throw new NotSupportedException("Users probably don't need this complexity.");
         public override void UpdateSectionSize() => throw new NotSupportedException("Users probably don't need this complexity.");
         public uint GetDirectParentId() => NodeBaseParams.DirectParentId;
+        public AkGroupType GetGroupType() => GroupType;
+        public bool GetIsContinuousValidation() => IsContinuousValidation != 0;
+        public IReadOnlyList<IAkSwitchNodeParams> GetNodeParameters() => Parameters;
 
         public class CAkSwitchPackage_V112 : ICAkSwitchPackage
         {
@@ -54,13 +57,13 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
             }
         }
 
-        public class AkSwitchNodeParams_V112
+        public class AkSwitchNodeParams_V112 : IAkSwitchNodeParams
         {
             public uint NodeId { get; set; }
             public byte BitVector0 { get; set; }
             public byte BitVector1 { get; set; }
-            public float FadeOutTime { get; set; }
-            public float FadeInTime { get; set; }
+            public int FadeOutTime { get; set; }
+            public int FadeInTime { get; set; }
 
             public static AkSwitchNodeParams_V112 ReadData(ByteChunk chunk)
             {
@@ -68,10 +71,21 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
                 instance.NodeId = chunk.ReadUInt32();
                 instance.BitVector0 = chunk.ReadByte();
                 instance.BitVector1 = chunk.ReadByte();
-                instance.FadeOutTime = chunk.ReadSingle();
-                instance.FadeInTime = chunk.ReadSingle();
+                instance.FadeOutTime = chunk.ReadInt32();
+                instance.FadeInTime = chunk.ReadInt32();
                 return instance;
             }
         }
+        public ushort GetMaxInstanceCount() => NodeBaseParams.AdvSettingsParams.MaxNumInstance;
+        public AuthoredProperties GetProperties() => NodeBaseParams.GetAuthoredProperties();
+        public bool GetOverridesParentPriority() => NodeBaseParams.OverridesParentPriority;
+        public bool GetIsGlobalLimit() => NodeBaseParams.AdvSettingsParams.IsGlobalLimit;
+        public bool GetDiscardsNewestOnLimit() => NodeBaseParams.AdvSettingsParams.DiscardsNewest;
+        public bool GetUsesVirtualVoiceOnLimit() => NodeBaseParams.AdvSettingsParams.UsesVirtualVoice;
+        public uint GetOutputBusId() => NodeBaseParams.OverrideBusId;
+        public bool GetIsPositioned() => (NodeBaseParams.PositioningParams.ByVector & 0x09) == 0x09;
+        public byte GetVirtualQueueBehaviour() => NodeBaseParams.AdvSettingsParams.VirtualQueueBehavior;
+        public byte GetBelowThresholdBehaviour() => NodeBaseParams.AdvSettingsParams.BelowThresholdBehavior;
+        public uint GetAttenuationId() => NodeBaseParams.PositioningParams.AttenuationId;
     }
 }

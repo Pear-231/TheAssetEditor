@@ -3,12 +3,15 @@ using Shared.GameFormats.Wwise.Hirc.V136.Shared;
 
 namespace Shared.GameFormats.Wwise.Hirc.V136
 {
-    public class CAkBus_V136 : HircItem
+    public class CAkBus_V136 : HircItem, ICAkBus
     {
         public uint OverrideBusId { get; set; }
         public uint IdDeviceShareset { get; set; }
         public BusInitialParams_V136 BusInitialParams { get; set; } = new BusInitialParams_V136();
-        public float RecoveryTime { get; set; }
+        // Milliseconds, signed, not a float. Settled 2026-08-31 against init.bnk: every bus in
+        // Warhammer III authors 1000, which is 0x000003E8 -- a denormal if read as a float. The
+        // width is the same either way, so no byte count can catch this; only the value can.
+        public int RecoveryTime { get; set; }
         public float MaxDuckVolume { get; set; }
         public DuckList_V136 DuckList { get; set; } = new DuckList_V136();
         public BusInitialFxParams_V136 BusInitialFxParams { get; set; } = new BusInitialFxParams_V136();
@@ -22,7 +25,7 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
             if (OverrideBusId == 0)
                 IdDeviceShareset = chunk.ReadUInt32();
             BusInitialParams.ReadData(chunk);
-            RecoveryTime = chunk.ReadSingle();
+            RecoveryTime = chunk.ReadInt32();
             MaxDuckVolume = chunk.ReadSingle();
             DuckList.ReadData(chunk);
             BusInitialFxParams.ReadData(chunk);
@@ -34,6 +37,41 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
         // We don't need to make CAkBus objects because we can route audio through the existing busses as hircs appear to be shared between Banks.
         public override byte[] WriteData() => throw new NotSupportedException("Users probably don't need this complexity.");
         public override void UpdateSectionSize() => throw new NotSupportedException("Users probably don't need this complexity.");
+
+        public uint GetOutputBusId() => OverrideBusId;
+
+        public AuthoredProperties GetProperties()
+            => WwisePropertyMap_V136.Read(BusInitialParams.AkPropBundle, new AkPropBundleMinMax_V136());
+
+        public IReadOnlyList<uint> GetEffectIds()
+        {
+            var effectIds = new List<uint>(BusInitialFxParams.FxChunk.Count + 1);
+            foreach (var effect in BusInitialFxParams.FxChunk)
+            {
+                if (effect.FxId != 0)
+                    effectIds.Add(effect.FxId);
+            }
+            if (BusInitialFxParams.FxId0 != 0)
+                effectIds.Add(BusInitialFxParams.FxId0);
+            return effectIds;
+        }
+
+        public IReadOnlyList<uint> GetAuxiliaryBusIds()
+        {
+            var auxiliaryBusIds = new List<uint>(5);
+            AddIfPresent(auxiliaryBusIds, BusInitialParams.AuxParams.AuxBus0);
+            AddIfPresent(auxiliaryBusIds, BusInitialParams.AuxParams.AuxBus1);
+            AddIfPresent(auxiliaryBusIds, BusInitialParams.AuxParams.AuxBus2);
+            AddIfPresent(auxiliaryBusIds, BusInitialParams.AuxParams.AuxBus3);
+            AddIfPresent(auxiliaryBusIds, BusInitialParams.AuxParams.ReflectionsAuxBus);
+            return auxiliaryBusIds;
+        }
+
+        private static void AddIfPresent(List<uint> busIds, uint busId)
+        {
+            if (busId != 0)
+                busIds.Add(busId);
+        }
 
         public class BusInitialParams_V136
         {
@@ -65,8 +103,10 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
             {
                 public uint BusId { get; set; }
                 public float DuckVolume { get; set; }
-                public float FadeOutTime { get; set; }
-                public float FadeInTime { get; set; }
+                // Milliseconds, signed, for the same reason RecoveryTime is: init.bnk authors
+                // 100, 200, 300, 400, 500, 800 and 1000 here.
+                public int FadeOutTime { get; set; }
+                public int FadeInTime { get; set; }
                 public byte FadeCurve { get; set; }
                 public byte TargetProp { get; set; }
 
@@ -74,8 +114,8 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
                 {
                     BusId = chunk.ReadUInt32();
                     DuckVolume = chunk.ReadSingle();
-                    FadeOutTime = chunk.ReadSingle();
-                    FadeInTime = chunk.ReadSingle();
+                    FadeOutTime = chunk.ReadInt32();
+                    FadeInTime = chunk.ReadInt32();
                     FadeCurve = chunk.ReadByte();
                     TargetProp = chunk.ReadByte();
                 }

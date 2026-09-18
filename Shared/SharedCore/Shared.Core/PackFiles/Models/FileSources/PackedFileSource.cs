@@ -1,4 +1,7 @@
-﻿using Shared.ByteParsing;
+﻿using System.Text;
+using Shared.ByteParsing;
+using Shared.Core.Settings;
+using Shared.Core.PackFiles.Serialization;
 using Shared.Core.PackFiles.Utility;
 
 namespace Shared.Core.PackFiles.Models.FileSources
@@ -6,6 +9,30 @@ namespace Shared.Core.PackFiles.Models.FileSources
     public class PackedFileSourceParent
     {
         public required string FilePath { get; set; }
+
+        // Set by a caller that knows for certain which game this pack belongs to -- currently
+        // PackFileContainerLoader (all three of its creation paths) and this codebase's own corpus
+        // audit tooling. Left null otherwise. Only read by FileEncryption, and only matters for
+        // encrypted packs; see FileEncryption.BlockKey for what null means for those.
+        public GameTypeEnum? GameType { get; set; }
+
+        private PackFileVersion? _version;
+
+        // Decryption needs the version of the pack the bytes came from, because the block keystream
+        // changed between generations. It is a property of the pack file, so it is read from the header
+        // here and memoised per pack rather than threaded through every construction site -- the cached
+        // container rebuilds sources from a database that has no version column, and would otherwise
+        // have to guess. Only encrypted packs ever ask, so a container built over a path that does not
+        // exist (as several tests do) never reaches this.
+        public PackFileVersion Version => _version ??= ReadVersionFromHeader();
+
+        private PackFileVersion ReadVersionFromHeader()
+        {
+            using var stream = File.Open(FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            Span<byte> magic = stackalloc byte[4];
+            stream.ReadExactly(magic);
+            return PackFileVersionConverter.GetEnum(Encoding.ASCII.GetString(magic));
+        }
     }
 
     public record PackedFileSource : IDataSource
@@ -49,7 +76,7 @@ namespace Shared.Core.PackFiles.Models.FileSources
             knownStream.ReadExactly(data, 0, (int)Size);
 
             if (IsEncrypted)
-                data = FileEncryption.Decrypt(data);
+                data = FileEncryption.Decrypt(data, Parent.Version, Parent.GameType);
 
             if (IsCompressed)
             {
@@ -80,7 +107,7 @@ namespace Shared.Core.PackFiles.Models.FileSources
                     stream.ReadExactly(data);
 
                     if (IsEncrypted)
-                        data = FileEncryption.Decrypt(data);
+                        data = FileEncryption.Decrypt(data, Parent.Version, Parent.GameType);
 
                     if (IsCompressed)
                     {
@@ -105,7 +132,7 @@ namespace Shared.Core.PackFiles.Models.FileSources
             }
 
             if (IsEncrypted)
-                data = FileEncryption.Decrypt(data);
+                data = FileEncryption.Decrypt(data, Parent.Version, Parent.GameType);
 
             return data;
         }

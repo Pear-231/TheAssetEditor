@@ -12,7 +12,7 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
         public List<AkMediaMap_V136> MediaList { get; set; } = [];
         public InitialRtpc_V136 InitialRtpc { get; set; } = new InitialRtpc_V136();
         public StateChunk_V136 StateChunk { get; set; } = new StateChunk_V136();
-        public short NumValues { get; set; }
+        public ushort NumValues { get; set; }
         public List<PluginPropertyValue_V136> PropertyValuesList { get; set; } = [];
 
         protected override void ReadData(ByteChunk chunk)
@@ -28,7 +28,7 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
             InitialRtpc.ReadData(chunk);
             StateChunk.ReadData(chunk);
 
-            NumValues = chunk.ReadShort();
+            NumValues = chunk.ReadUShort();
             for (var i = 0; i < NumValues; i++)
                 PropertyValuesList.Add(PluginPropertyValue_V136.ReadData(chunk));
         }

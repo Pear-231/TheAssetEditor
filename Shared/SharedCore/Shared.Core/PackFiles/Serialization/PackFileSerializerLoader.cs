@@ -1,4 +1,4 @@
-﻿using Shared.ByteParsing;
+using Shared.ByteParsing;
 using Shared.Core.PackFiles.Models;
 using Shared.Core.PackFiles.Models.Containers;
 using Shared.Core.PackFiles.Models.FileSources;
@@ -27,7 +27,7 @@ namespace Shared.Core.PackFiles.Serialization
     {
         static readonly ILogger s_logger = Logging.CreateStatic(typeof(PackFileSerializerLoader));
 
-        public static PackFileContainer Load(string packFileSystemPath, long packFileSize, BinaryReader reader, IDuplicateFileResolver duplicatePackFileResolver)
+        public static PackFileContainer Load(string packFileSystemPath, long packFileSize, BinaryReader reader, IDuplicateFileResolver duplicatePackFileResolver, GameTypeEnum? game = null)
         {
             try
             {
@@ -46,6 +46,7 @@ namespace Shared.Core.PackFiles.Serialization
                 var packedFileSourceParent = new PackedFileSourceParent()
                 {
                     FilePath = packFileSystemPath,
+                    GameType = game,
                 };
 
                 var offset = output.Header.DataStart;
@@ -73,7 +74,7 @@ namespace Shared.Core.PackFiles.Serialization
                     uint uncompressedSize = 0;
                     if (isCompressed)
                     {
-                        var fileHeader = DetectCompressionInfo(reader, offset, size, isEncrypted);
+                        var fileHeader = DetectCompressionInfo(reader, offset, size, isEncrypted, headerVersion, game);
                         using var compressionStream = new MemoryStream(fileHeader, false);
                         using var compressionReader = new BinaryReader(compressionStream);
                         uncompressedSize = compressionReader.ReadUInt32();
@@ -142,13 +143,11 @@ namespace Shared.Core.PackFiles.Serialization
             }
             else if (header.Version == PackFileVersion.PFH4 || header.Version == PackFileVersion.PFH5)
             {
-                if (header.HasExtendedHeader)
-                    header.Buffer = reader.ReadBytes(24);
-                else
-                    header.Buffer = reader.ReadBytes(4);
-
-                // Uint32 timestamp
-                // output.HasExtendedHeader 20 bytes missing? Used by Arena, we dont care 
+                // PFH4/PFH5 always carry the four-byte timestamp here. Some newer CA packs set
+                // HAS_EXTENDED_HEADER, but do not actually add the historical 20-byte Arena fields;
+                // treating the flag as twenty extra bytes shifts the whole index and produces
+                // apparently impossible encrypted entry sizes (Pharaoh data_special.pack exposed this).
+                header.Buffer = reader.ReadBytes(4);
             }
             else if (header.Version == PackFileVersion.PFH6)
             {
@@ -175,7 +174,7 @@ namespace Shared.Core.PackFiles.Serialization
 
  
 
-        private static byte[] DetectCompressionInfo(BinaryReader reader, long dataOffset, uint entrySize, bool isEncrypted)
+        private static byte[] DetectCompressionInfo(BinaryReader reader, long dataOffset, uint entrySize, bool isEncrypted, PackFileVersion version, GameTypeEnum? game)
         {
             if (entrySize <= 8 || !isEncrypted && entrySize == 0)
                 return [];
@@ -183,14 +182,14 @@ namespace Shared.Core.PackFiles.Serialization
             var headerLen = 8;
             var header = new byte[headerLen];
 
-            var savedPos = reader.BaseStream.Position; 
+            var savedPos = reader.BaseStream.Position;
 
             reader.BaseStream.Seek(dataOffset, SeekOrigin.Begin);
             reader.Read(header, 0, headerLen);
             reader.BaseStream.Seek(savedPos, SeekOrigin.Begin);
 
             if (isEncrypted)
-                FileEncryption.DecryptInPlace(header, entrySize);
+                FileEncryption.DecryptInPlace(header, entrySize, version, game);
 
             return header;
         }

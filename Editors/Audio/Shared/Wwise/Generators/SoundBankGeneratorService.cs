@@ -32,6 +32,7 @@ namespace Editors.Audio.Shared.Wwise.Generators
         private readonly IFileSaveService _fileSaveService;
         private readonly ApplicationSettingsService _applicationSettingsService;
         private readonly IAudioRepository _audioRepository;
+        private readonly IAudioBankQueries _bankQueries;
         private readonly HircGeneratorServiceFactory _hircGeneratorServiceFactory;
         private readonly IAudioEditorIntegrityService _audioEditorIntegrityService;
 
@@ -41,11 +42,13 @@ namespace Editors.Audio.Shared.Wwise.Generators
             IFileSaveService fileSaveService,
             ApplicationSettingsService applicationSettingsService,
             IAudioRepository audioRepository,
+            IAudioBankQueries bankQueries,
             IAudioEditorIntegrityService audioEditorIntegrityService)
         {
             _fileSaveService = fileSaveService;
             _applicationSettingsService = applicationSettingsService;
             _audioRepository = audioRepository;
+            _bankQueries = bankQueries;
             _audioEditorIntegrityService = audioEditorIntegrityService;
 
             var bankGeneratorVersion = (uint)GameInformationDatabase.GetGameById(_applicationSettingsService.CurrentSettings.CurrentGame).BankGeneratorVersion;
@@ -153,8 +156,8 @@ namespace Editors.Audio.Shared.Wwise.Generators
         {
             _audioEditorIntegrityService.CheckMergingSoundBanksIdIntegrity();
 
-            var vanillaDialogueEventsByBnkByLanguage = _audioRepository.GetVanillaDialogueEventsByBnkByLanguage();
-            var moddedDialogueEventsByLanguage = _audioRepository.GetModdedDialogueEventsByLanguage(moddedSoundBanks);
+            var vanillaDialogueEventsByBnkByLanguage = _bankQueries.GetVanillaDialogueEventsByBnkByLanguage();
+            var moddedDialogueEventsByLanguage = _bankQueries.GetModdedDialogueEventsByLanguage(moddedSoundBanks);
 
             var soundBanksToGenerateByLanguage = moddedDialogueEventsByLanguage
                 .ToDictionary(

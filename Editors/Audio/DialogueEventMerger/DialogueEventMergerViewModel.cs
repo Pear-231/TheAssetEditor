@@ -13,6 +13,7 @@ namespace Editors.Audio.DialogueEventMerger
     public partial class DialogueEventMergerViewModel : ObservableObject
     {
         private readonly IAudioRepository _audioRepository;
+        private readonly IAudioBankQueries _bankQueries;
         private readonly ISoundBankGeneratorService _soundBankGeneratorService;
 
         private readonly ILogger _logger = Logging.Create<AudioProjectCompilerService>();
@@ -24,14 +25,15 @@ namespace Editors.Audio.DialogueEventMerger
         [ObservableProperty] private ObservableCollection<string> _selectedModdedSoundBanks = [];
         public ObservableCollection<ModdedSoundBank> ModdedSoundBanks { get; }
 
-        public DialogueEventMergerViewModel(IAudioRepository audioRepository, ISoundBankGeneratorService soundBankGeneratorService)
+        public DialogueEventMergerViewModel(IAudioRepository audioRepository, IAudioBankQueries bankQueries, ISoundBankGeneratorService soundBankGeneratorService)
         {
             _audioRepository = audioRepository;
+            _bankQueries = bankQueries;
             _soundBankGeneratorService = soundBankGeneratorService;
 
             _audioRepository.Load(Wh3LanguageInformation.GetAllLanguages());
 
-            ModdedSoundBanks = new ObservableCollection<ModdedSoundBank>(_audioRepository.GetModdedSoundBankFilePaths("for_merging")
+            ModdedSoundBanks = new ObservableCollection<ModdedSoundBank>(_bankQueries.GetModdedSoundBankFilePaths("for_merging")
                 .Select(path => new ModdedSoundBank(path, isChecked: true))
             );
 

@@ -16,16 +16,16 @@ namespace Editors.Audio.AudioEditor.Core.AudioProjectMutation
         bool RemoveStatePath(string dialogueEventName, string statePathName);
     }
 
-    public class DialogueEventService(IAudioEditorStateService audioEditorStateService, IAudioRepository audioRepository, IStatePathFactory statePathFactory) : IDialogueEventService
+    public class DialogueEventService(IAudioEditorStateService audioEditorStateService, IAudioBankQueries bankQueries, IStatePathFactory statePathFactory) : IDialogueEventService
     {
         private readonly IAudioEditorStateService _audioEditorStateService = audioEditorStateService;
-        private readonly IAudioRepository _audioRepository = audioRepository;
+        private readonly IAudioBankQueries _bankQueries = bankQueries;
         private readonly IStatePathFactory _statePathFactory = statePathFactory;
 
         public void AddStatePath(string dialogueEventName, List<AudioFile> audioFiles, HircSettings hircSettings, List<KeyValuePair<string, string>> statePathList)
         {
-            var usedHircIds = IdGenerator.GetUsedHircIds(_audioRepository, _audioEditorStateService.AudioProject);
-            var usedSourceIds = IdGenerator.GetUsedSourceIds(_audioRepository, _audioEditorStateService.AudioProject);
+            var usedHircIds = IdGenerator.GetUsedHircIds(_bankQueries, _audioEditorStateService.AudioProject);
+            var usedSourceIds = IdGenerator.GetUsedSourceIds(_bankQueries, _audioEditorStateService.AudioProject);
 
             var gameSoundBankName = Wh3SoundBankInformation.GetName(Wh3DialogueEventInformation.GetSoundBank(dialogueEventName));
             var audioProjectNameWithoutExtension = Path.GetFileNameWithoutExtension(_audioEditorStateService.AudioProjectFileName);

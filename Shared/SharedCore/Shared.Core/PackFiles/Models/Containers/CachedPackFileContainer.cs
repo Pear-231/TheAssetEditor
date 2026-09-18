@@ -490,7 +490,7 @@ namespace Shared.Core.PackFiles.Models.Containers
             {
                 if (!parentCache.TryGetValue(entry.SourcePackFilePath, out var parent))
                 {
-                    parent = new PackedFileSourceParent { FilePath = entry.SourcePackFilePath };
+                    parent = new PackedFileSourceParent { FilePath = entry.SourcePackFilePath, GameType = PackFileSettings.GameVersion };
                     parentCache[entry.SourcePackFilePath] = parent;
                 }
 
@@ -537,7 +537,7 @@ namespace Shared.Core.PackFiles.Models.Containers
                 {
                     if (!packedFileSourceParentCache.TryGetValue(f.SourcePackFilePath, out var parent))
                     {
-                        parent = new PackedFileSourceParent { FilePath = f.SourcePackFilePath };
+                        parent = new PackedFileSourceParent { FilePath = f.SourcePackFilePath, GameType = PackFileSettings.GameVersion };
                         packedFileSourceParentCache[f.SourcePackFilePath] = parent;
                     }
 
@@ -578,9 +578,9 @@ namespace Shared.Core.PackFiles.Models.Containers
         public void SaveToDisk(string path, bool createBackup, GameInformation gameInformation) =>
             throw new InvalidOperationException("Cannot modify a cached CA pack file container.");
 
-        private static PackFile ToPackFile(CachedFileEntity entry)
+        private PackFile ToPackFile(CachedFileEntity entry)
         {
-            var parent = new PackedFileSourceParent { FilePath = entry.SourcePackFilePath };
+            var parent = new PackedFileSourceParent { FilePath = entry.SourcePackFilePath, GameType = PackFileSettings.GameVersion };
             var source = new PackedFileSource(
                 parent, entry.Offset, entry.Size,
                 entry.IsEncrypted, entry.IsCompressed,

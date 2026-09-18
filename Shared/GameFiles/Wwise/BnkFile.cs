@@ -3,8 +3,12 @@ using Shared.GameFormats.Wwise.Bkhd;
 using Shared.GameFormats.Wwise.Data;
 using Shared.GameFormats.Wwise.Didx;
 using Shared.GameFormats.Wwise.Enums;
+using Shared.GameFormats.Wwise.Envs;
 using Shared.GameFormats.Wwise.Hirc;
+using Shared.GameFormats.Wwise.Init;
+using Shared.GameFormats.Wwise.Plat;
 using Shared.GameFormats.Wwise.Stid;
+using Shared.GameFormats.Wwise.Stmg;
 
 namespace Shared.GameFormats.Wwise
 {
@@ -15,6 +19,14 @@ namespace Shared.GameFormats.Wwise
         public DidxChunk? DidxChunk { get; set; }
         public DataChunk? DataChunk { get; set; }
         public StidChunk? StidChunk { get; set; }
+
+        // The init bank's own chunks. Every other bank carries none of them, so all four are null
+        // for anything but init.bnk -- and INIT and PLAT are null there too on a bank version below
+        // theirs, which is why a V112 init bank correctly has neither.
+        public StmgChunk? StmgChunk { get; set; }
+        public InitChunk? InitChunk { get; set; }
+        public EnvsChunk? EnvsChunk { get; set; }
+        public PlatChunk? PlatChunk { get; set; }
 
         public class Index
         {
@@ -50,6 +62,14 @@ namespace Shared.GameFormats.Wwise
                     DataChunk = DataChunk.ReadData(filePath, chunk);
                 else if (BankChunkTypes.STID == chunkHeader.Tag)
                     StidChunk = StidChunk.ReadData(filePath, chunk);
+                else if (BankChunkTypes.STMG == chunkHeader.Tag)
+                    StmgChunk = StmgChunk.ReadData(filePath, chunk, BkhdChunk.AkBankHeader.BankGeneratorVersion);
+                else if (BankChunkTypes.INIT == chunkHeader.Tag)
+                    InitChunk = InitChunk.ReadData(filePath, chunk);
+                else if (BankChunkTypes.ENVS == chunkHeader.Tag)
+                    EnvsChunk = EnvsChunk.ReadData(filePath, chunk);
+                else if (BankChunkTypes.PLAT == chunkHeader.Tag)
+                    PlatChunk = PlatChunk.ReadData(filePath, chunk);
                 else
                     throw new ArgumentException($"Unknown data block '{chunkHeader.Tag}' while parsing bnk file '{filePath}'");
 

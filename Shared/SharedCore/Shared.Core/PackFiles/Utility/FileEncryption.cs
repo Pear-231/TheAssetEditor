@@ -1,5 +1,6 @@
-﻿using System.Buffers.Binary;
+using System.Buffers.Binary;
 using System.Text;
+using Shared.Core.Settings;
 
 namespace Shared.Core.PackFiles.Utility
 {
@@ -9,7 +10,63 @@ namespace Shared.Core.PackFiles.Utility
         private const uint INDEX_U32_KEY = 0xE10B_73F4;
         private const ulong DATA_KEY = 0x8FEB_2A67_40A6_920E;
 
-        public static byte[] Decrypt(byte[] ciphertext)
+        // The block keystream differs between pack generations, and getting it wrong is close to
+        // invisible: only the upper 32 bits of the multiplier change, so the low half of every 8-byte
+        // block still decodes correctly and only the high half is wrong. Encrypted banks then read back
+        // with valid four-character chunk tags, a correct version and correct ids, and nonsense chunk
+        // sizes -- which looks far more like an unknown file format than a decryption fault. The RIFF/WAVE
+        // magic bytes look right under *either* keystream too, for the same reason -- they sit in the low
+        // half of the first block -- so only the size field a few bytes later actually tells the two apart.
+        //
+        // Which keystream a pack needs is a fact about the game that produced it, not about the pack file
+        // itself: measured directly against real packs, Warhammer I and Attila are both PFH4 but need
+        // opposite keystreams, and the pack header (including every currently-named PFHFlags bit) is
+        // byte-for-byte identical between them. There is nothing in a pack's own bytes to detect this
+        // from, and every encrypted file within a given game has been measured to agree with every other
+        // (checked across multiple packs per game, never a mix), so it is recorded per game rather than
+        // guessed at per pack or per file:
+        //   32-bit complement: Attila, Rome II
+        //   64-bit complement: Warhammer I, Warhammer II, Warhammer III, Troy, Pharaoh
+        //   No encrypted content measured: Three Kingdoms. No CA packs: Rome Remastered.
+        // See GameInformationDatabase.EncryptionKeystream and the handoff doc's "Encryption: current
+        // state and the open decision" for the full measurement.
+        //
+        // Because the correct keystream is a fact about the game, not the pack, decryption needs to know
+        // which game a pack belongs to -- and that is only known when the caller supplies it. Every path
+        // that loads a whole game's pack set (PackFileContainerLoader.CreateFromGameEnum, and this
+        // codebase's own corpus audits) knows the game for certain and passes it through. A pack loaded
+        // any other way -- importing a single pack file, opening a system folder -- carries whatever game
+        // is currently selected in the application's Settings, which is correct only if the user has that
+        // setting pointed at the game the pack actually came from. THIS IS UNRESOLVABLE FROM INSIDE THIS
+        // CLASS: nothing in a pack's bytes says which game it is, so if the caller's game is wrong (or
+        // absent), the wrong keystream is used silently and encrypted content decodes to garbage that
+        // looks like corruption rather than a mismatched setting. If you are manually loading a pack from
+        // a game other than the one currently selected in Settings, set Settings to that game first.
+        //
+        // When no game is supplied at all, PFH5 packs fall back to the 64-bit complement and everything
+        // else to the 32-bit one. That fallback is only known correct for the six games measured above,
+        // and is wrong for Warhammer I in particular (PFH4, but needs 64-bit) -- it exists only so a pack
+        // with no game association still decrypts as well as the previous, version-only rule did.
+        private static ulong BlockKey(ulong blockOffset, PackFileVersion version, GameTypeEnum? game)
+            => ResolveKeystream(version, game) == EncryptionKeystream.ThirtyTwoBitComplement
+                ? DATA_KEY * ~(uint)blockOffset
+                : DATA_KEY * ~blockOffset;
+
+        private static EncryptionKeystream ResolveKeystream(PackFileVersion version, GameTypeEnum? game)
+        {
+            if (game.HasValue)
+            {
+                var gameInfo = GameInformationDatabase.GetGameById(game.Value);
+                if (gameInfo.HasKnownKeystream)
+                    return gameInfo.EncryptionKeystream;
+            }
+
+            return version >= PackFileVersion.PFH5
+                ? EncryptionKeystream.SixtyFourBitComplement
+                : EncryptionKeystream.ThirtyTwoBitComplement;
+        }
+
+        public static byte[] Decrypt(byte[] ciphertext, PackFileVersion version, GameTypeEnum? game = null)
         {
             // First, make sure the file ends in a multiple of 8. If not, extend it with zeros.
             // We need it because the decoding is done in packs of 8 bytes.
@@ -35,7 +92,7 @@ namespace Shared.Core.PackFiles.Utility
                     {
                         var esi = edi;
                         memStream.Seek((long)esi, SeekOrigin.Begin);
-                        var prod = DATA_KEY * ~edi;
+                        var prod = BlockKey(edi, version, game);
                         var data = reader.ReadUInt64();
                         prod ^= data;
                         writer.Seek((int)esi, SeekOrigin.Begin);
@@ -50,7 +107,7 @@ namespace Shared.Core.PackFiles.Utility
             return plaintext;
         }
 
-        public static void DecryptInPlace(Span<byte> buffer, long entrySize, long entryRelativeOffset = 0)
+        public static void DecryptInPlace(Span<byte> buffer, long entrySize, PackFileVersion version, GameTypeEnum? game = null, long entryRelativeOffset = 0)
         {
             // We need it because the decoding is done in packs of 8 bytes.
             if (entrySize <= 8)
@@ -63,7 +120,7 @@ namespace Shared.Core.PackFiles.Utility
                     break;
 
                 var cipher = BinaryPrimitives.ReadUInt64LittleEndian(buffer.Slice(off, 8));
-                var plain = DATA_KEY * ~((ulong)edi) ^ cipher;
+                var plain = BlockKey((ulong)edi, version, game) ^ cipher;
                 BinaryPrimitives.WriteUInt64LittleEndian(buffer.Slice(off, 8), plain);
             }
         }
@@ -94,7 +151,7 @@ namespace Shared.Core.PackFiles.Utility
             return path.ToString();
         }
 
-        public static byte[] Encrypt(byte[] plaintext)
+        public static byte[] Encrypt(byte[] plaintext, PackFileVersion version, GameTypeEnum? game = null)
         {
             // Ensure the plaintext is a multiple of 8 bytes by padding with zeros if necessary.
             var size = plaintext.Length;
@@ -119,7 +176,7 @@ namespace Shared.Core.PackFiles.Utility
                         var esi = edi;
                         memStream.Seek((long)esi, SeekOrigin.Begin);
                         var data = reader.ReadUInt64();
-                        var encrypted = data ^ (DATA_KEY * ~edi);
+                        var encrypted = data ^ BlockKey(edi, version, game);
                         writer.Seek((int)esi, SeekOrigin.Begin);
                         writer.Write(encrypted);
                     }

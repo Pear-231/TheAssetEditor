@@ -1,10 +1,10 @@
-﻿using Shared.ByteParsing;
+using Shared.ByteParsing;
 using Shared.GameFormats.Wwise.Enums;
 using Shared.GameFormats.Wwise.Hirc.V136.Shared;
 
 namespace Shared.GameFormats.Wwise.Hirc.V136
 {
-    public class CAkLayerCntr_V136 : HircItem, ICAkLayerCntr
+    public class CAkLayerCntr_V136 : HircItem, ICAkLayerCntr, ICAkParameterNode
     {
         public NodeBaseParams_V136 NodeBaseParams { get; set; } = new NodeBaseParams_V136();
         public Children_V136 Children { get; set; } = new Children_V136();
@@ -33,8 +33,20 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
 
         public List<uint> GetChildren() => Children.ChildIds;
         public uint GetDirectParentId() => NodeBaseParams.DirectParentId;
+        public ushort GetMaxInstanceCount() => NodeBaseParams.AdvSettingsParams.MaxNumInstance;
+        public AuthoredProperties GetProperties() => NodeBaseParams.GetAuthoredProperties();
+        public bool GetOverridesParentPriority() => NodeBaseParams.OverridesParentPriority;
+        public bool GetIsGlobalLimit() => NodeBaseParams.AdvSettingsParams.IsGlobalLimit;
+        public bool GetDiscardsNewestOnLimit() => NodeBaseParams.AdvSettingsParams.DiscardsNewest;
+        public bool GetUsesVirtualVoiceOnLimit() => NodeBaseParams.AdvSettingsParams.UsesVirtualVoice;
+        public uint GetOutputBusId() => NodeBaseParams.OverrideBusId;
+        public bool GetIsPositioned() => (NodeBaseParams.PositioningParams.BitsPositioning & 0x03) == 0x03;
+        public byte GetVirtualQueueBehaviour() => NodeBaseParams.AdvSettingsParams.VirtualQueueBehavior;
+        public byte GetBelowThresholdBehaviour() => NodeBaseParams.AdvSettingsParams.BelowThresholdBehavior;
+        public bool GetIsContinuousValidation() => IsContinuousValidation != 0;
+        public IReadOnlyList<ICAkLayerCntr.IAkLayer> GetLayers() => LayerList;
 
-        public class CAkLayer_V136
+        public class CAkLayer_V136 : ICAkLayerCntr.IAkLayer
         {
             public uint LayerId { get; set; }
             public InitialRtpc_V136 InitialRtpc { get; set; } = new InitialRtpc_V136();
@@ -58,9 +70,11 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
                     CAssociatedChildDataList.Add(associatedChildData);
                 }
             }
+
+            public IReadOnlyList<ICAkLayerCntr.IAkAssociatedChildData> GetAssociatedChildren() => CAssociatedChildDataList;
         }
 
-        public class CAssociatedChildData_V136
+        public class CAssociatedChildData_V136 : ICAkLayerCntr.IAkAssociatedChildData
         {
             public uint AssociatedChildId { get; set; }
             public byte UnknownCustom0 { get; set; }
@@ -77,6 +91,9 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
                 for (var i = 0; i < CurveSize; i++)
                     AkRtpcGraphPointList.Add(AkRtpcGraphPoint_V136.ReadData(chunk));
             }
+
+
+            public IReadOnlyList<ICAkLayerCntr.IAkRtpcGraphPoint> GetCurvePoints() => AkRtpcGraphPointList;
         }
     }
 }
