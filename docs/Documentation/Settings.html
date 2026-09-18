@@ -1,0 +1,150 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Settings Reference - Asset Editor</title>
+    <link rel="stylesheet" href="DocumentationShared.css">
+    <script src="DocumentationShared.js" defer></script>
+</head>
+<body>
+    <h1>Settings Reference</h1>
+    <p>
+        This page explains every setting in the settings window (File &rarr; Settings), grouped the same way they
+        appear on screen: <b>Application</b>, <b>Rendering</b>, and <b>Game Files</b>.
+    </p>
+
+    <figure>
+        <img class="doc-image" src="Images\AssetEditor_settings.png" alt="Asset Editor settings window">
+        <figcaption>The settings window.</figcaption>
+    </figure>
+
+    <div class="warning">
+        Some settings changes require the tool to be restarted before they take effect.
+    </div>
+
+    <h2>Application</h2>
+    <table>
+        <tr><th>Setting</th><th>What it does</th></tr>
+        <tr>
+            <td>Language</td>
+            <td>
+                Changes the language used for menus, labels, and other UI text throughout the tool.
+                <span class="placeholder">Placeholder: confirm whether this applies immediately or requires a restart, and how complete translations are for each language.</span>
+            </td>
+        </tr>
+        <tr>
+            <td>Theme</td>
+            <td>Switches the overall UI colour scheme between Dark and Light.</td>
+        </tr>
+        <tr>
+            <td>Start maximised</td>
+            <td>When enabled, the main AssetEditor window opens maximised (full screen) on startup, instead of at its last used/default window size.</td>
+        </tr>
+    </table>
+
+    <h2>Rendering</h2>
+    <table>
+        <tr><th>Setting</th><th>What it does</th></tr>
+        <tr>
+            <td>3D camera mode</td>
+            <td>
+                Selects the camera control scheme used across all 3D editors in AssetEditor: <b>AssetEditor
+                style</b> (the default) or <b>Blender style</b>. See the
+                <a href="CameraControl.html">Camera Control</a> page for details on both schemes.
+            </td>
+        </tr>
+        <tr>
+            <td>Render engine background colour</td>
+            <td>Sets the background colour of the 3D viewport used by the visual editors (Dark Grey, Legacy Blue, or Green).</td>
+        </tr>
+        <tr>
+            <td>Grid Size</td>
+            <td>Sets the size of the reference grid shown in the 3D viewport of the visual editors.</td>
+        </tr>
+        <tr>
+            <td>Vertex Selection Colour</td>
+            <td>Sets the colour used to highlight selected vertices when editing meshes. Entered as a hex colour, e.g. <code>#FF7800</code>.</td>
+        </tr>
+        <tr>
+            <td>Only load Lod0 for reference meshes</td>
+            <td>When importing a reference mesh in the Kitbash tool, only imports Lod0 (the highest detail level) rather than every LOD level, in order to save memory.</td>
+        </tr>
+    </table>
+
+    <h2>Game Files</h2>
+    <table>
+        <tr><th>Setting</th><th>What it does</th></tr>
+        <tr>
+            <td>Active game</td>
+            <td>
+                <p>
+                    This is the single most important setting in the tool. It tells AssetEditor which Total War
+                    game you are working with, which controls how pack files for that game are parsed:
+                </p>
+                <ul>
+                    <li>Which pack file format version (PFH4, PFH5, etc.) is expected.</li>
+                    <li>Which encryption keystream is used to decrypt encrypted pack entries (different games use different keystreams even when they share the same pack file format version - AssetEditor needs the correct game to decrypt these files correctly).</li>
+                    <li>Which compression formats are supported/expected for that game.</li>
+                    <li>Which Wwise/audio bank version and project ID apply, for the Audio tools.</li>
+                    <li>Which model/animation format versions (RMV2, WSModel, animation slots) apply, for the 3D and animation tools.</li>
+                </ul>
+                <p>
+                    If you load a pack file that does not appear to match the selected game (wrong pack format
+                    version, or encrypted content that doesn't decrypt to anything recognisable), AssetEditor will
+                    show a "Pack file game mismatch" warning. If you see this, double check that the correct game
+                    is selected here before loading that pack file again.
+                </p>
+                <p>
+                    This also determines which packs get loaded automatically on startup (see "Load game files on
+                    startup" below) and which path (below) is used for that.
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td>Load game files on startup</td>
+            <td>
+                When enabled, AssetEditor automatically loads all of the selected game's own pack files (from the
+                path configured for that game below) every time the tool starts, so the game's data is
+                immediately available without having to open it manually.
+            </td>
+        </tr>
+        <tr>
+            <td>Show game WEM files</td>
+            <td>
+                Controls whether the game's own <code>.wem</code> audio files are shown in the PackFile explorer
+                tree for CA (game) pack files. This only affects official game packs - <code>.wem</code> files
+                inside mod packs are always shown regardless of this setting. Since a game's own audio packs can
+                contain a very large number of <code>.wem</code> files, this is off by default to keep the file
+                tree manageable; turn it on if you specifically need to browse or extract the game's own audio
+                files.
+            </td>
+        </tr>
+    </table>
+    <p>
+        Below these settings is a list of every supported game, with a text box and a "..." browse button for
+        each one. Set this to the <code>data</code> folder inside that game's installation
+        (e.g. <code>C:\SteamLibrary\steamapps\common\Total War WARHAMMER III\data</code>) so AssetEditor knows
+        where to find that game's pack files.
+    </p>
+    <div class="note">
+        Only the games listed here are actually supported by AssetEditor's pack file handling (format version,
+        compression, and encryption). Selecting a path for a game is what makes "Active game" (above) and "Open
+        game files" able to find and load that game's packs.
+    </div>
+    <p>
+        When browsing for a folder, AssetEditor does a quick sanity check and warns you if the folder you picked
+        doesn't appear to contain any pack files or a <code>manifest.txt</code>, in case you selected the wrong
+        folder.
+    </p>
+
+    <h2>Settings not shown in this window</h2>
+    <p>
+        A few internal settings exist purely to support first-run behaviour and development/testing, and are not
+        exposed in the settings window because there is nothing for a user to meaningfully configure:
+    </p>
+    <ul>
+        <li><span class="placeholder">Placeholder: whether there is anything else worth documenting here for a general user (e.g. developer-only flags) - none currently need end-user attention.</span></li>
+    </ul>
+</body>
+</html>

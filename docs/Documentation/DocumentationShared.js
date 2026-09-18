@@ -2,6 +2,7 @@ const documentationPages = [
     { title: 'Installing', fileName: 'Installing.html' },
     { title: 'Getting Started', fileName: 'GettingStarted.html' },
     { title: 'Camera Control', fileName: 'CameraControl.html' },
+    { title: 'Settings Reference', fileName: 'Settings.html' },
     { title: 'PackFile Handling', fileName: 'PackFileHandling.html' },
     {
         title: 'Kitbashing',
