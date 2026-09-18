@@ -1,5 +1,4 @@
-﻿using System;
-using System.Windows;
+﻿using System.Windows;
 
 namespace AssetEditor.Views.Settings
 {
@@ -20,7 +19,7 @@ namespace AssetEditor.Views.Settings
 
         private void Window_OnContentRendered(object sender, EventArgs e)
         {
-            InvalidateVisual();
+            InvalidateMeasure();
         }
     }
 }

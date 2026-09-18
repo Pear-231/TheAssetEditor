@@ -37,6 +37,7 @@ namespace AssetEditor.ViewModels
 
         public ObservableCollection<RecentPackFileItem> RecentPackFiles { get; set; } = [];
         public ObservableCollection<EditorShortcutViewModel> Editors { get; set; } = [];
+        public ObservableCollection<GameInformation> SupportedGames { get; }
 
         public MenuBarViewModel(IPackFileService packfileService, 
             ApplicationSettingsService settingsService, 
@@ -56,6 +57,9 @@ namespace AssetEditor.ViewModels
             _packFileContainerLoader = packFileContainerLoader;
             _standardDialogs = standardDialogs;
             var settings = settingsService.CurrentSettings;
+            SupportedGames = new ObservableCollection<GameInformation>(GameInformationDatabase.GetSupportedGames()
+                .Select(GameInformationDatabase.GetGameById)
+                .OrderBy(game => game.DisplayName));
             settings.RecentPackFiles.CollectionChanged += OnRecentPackFilePathsChanged;
             CreateRecentPackFilesItems();
             CreateTools();
@@ -104,12 +108,7 @@ namespace AssetEditor.ViewModels
         [RelayCommand] private void PrintScope() => _uiCommandFactory.Create<PrintScopesCommand>().Execute();
         [RelayCommand] private void PrintTrackedGraphicsResources() => _uiCommandFactory.Create<PrintTrackedGraphicsResourcesCommand>().Execute();
         [RelayCommand] private void Search() => _uiCommandFactory.Create<DeepSearchCommand>().Execute();
-        [RelayCommand] private void OpenAttilaPacks() => _uiCommandFactory.Create<OpenGamePackCommand>(x => x.Configure(GameTypeEnum.Attila)).Execute();
-        [RelayCommand] private void OpenRomeRemasteredPacks() => _uiCommandFactory.Create<OpenGamePackCommand>(x => x.Configure(GameTypeEnum.RomeRemastered)).Execute();
-        [RelayCommand] private void OpenThreeKingdomsPacks() => _uiCommandFactory.Create<OpenGamePackCommand>(x => x.Configure(GameTypeEnum.ThreeKingdoms)).Execute();
-        [RelayCommand] private void OpenWarhammer2Packs() => _uiCommandFactory.Create<OpenGamePackCommand>(x => x.Configure(GameTypeEnum.Warhammer2)).Execute();
-        [RelayCommand] private void OpenWarhammer3Packs() => _uiCommandFactory.Create<OpenGamePackCommand>(x => x.Configure(GameTypeEnum.Warhammer3)).Execute();
-        [RelayCommand] private void OpenTroyPacks() => _uiCommandFactory.Create<OpenGamePackCommand>(x => x.Configure(GameTypeEnum.Troy)).Execute();
+        [RelayCommand] private void OpenGamePacks(GameTypeEnum game) => _uiCommandFactory.Create<OpenGamePackCommand>(x => x.Configure(game)).Execute();
 
         [RelayCommand] private void OpenAnimatedPropTutorial() => _uiCommandFactory.Create<OpenWebpageCommand>(x => x.Configure("https://www.youtube.com/watch?v=b68hSHZ5raY")).Execute();
         [RelayCommand] private void OpenAnimationBasicsTutorial() => _uiCommandFactory.Create<OpenWebpageCommand>(x => x.Configure("https://youtu.be/H10jDrHJ_Uo?si=XnePs_0X5CQjxLZZ")).Execute();

@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="AssetEditor.Views.Settings.SettingsView"
+<UserControl x:Class="AssetEditor.Views.Settings.SettingsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -45,41 +45,21 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Row="0" Text="{loc:Loc SettingsWindow.Application}" Margin="5, 10, 0, 0" FontSize="15"/>
             <Separator Grid.Row="1" Grid.ColumnSpan="3" Height="1" Margin="5, 5, 10, 10"/>
 
-            <TextBlock Grid.Row="2" Text="{loc:Loc SettingsWindow.SelectedLanguage}" Margin="5, 0, 0, 0"/>
-            <ComboBox Grid.Row="2" Grid.Column="1" Margin="0, 0, 0, 5" SelectedItem="{Binding SelectedLanguage, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+            <TextBlock Grid.Row="2" Text="{loc:Loc SettingsWindow.Language}" Margin="5, 0, 0, 0"/>
+            <ComboBox Grid.Row="2" Grid.Column="1" Margin="0, 0, 0, 5" SelectedItem="{Binding SelectedLanguage, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                       ItemsSource="{Binding AvailableLangauges}"/>
 
             <TextBlock Grid.Row="3" Text="{loc:Loc SettingsWindow.Theme}" Margin="5, 0, 0, 0"/>
-            <ComboBox Grid.Row="3" Grid.Column="1" Margin="0, 0, 0, 5" SelectedItem="{Binding CurrentTheme, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+            <ComboBox Grid.Row="3" Grid.Column="1" Width="150" Margin="0, 0, 0, 5" SelectedItem="{Binding CurrentTheme, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                       ItemsSource="{Binding AvailableThemes}" ItemTemplate="{StaticResource SettingsEnumConverterTemplate}"/>
 
             <TextBlock Grid.Row="4" Grid.Column="0" Text="{loc:Loc SettingsWindow.StartMaximised}" Margin="5, 0, 0, 0"/>
             <CheckBox Grid.Row="4" Grid.Column="1" Margin="-1, 0, 0, 5" IsChecked="{Binding StartMaximised, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
-
-            <TextBlock Grid.Row="5" Grid.Column="0"  Text="{loc:Loc SettingsWindow.SelectedGame}" Margin="5, 0, 0, 0"/>
-            <ComboBox Grid.Row="5" Grid.Column="1" Width="150" Margin="0, 0, 0, 5" SelectedItem="{Binding CurrentGame, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
-                      ItemsSource="{Binding Games}" ItemTemplate="{StaticResource SettingsEnumConverterTemplate}"/>
-
-            <TextBlock Grid.Row="6" Grid.Column="0" Text="{loc:Loc SettingsWindow.LoadGameFileOnStartup}" Margin="5, 0, 0, 0"/>
-            <CheckBox Grid.Row="6" Grid.Column="1" Margin="-1, 0, 0, 5" IsChecked="{Binding LoadCaPacksByDefault, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
-
-            <TextBlock Grid.Row="7" Grid.Column="0" Text="{loc:Loc SettingsWindow.ShowCaWems}" Margin="5, 0, 0, 0"/>
-            <CheckBox Grid.Row="7" Grid.Column="1" Margin="-1, 0, 0, 5" IsChecked="{Binding ShowCAWemFiles, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
-
-            <TextBlock Grid.Row="8" Text="{loc:Loc SettingsWindow.CameraMode}" Margin="5, 0, 0, 0"/>
-            <ComboBox Grid.Row="8" Grid.Column="1" Margin="0, 0, 0, 5" SelectedItem="{Binding SelectedCameraMode, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
-                    ItemsSource="{Binding CameraModes}"/>
         </Grid>
 
 
@@ -98,17 +78,19 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Row="0" Text="{loc:Loc SettingsWindow.Rendering}" Margin="5, 10, 0, 0" FontSize="15"/>
             <Separator Grid.Row="1" Grid.ColumnSpan="3" Height="1" Margin="5, 5, 10, 10"/>
 
-            <TextBlock Grid.Row="2" Grid.Column="0" Text="{loc:Loc SettingsWindow.RenderBackground}" Margin="5, 0, 0, 0"/>
-            <ComboBox Grid.Row="2" Grid.Column="1" Margin="0, 0, 0, 5" SelectedItem="{Binding CurrentRenderEngineBackgroundColour, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
-                      ItemsSource="{Binding RenderEngineBackgroundColours}" ItemTemplate="{StaticResource SettingsEnumConverterTemplate}"/>
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="{loc:Loc SettingsWindow.CameraMode}" Margin="5, 0, 0, 0"/>
+            <ComboBox Grid.Row="2" Grid.Column="1" Margin="0, 0, 0, 5" SelectedItem="{Binding SelectedCameraMode, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                    ItemsSource="{Binding CameraModes}" ItemTemplate="{StaticResource SettingsEnumConverterTemplate}"/>
 
-            <TextBlock Grid.Row="3" Grid.Column="0" Text="{loc:Loc SettingsWindow.OnlyLoadLod0}" Margin="5, 0, 0, 0" ToolTip="{loc:Loc SettingsWindow.OnlyLoadLod0Tooltip}"/>
-            <CheckBox Grid.Row="3" Grid.Column="1" Margin="-1, 0, 0, 5" IsChecked="{Binding OnlyLoadLod0ForReferenceMeshes, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+            <TextBlock Grid.Row="3" Grid.Column="0" Text="{loc:Loc SettingsWindow.RenderBackground}" Margin="5, 0, 0, 0"/>
+            <ComboBox Grid.Row="3" Grid.Column="1" Margin="0, 0, 0, 5" SelectedItem="{Binding CurrentRenderEngineBackgroundColour, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                      ItemsSource="{Binding RenderEngineBackgroundColours}" ItemTemplate="{StaticResource SettingsEnumConverterTemplate}"/>
 
             <TextBlock Grid.Row="4" Grid.Column="0" Text="{loc:Loc SettingsWindow.GridSize}" Margin="5, 0, 0, 0" ToolTip="{loc:Loc SettingsWindow.GridSizeTooltip}"/>
             <TextBox  Grid.Row="4" Grid.Column="1" Text="{Binding VisualEditorsGridSize, UpdateSourceTrigger=LostFocus}" MaxLength="4" Width="150" Margin="0, 0, 0, 5" HorizontalAlignment="Left" HorizontalContentAlignment="Right"/>
@@ -116,11 +98,17 @@
             <TextBlock Grid.Row="5" Grid.Column="0" Text="{loc:Loc SettingsWindow.VertexSelectionColour}" Margin="5, 0, 0, 0" ToolTip="{loc:Loc SettingsWindow.VertexSelectionColourTooltip}"/>
             <colourpickerbutton:ColourPickerButtonView Grid.Row="5" Grid.Column="1" DataContext="{Binding VertexSelectionColour}" Width="25" Height="25" Margin="0, 0, 0, 5" HorizontalAlignment="Left"/>
 
-
-
+            <TextBlock Grid.Row="6" Grid.Column="0" Text="{loc:Loc SettingsWindow.OnlyLoadLod0}" Margin="5, 0, 0, 0" ToolTip="{loc:Loc SettingsWindow.OnlyLoadLod0Tooltip}"/>
+            <CheckBox Grid.Row="6" Grid.Column="1" Margin="-1, 0, 0, 5" IsChecked="{Binding OnlyLoadLod0ForReferenceMeshes, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
         </Grid>
 
         <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="230"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -131,9 +119,19 @@
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Row="0" Text="{loc:Loc SettingsWindow.GameFiles}" Margin="5, 10, 0, 0" FontSize="15"/>
-            <Separator Grid.Row="1" Height="1" Margin="5, 5, 10, 10"/>
+            <Separator Grid.Row="1" Grid.ColumnSpan="3" Height="1" Margin="5, 5, 10, 10"/>
 
-            <ItemsControl Grid.Row="5" ItemsSource="{Binding GameDirectores}" >
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="{loc:Loc SettingsWindow.ActiveGame}" Margin="5, 0, 0, 0"/>
+            <ComboBox Grid.Row="2" Grid.Column="1" Width="190" Margin="0, 0, 0, 5" SelectedItem="{Binding CurrentGame, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                      ItemsSource="{Binding Games}" ItemTemplate="{StaticResource SettingsEnumConverterTemplate}"/>
+
+            <TextBlock Grid.Row="3" Grid.Column="0" Text="{loc:Loc SettingsWindow.LoadGameFilesOnStartup}" Margin="5, 0, 0, 0"/>
+            <CheckBox Grid.Row="3" Grid.Column="1" Margin="-1, 0, 0, 5" IsChecked="{Binding LoadCaPacksByDefault, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+
+            <TextBlock Grid.Row="4" Grid.Column="0" Text="{loc:Loc SettingsWindow.ShowGameWemFiles}" Margin="5, 0, 0, 0"/>
+            <CheckBox Grid.Row="4" Grid.Column="1" Margin="-1, 0, 0, 5" IsChecked="{Binding ShowCAWemFiles, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+
+            <ItemsControl Grid.Row="5" Grid.ColumnSpan="3" ItemsSource="{Binding GameDirectores}" >
                 <ItemsControl.ItemContainerStyle>
                     <Style TargetType="ContentPresenter">
                         <Setter Property="VerticalAlignment" Value="Stretch" />
@@ -145,19 +143,20 @@
                     <DataTemplate>
                         <Grid Margin="0, 0, 0, 5">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="200"/>
+                                <ColumnDefinition Width="230"/>
                                 <ColumnDefinition Width="600"/>
-                                <ColumnDefinition Width="40"/>
+                                <ColumnDefinition Width="45"/>
                             </Grid.ColumnDefinitions>
 
                             <TextBlock Grid.Column="0" Text="{Binding GameName}" Margin="5, 0, 0, 0"/>
                             <TextBox Grid.Column="1"
-                                        Style="{StaticResource HintedTextBox}"                                     
-                                        Text="{Binding Path}" 
+                                        Style="{StaticResource HintedTextBox}"
+                                        Text="{Binding Path}"
                                         Tag="{loc:Loc SettingsWindow.GameDataPathHint}"
                                         IsReadOnly="True"
+                                        Margin="0, 0, 5, 0"
                                         Padding="2.5, 0, 0, 0"/>
-                            <Button Grid.Column="2" Content="..." Command="{Binding BrowseCommand}" Margin="5, 0, 5, 0"/>
+                            <Button Grid.Column="2" Content="..." Width="30" Command="{Binding BrowseCommand}" Margin="5, 0, 10, 0"/>
                         </Grid>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>

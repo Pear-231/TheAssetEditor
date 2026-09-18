@@ -33,13 +33,14 @@
             
                 <MenuItem Header="{loc:Loc MenuBar.File.ImportReferencePack}" Command="{Binding MenuBar.ImportReferencePackCommand}"/>
 
-                <MenuItem Header="{loc:Loc MenuBar.File.OpenGamePacks}">
-                    <MenuItem Header="{loc:Loc MenuBar.File.GameAttila}" Command="{Binding MenuBar.OpenAttilaPacksCommand}"/>
-                    <MenuItem Header="{loc:Loc MenuBar.File.GameRomeRemastered}" Command="{Binding MenuBar.OpenRomeRemasteredPacksCommand}"/>
-                    <MenuItem Header="{loc:Loc MenuBar.File.GameThreeKingdoms}" Command="{Binding MenuBar.OpenThreeKingdomsPacksCommand}"/>
-                    <MenuItem Header="{loc:Loc MenuBar.File.GameWarhammer2}" Command="{Binding MenuBar.OpenWarhammer2PacksCommand}"/>
-                    <MenuItem Header="{loc:Loc MenuBar.File.GameWarhammer3}" Command="{Binding MenuBar.OpenWarhammer3PacksCommand}"/>
-                    <MenuItem Header="{loc:Loc MenuBar.File.GameTroy}" Command="{Binding MenuBar.OpenTroyPacksCommand}"/>
+                <MenuItem Header="{loc:Loc MenuBar.File.OpenGamePacks}" ItemsSource="{Binding MenuBar.SupportedGames}">
+                    <MenuItem.ItemContainerStyle>
+                        <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Type MenuItem}}">
+                            <Setter Property="Header" Value="{Binding DisplayName}"/>
+                            <Setter Property="Command" Value="{Binding DataContext.MenuBar.OpenGamePacksCommand, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"/>
+                            <Setter Property="CommandParameter" Value="{Binding Type}"/>
+                        </Style>
+                    </MenuItem.ItemContainerStyle>
                 </MenuItem>
                 
                 <MenuItem Header="{loc:Loc MenuBar.File.OpenRecentPacks}" ItemsSource="{Binding MenuBar.RecentPackFiles}">

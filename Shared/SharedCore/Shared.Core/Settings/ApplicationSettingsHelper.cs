@@ -8,6 +8,7 @@ namespace Shared.Core.Settings
         LegacyBlue,
         Green,
     }
+
     public class ApplicationSettingsHelper
     {
         public static string GetEnumAsString(BackgroundColour colour)
@@ -20,6 +21,7 @@ namespace Shared.Core.Settings
                 _ => throw new NotImplementedException(),
             };
         }
+
         public static Color GetEnumAsColour(BackgroundColour colour)
         {
             return colour switch
@@ -27,6 +29,16 @@ namespace Shared.Core.Settings
                 BackgroundColour.DarkGrey => new Color(50, 50, 50, 1),
                 BackgroundColour.LegacyBlue => new Color(94, 150, 239, 1),
                 BackgroundColour.Green => new Color(0, 177, 64, 1),
+                _ => throw new NotImplementedException(),
+            };
+        }
+
+        public static string GetEnumAsString(CameraControlMode mode)
+        {
+            return mode switch
+            {
+                CameraControlMode.BlenderStyle => "Blender Style",
+                CameraControlMode.AssetEditorStyle => "AssetEditor Style",
                 _ => throw new NotImplementedException(),
             };
         }

@@ -31,7 +31,7 @@ namespace Shared.Core.Settings
     public enum WwiseProjectId : uint
     {
         Unsupported = 0,
-        Warhammer3 = 2361,
+        Warhammer3 = 2361
     }
 
     public enum PackFileVersion
@@ -48,7 +48,7 @@ namespace Shared.Core.Settings
         Unknown = 0,
         Version1,
         Version2,
-        Version3,
+        Version3
     }
 
     public enum EncryptionKeystream
@@ -56,7 +56,7 @@ namespace Shared.Core.Settings
         Unsupported = 0,
         None,
         ThirtyTwoBitComplement,
-        SixtyFourBitComplement,
+        SixtyFourBitComplement
     }
 
     public class GameInformation(
@@ -87,7 +87,7 @@ namespace Shared.Core.Settings
         {
             var warhammer = new GameInformation(
                 GameTypeEnum.Warhammer,
-                "Warhammer",
+                "Total War: WARHAMMER",
                 PackFileVersion.PFH4,
                 GameBnkVersion.Unsupported,
                 WwiseProjectId.Unsupported,
@@ -97,7 +97,7 @@ namespace Shared.Core.Settings
 
             var warhammer2 = new GameInformation(
                 GameTypeEnum.Warhammer2,
-                "Warhammer II",
+                "Total War: WARHAMMER II",
                 PackFileVersion.PFH5,
                 GameBnkVersion.Unsupported,
                 WwiseProjectId.Unsupported,
@@ -107,7 +107,7 @@ namespace Shared.Core.Settings
 
             var warhammer3 = new GameInformation(
                 GameTypeEnum.Warhammer3,
-                "Warhammer III",
+                "Total War: WARHAMMER III",
                 PackFileVersion.PFH5,
                 GameBnkVersion.Warhammer3,
                 WwiseProjectId.Warhammer3,
@@ -117,7 +117,7 @@ namespace Shared.Core.Settings
 
             var troy = new GameInformation(
                 GameTypeEnum.Troy,
-                "Troy",
+                "A Total War Saga: TROY",
                 PackFileVersion.PFH5,
                 GameBnkVersion.Unsupported,
                 WwiseProjectId.Unsupported,
@@ -127,7 +127,7 @@ namespace Shared.Core.Settings
 
             var threeKingdoms = new GameInformation(
                 GameTypeEnum.ThreeKingdoms,
-                "Three Kingdoms",
+                "Total War: THREE KINGDOMS",
                 PackFileVersion.PFH5,
                 GameBnkVersion.Unsupported,
                 WwiseProjectId.Unsupported,
@@ -137,7 +137,7 @@ namespace Shared.Core.Settings
 
             var rome2 = new GameInformation(
                 GameTypeEnum.Rome2,
-                "Rome II",
+                "Total War: ROME II",
                 PackFileVersion.PFH4,
                 GameBnkVersion.Unsupported,
                 WwiseProjectId.Unsupported,
@@ -147,7 +147,7 @@ namespace Shared.Core.Settings
 
             var attila = new GameInformation(
                 GameTypeEnum.Attila,
-                "Attila",
+                "Total War: ATTILA",
                 PackFileVersion.PFH4,
                 GameBnkVersion.Attila,
                 WwiseProjectId.Unsupported,
@@ -157,7 +157,7 @@ namespace Shared.Core.Settings
 
             var pharaoh = new GameInformation(
                 GameTypeEnum.Pharaoh,
-                "Pharaoh",
+                "Total War: PHARAOH",
                 PackFileVersion.PFH5,
                 GameBnkVersion.Unsupported,
                 WwiseProjectId.Unsupported,
@@ -192,25 +192,10 @@ namespace Shared.Core.Settings
 
         public static string GetEnumAsString(GameTypeEnum game)
         {
-            return game switch
-            {
-                GameTypeEnum.Unknown => "Unknown",
-                GameTypeEnum.Arena => "Arena",
-                GameTypeEnum.Attila => "Attila",
-                GameTypeEnum.Empire => "Empire",
-                GameTypeEnum.Napoleon => "Napoleon",
-                GameTypeEnum.RomeRemastered => "Rome Remastered",
-                GameTypeEnum.Rome2 => "Rome II",
-                GameTypeEnum.Shogun2 => "Shogun 2",
-                GameTypeEnum.ThreeKingdoms => "Three Kingdoms",
-                GameTypeEnum.ThronesOfBritannia => "Thrones of Britannia",
-                GameTypeEnum.Warhammer => "Warhammer",
-                GameTypeEnum.Warhammer2 => "Warhammer II",
-                GameTypeEnum.Warhammer3 => "Warhammer III",
-                GameTypeEnum.Troy => "Troy",
-                GameTypeEnum.Pharaoh => "Pharaoh",
-                _ => throw new Exception($"Unknown game - {game}"),
-            };
+            if (Games.TryGetValue(game, out var gameInformation))
+                return gameInformation.DisplayName;
+
+            throw new Exception($"Unknown or unsupported game {game}");
         }
     }
 }
