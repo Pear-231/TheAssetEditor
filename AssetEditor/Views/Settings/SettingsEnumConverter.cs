@@ -1,9 +1,8 @@
-﻿using System;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Windows.Data;
 using Shared.Core.Settings;
-using static Shared.Core.Settings.ThemesController;
 using static Shared.Core.Settings.ApplicationSettingsHelper;
+using static Shared.Core.Settings.ThemesController;
 
 namespace AssetEditor.Views.Settings
 {
@@ -19,6 +18,8 @@ namespace AssetEditor.Views.Settings
                 return GetEnumAsString(theme);
             else if (value is BackgroundColour backgroundColour)
                 return GetEnumAsString(backgroundColour);
+            else if (value is CameraControlMode cameraControlMode)
+                return GetEnumAsString(cameraControlMode);
             else
                 return null;
         }
