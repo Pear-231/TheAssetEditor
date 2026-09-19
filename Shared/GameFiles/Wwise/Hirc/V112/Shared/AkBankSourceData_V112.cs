@@ -13,19 +13,16 @@ namespace Shared.GameFormats.Wwise.Hirc.V112.Shared
         public AkMediaInformation_V112 AkMediaInformation { get; set; } = new AkMediaInformation_V112();
         public uint Size { get; set; }
 
-        public static AkBankSourceData_V112 ReadData(ByteChunk chunk)
+        public void ReadData(ByteChunk chunk)
         {
-            var akBankSourceData_V112 = new AkBankSourceData_V112();
-            akBankSourceData_V112.PluginId = chunk.ReadUInt32();
-            akBankSourceData_V112.PluginIdType = (AkPluginType_V112)(ushort)(akBankSourceData_V112.PluginId >> 0 & 0x000F);
-            akBankSourceData_V112.PluginIdCompany = (ushort)(akBankSourceData_V112.PluginId >> 4 & 0x03FF); // Apparently CA doesn't have one
-            akBankSourceData_V112.StreamType = (AKBKSourceType)chunk.ReadByte();
-            akBankSourceData_V112.AkMediaInformation.ReadData(chunk, akBankSourceData_V112.StreamType);
+            PluginId = chunk.ReadUInt32();
+            PluginIdType = (AkPluginType_V112)(ushort)(PluginId >> 0 & 0x000F);
+            PluginIdCompany = (ushort)(PluginId >> 4 & 0x03FF); // Apparently CA doesn't have one
+            StreamType = (AKBKSourceType)chunk.ReadByte();
+            AkMediaInformation.ReadData(chunk, StreamType);
 
-            if (akBankSourceData_V112.PluginIdType == AkPluginType_V112.Source || akBankSourceData_V112.PluginIdType == AkPluginType_V112.MotionSource)
-                akBankSourceData_V112.Size = chunk.ReadUInt32();
-
-            return akBankSourceData_V112;
+            if (PluginIdType == AkPluginType_V112.Source || PluginIdType == AkPluginType_V112.MotionSource)
+                Size = chunk.ReadUInt32();
         }
 
         public byte[] WriteData()

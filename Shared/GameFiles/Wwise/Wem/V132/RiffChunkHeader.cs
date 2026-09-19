@@ -2,7 +2,7 @@
 
 namespace Shared.GameFormats.Wwise.Wem.V132
 {
-    public class RiffChunkHeader(string tag, uint chunkSize)
+    public class RiffChunkHeader(string tag = "", uint chunkSize = 0)
     {
         public const uint HeaderSize = 8;
         public const int ChunkPaddingAlignment = 2;
@@ -10,17 +10,18 @@ namespace Shared.GameFormats.Wwise.Wem.V132
         public string Tag { get; set; } = tag;
         public uint ChunkSize { get; set; } = chunkSize;
 
-        public static RiffChunkHeader ReadData(ByteChunk chunk)
+        public void ReadData(ByteChunk chunk)
         {
-            var tag = System.Text.Encoding.ASCII.GetString(chunk.ReadBytes(4));
-            var chunkSize = chunk.ReadUInt32();
-            return new RiffChunkHeader(tag, chunkSize);
+            Tag = System.Text.Encoding.ASCII.GetString(chunk.ReadBytes(4));
+            ChunkSize = chunk.ReadUInt32();
         }
 
         public static RiffChunkHeader PeekFromBytes(ByteChunk chunk)
         {
             var peekBytes = chunk.PeekChunk((int)HeaderSize);
-            return ReadData(peekBytes);
+            var header = new RiffChunkHeader();
+            header.ReadData(peekBytes);
+            return header;
         }
 
         public static byte[] WriteData(RiffChunkHeader header)

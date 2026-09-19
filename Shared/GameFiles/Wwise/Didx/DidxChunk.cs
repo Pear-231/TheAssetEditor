@@ -7,11 +7,10 @@ namespace Shared.GameFormats.Wwise.Didx
         public ChunkHeader ChunkHeader { get; set; } = new ChunkHeader();
         public List<MediaHeader> MediaList { get; set; } = [];
 
-        public static DidxChunk ReadData(string fileName, ByteChunk chunk)
+        public void ReadData(string fileName, ByteChunk chunk)
         {
-            var didxChunk = new DidxChunk { ChunkHeader = ChunkHeader.ReadData(chunk) };
-            didxChunk.MediaList = ReadMediaHeaders(chunk, didxChunk.ChunkHeader.ChunkSize);
-            return didxChunk;
+            ChunkHeader.ReadData(chunk);
+            MediaList = ReadMediaHeaders(chunk, ChunkHeader.ChunkSize);
         }
 
         public static List<MediaHeader> ReadMediaHeaders(ByteChunk chunk, uint chunkSize)
@@ -22,7 +21,11 @@ namespace Shared.GameFormats.Wwise.Didx
             var items = chunkSize / MediaHeader.ByteSize;
             var mediaHeaders = new List<MediaHeader>((int)items);
             for (var itemIndex = 0; itemIndex < items; itemIndex++)
-                mediaHeaders.Add(MediaHeader.ReadData(chunk));
+            {
+                var mediaHeader = new MediaHeader();
+                mediaHeader.ReadData(chunk);
+                mediaHeaders.Add(mediaHeader);
+            }
 
             return mediaHeaders;
         }

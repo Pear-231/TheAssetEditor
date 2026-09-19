@@ -17,7 +17,11 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
             {
                 BitsFxBypass = chunk.ReadByte();
                 for (var i = 0; i < NumFx; i++)
-                    FxChunk.Add(FxChunk_V136.ReadData(chunk));
+                {
+                    var fxChunk = new FxChunk_V136();
+                    fxChunk.ReadData(chunk);
+                    FxChunk.Add(fxChunk);
+                }
             }
         }
 

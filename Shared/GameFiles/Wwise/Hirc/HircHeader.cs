@@ -9,29 +9,29 @@ namespace Shared.GameFormats.Wwise.Hirc
         public const uint PrefixSize = 5;
 
         public AkBkHircType HircType { get; set; }
+        public byte RawHircType { get; set; }
         public uint SectionSize { get; set; }
         public uint Id { get; set; }
 
-        public static HircHeader ReadData(ByteChunk chunk)
+        public void ReadData(ByteChunk chunk)
         {
-            return new HircHeader
-            {
-                HircType = (AkBkHircType)chunk.ReadByte(),
-                SectionSize = chunk.ReadUInt32(),
-                Id = chunk.ReadUInt32()
-            };
+            RawHircType = chunk.ReadByte();
+            HircType = (AkBkHircType)RawHircType;
+            SectionSize = chunk.ReadUInt32();
+            Id = chunk.ReadUInt32();
         }
 
         public static byte[] WriteData(HircHeader header)
         {
             using var memStream = new MemoryStream();
-            memStream.Write(ByteParsers.Byte.EncodeValue((byte)header.HircType, out _));
+            var hircType = header.RawHircType != 0 ? header.RawHircType : (byte)header.HircType;
+            memStream.Write(ByteParsers.Byte.EncodeValue(hircType, out _));
             memStream.Write(ByteParsers.UInt32.EncodeValue(header.SectionSize, out _));
             memStream.Write(ByteParsers.UInt32.EncodeValue(header.Id, out _));
             var byteArray = memStream.ToArray();
 
             // Reload the object to ensure sanity
-            ReadData(new ByteChunk(byteArray));
+            new HircHeader().ReadData(new ByteChunk(byteArray));
 
             return byteArray;
         }

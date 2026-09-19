@@ -49,12 +49,9 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
         {
             public uint ActionId { get; set; }
 
-            public static Action_V112 ReadData(ByteChunk chunk)
+            public void ReadData(ByteChunk chunk)
             {
-                return new Action_V112()
-                {
-                    ActionId = chunk.ReadUInt32()
-                };
+                ActionId = chunk.ReadUInt32();
             }
 
             public byte[] WriteData()

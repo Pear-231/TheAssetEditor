@@ -33,12 +33,12 @@ namespace Editors.Audio.Shared.AudioProject.Compiler
                 return id;
         }
 
-        public static HashSet<uint> GetUsedHircIds(IAudioRepository audioRepository, AudioProjectFile audioProject)
+        public static HashSet<uint> GetUsedHircIds(IAudioBankQueries bankQueries, AudioProjectFile audioProject)
         {
             var usedHircIds = new HashSet<uint>();
 
             var languageId = WwiseHash.Compute(audioProject.Language);
-            var languageHircIds = audioRepository.GetUsedVanillaHircIdsByLanguageId(languageId);
+            var languageHircIds = bankQueries.GetUsedVanillaHircIdsByLanguageId(languageId);
             usedHircIds.UnionWith(languageHircIds);
 
             var audioProjectGeneratableItemIds = audioProject.GetGeneratableItemIds();
@@ -47,12 +47,12 @@ namespace Editors.Audio.Shared.AudioProject.Compiler
             return usedHircIds;
         }
 
-        public static HashSet<uint> GetUsedSourceIds(IAudioRepository audioRepository, AudioProjectFile audioProject)
+        public static HashSet<uint> GetUsedSourceIds(IAudioBankQueries bankQueries, AudioProjectFile audioProject)
         {
             var usedSourceIds = new HashSet<uint>();
 
             var languageId = WwiseHash.Compute(audioProject.Language);
-            var languageSourceIds = audioRepository.GetUsedVanillaSourceIdsByLanguageId(languageId);
+            var languageSourceIds = bankQueries.GetUsedVanillaSourceIdsByLanguageId(languageId);
             usedSourceIds.UnionWith(languageSourceIds);
 
             var audioProjectSourceIds = audioProject.GetAudioFileIds();

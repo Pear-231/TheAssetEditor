@@ -1,11 +1,11 @@
-﻿using Shared.ByteParsing;
+using Shared.ByteParsing;
 using Shared.GameFormats.Wwise.Enums;
 using Shared.GameFormats.Wwise.Hirc.V112.Shared;
 using Shared.GameFormats.Wwise.Hirc.V136.Shared;
 
 namespace Shared.GameFormats.Wwise.Hirc.V112
 {
-    public class CAkLayerCntr_V112 : HircItem, ICAkLayerCntr
+    public class CAkLayerCntr_V112 : HircItem, ICAkLayerCntr, ICAkParameterNode
     {
         public NodeBaseParams_V112 NodeBaseParams { get; set; } = new NodeBaseParams_V112();
         public Children_V112 Children { get; set; } = new Children_V112();
@@ -32,8 +32,10 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
 
         public List<uint> GetChildren() => Children.ChildIds;
         public uint GetDirectParentId() => NodeBaseParams.DirectParentId;
+        public bool GetIsContinuousValidation() => IsContinuousValidation != 0;
+        public IReadOnlyList<ICAkLayerCntr.IAkLayer> GetLayers() => LayerList;
 
-        public class CAkLayer_V112
+        public class CAkLayer_V112 : ICAkLayerCntr.IAkLayer
         {
             public uint UlLayerIr { get; set; }
             public InitialRtpc_V112 InitialRtpc { get; set; } = new InitialRtpc_V112();
@@ -57,9 +59,12 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
                     CAssociatedChildDataList.Add(associatedChildData);
                 }
             }
+
+
+            public IReadOnlyList<ICAkLayerCntr.IAkAssociatedChildData> GetAssociatedChildren() => CAssociatedChildDataList;
         }
 
-        public class CAssociatedChildData_V112
+        public class CAssociatedChildData_V112 : ICAkLayerCntr.IAkAssociatedChildData
         {
             public uint AssociatedChildId { get; set; }
             public uint CurveSize { get; set; }
@@ -70,8 +75,16 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
                 AssociatedChildId = chunk.ReadUInt32();
                 CurveSize = chunk.ReadUInt32();
                 for (var i = 0; i < CurveSize; i++)
-                    AkRtpcGraphPointList.Add(AkRtpcGraphPoint_V112.ReadData(chunk));
+                {
+                    var akRtpcGraphPoint = new AkRtpcGraphPoint_V112();
+                    akRtpcGraphPoint.ReadData(chunk);
+                    AkRtpcGraphPointList.Add(akRtpcGraphPoint);
+                }
             }
+
+
+            public IReadOnlyList<ICAkLayerCntr.IAkRtpcGraphPoint> GetCurvePoints() => AkRtpcGraphPointList;
         }
+        INodeBaseParams ICAkParameterNode.NodeBaseParams => NodeBaseParams;
     }
 }

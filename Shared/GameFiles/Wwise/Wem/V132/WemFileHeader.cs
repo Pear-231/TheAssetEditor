@@ -2,7 +2,7 @@
 
 namespace Shared.GameFormats.Wwise.Wem.V132
 {
-    public class WemFileHeader(uint riffSize)
+    public class WemFileHeader(uint riffSize = 0)
     {
         public const int Size = 12;
         public const int BytesBeforeSize = 8;
@@ -13,21 +13,17 @@ namespace Shared.GameFormats.Wwise.Wem.V132
         public string FormType { get; set; } = WaveFormType;
         public uint RiffSize { get; set; } = riffSize;
 
-        public static WemFileHeader ReadData(ByteChunk chunk)
+        public void ReadData(ByteChunk chunk)
         {
-            var containerId = System.Text.Encoding.ASCII.GetString(chunk.ReadBytes(4));
-            if (containerId != RiffContainerId)
-                throw new InvalidDataException($"Expected RIFF container ID '{RiffContainerId}', got '{containerId}'.");
+            ContainerId = System.Text.Encoding.ASCII.GetString(chunk.ReadBytes(4));
+            if (ContainerId != RiffContainerId)
+                throw new InvalidDataException($"Expected RIFF container ID '{RiffContainerId}', got '{ContainerId}'.");
 
-            var riffSize = chunk.ReadUInt32();
+            RiffSize = chunk.ReadUInt32();
 
-            var formType = System.Text.Encoding.ASCII.GetString(chunk.ReadBytes(4));
-            if (formType != WaveFormType)
-                throw new InvalidDataException($"Expected WAVE form type '{WaveFormType}', got '{formType}'.");
-
-            var header = new WemFileHeader(riffSize);
-
-            return header;
+            FormType = System.Text.Encoding.ASCII.GetString(chunk.ReadBytes(4));
+            if (FormType != WaveFormType)
+                throw new InvalidDataException($"Expected WAVE form type '{WaveFormType}', got '{FormType}'.");
         }
 
         public static void WriteData(Stream stream, WemFileHeader header)

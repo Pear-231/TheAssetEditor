@@ -12,19 +12,16 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
         public AkMediaInformation_V136 AkMediaInformation { get; set; } = new AkMediaInformation_V136();
         public uint Size { get; set; }
 
-        public static AkBankSourceData_V136 ReadData(ByteChunk chunk)
+        public void ReadData(ByteChunk chunk)
         {
-            var akBankSourceData_V136 = new AkBankSourceData_V136();
-            akBankSourceData_V136.PluginId = chunk.ReadUInt32();
-            akBankSourceData_V136.PluginIdType = (AkPluginType_V136)(ushort)(akBankSourceData_V136.PluginId >> 0 & 0x000F);
-            akBankSourceData_V136.PluginIdCompany = (ushort)(akBankSourceData_V136.PluginId >> 4 & 0x03FF); // Apparently CA doesn't have one
-            akBankSourceData_V136.StreamType = (AKBKSourceType)chunk.ReadByte();
-            akBankSourceData_V136.AkMediaInformation.ReadData(chunk); 
-            
-            if (akBankSourceData_V136.PluginIdType == AkPluginType_V136.Source)
-                akBankSourceData_V136.Size = chunk.ReadUInt32();
+            PluginId = chunk.ReadUInt32();
+            PluginIdType = (AkPluginType_V136)(ushort)(PluginId >> 0 & 0x000F);
+            PluginIdCompany = (ushort)(PluginId >> 4 & 0x03FF); // Apparently CA doesn't have one
+            StreamType = (AKBKSourceType)chunk.ReadByte();
+            AkMediaInformation.ReadData(chunk);
 
-            return akBankSourceData_V136;
+            if (PluginIdType == AkPluginType_V136.Source)
+                Size = chunk.ReadUInt32();
         }
 
         public byte[] WriteData()

@@ -24,10 +24,11 @@ namespace Editors.Audio.AudioEditor.Core
         void CheckMergingSoundBanksIdIntegrity();
     }
 
-    public class AudioEditorIntegrityService(IPackFileService packFileService, IAudioRepository audioRepository) : IAudioEditorIntegrityService
+    public class AudioEditorIntegrityService(IPackFileService packFileService, IAudioRepository audioRepository, IAudioBankQueries bankQueries) : IAudioEditorIntegrityService
     {
         private readonly IPackFileService _packFileService = packFileService;
         private readonly IAudioRepository _audioRepository = audioRepository;
+        private readonly IAudioBankQueries _bankQueries = bankQueries;
 
         public void EnsureCorrectSoundBankNames(AudioProjectFile audioProject, string audioProjectNameWithoutExtension)
         {
@@ -45,7 +46,7 @@ namespace Editors.Audio.AudioEditor.Core
 
         public void RefreshSourceIds(AudioProjectFile audioProject)
         {
-            var usedSourceIds = IdGenerator.GetUsedSourceIds(_audioRepository, audioProject);
+            var usedSourceIds = IdGenerator.GetUsedSourceIds(_bankQueries, audioProject);
 
             var audioProjectSounds = audioProject.GetSounds();
             foreach (var audioFile in audioProject.AudioFiles)
@@ -177,8 +178,8 @@ namespace Editors.Audio.AudioEditor.Core
             var audioProjectSourceIds = audioProject.GetAudioFileIds();
 
             var languageId = WwiseHash.Compute(audioProject.Language);
-            var languageHircIds = _audioRepository.GetUsedVanillaHircIdsByLanguageId(languageId);
-            var languageSourceIds = _audioRepository.GetUsedVanillaSourceIdsByLanguageId(languageId);
+            var languageHircIds = _bankQueries.GetUsedVanillaHircIdsByLanguageId(languageId);
+            var languageSourceIds = _bankQueries.GetUsedVanillaSourceIdsByLanguageId(languageId);
 
             // Reset and remove any AudioProjectItem IDs used in vanilla so we can handle them
             var hircIdConflicts = new List<uint>();
@@ -524,7 +525,7 @@ namespace Editors.Audio.AudioEditor.Core
 
         public void CheckMergingSoundBanksIdIntegrity()
         {
-            var moddedHircsByBnkByLanguage = _audioRepository.GetModdedHircsByBnkByLanguage();
+            var moddedHircsByBnkByLanguage = _bankQueries.GetModdedHircsByBnkByLanguage();
 
             var hasClashes = false;
             var messageBuilder = new StringBuilder()

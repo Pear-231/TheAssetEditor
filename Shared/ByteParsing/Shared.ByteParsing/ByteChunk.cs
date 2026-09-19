@@ -144,6 +144,7 @@ namespace Shared.ByteParsing
         public int ReadInt32() => Read(ByteParsers.Int32);
         public uint ReadUInt32() => Read(ByteParsers.UInt32);
         public long ReadInt64() => Read(ByteParsers.Int64);
+        public double ReadDouble() => Read(ByteParsers.Double);
         public float ReadSingle() => Read(ByteParsers.Single);
         public Half ReadFloat16() => Read(ByteParsers.Float16);
         public short ReadShort() => Read(ByteParsers.Short);

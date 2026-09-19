@@ -12,7 +12,7 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
         public List<AkMediaMap_V136> MediaList { get; set; } = [];
         public InitialRtpc_V136 InitialRtpc { get; set; } = new InitialRtpc_V136();
         public StateChunk_V136 StateChunk { get; set; } = new StateChunk_V136();
-        public short NumValues { get; set; }
+        public ushort NumValues { get; set; }
         public List<PluginPropertyValue_V136> PropertyValuesList { get; set; } = [];
 
         protected override void ReadData(ByteChunk chunk)
@@ -23,14 +23,22 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
 
             NumBankData = chunk.ReadByte();
             for (var i = 0; i < NumBankData; i++)
-                MediaList.Add(AkMediaMap_V136.ReadData(chunk));
+            {
+                var akMediaMap = new AkMediaMap_V136();
+                akMediaMap.ReadData(chunk);
+                MediaList.Add(akMediaMap);
+            }
 
             InitialRtpc.ReadData(chunk);
             StateChunk.ReadData(chunk);
 
-            NumValues = chunk.ReadShort();
+            NumValues = chunk.ReadUShort();
             for (var i = 0; i < NumValues; i++)
-                PropertyValuesList.Add(PluginPropertyValue_V136.ReadData(chunk));
+            {
+                var pluginPropertyValue = new PluginPropertyValue_V136();
+                pluginPropertyValue.ReadData(chunk);
+                PropertyValuesList.Add(pluginPropertyValue);
+            }
         }
 
         public override byte[] WriteData() => throw new NotSupportedException("Users probably don't need this complexity.");

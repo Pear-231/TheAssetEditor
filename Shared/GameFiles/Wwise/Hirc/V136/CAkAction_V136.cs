@@ -1,19 +1,24 @@
-﻿using Shared.ByteParsing;
+using Shared.ByteParsing;
 using Shared.GameFormats.Wwise.Enums;
 using Shared.GameFormats.Wwise.Hirc.V136.Shared;
+using Shared.GameFormats.Wwise.Versions;
 
 namespace Shared.GameFormats.Wwise.Hirc.V136
 {
     public class CAkAction_V136 : HircItem, ICAkAction
     {
+        private static readonly WwiseVersionDefinition s_versionDefinition = WwiseVersionResolver.Resolve(BankVersion.WarhammerIII);
+
         public AkActionType ActionType { get; set; }
         public uint IdExt { get; set; }
         public byte IdExt4 { get; set; }
         public AkPropBundle_V136 AkPropBundle0 { get; set; } = new AkPropBundle_V136();
-        public AkPropBundle_V136 AkPropBundle1 { get; set; } = new AkPropBundle_V136();
+        public AkPropBundleMinMax_V136 AkPropBundle1 { get; set; } = new AkPropBundleMinMax_V136();
         public PlayActionParams_V136? PlayActionParams { get; set; }
         public ActiveActionParams_V136? ActiveActionParams { get; set; }
         public StateActionParams_V136? StateActionParams { get; set; }
+        public SwitchActionParams_V136? SwitchActionParams { get; set; }
+        public byte[] AdditionalParameters { get; set; } = [];
 
         protected override void ReadData(ByteChunk chunk)
         {
@@ -23,16 +28,30 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
             AkPropBundle0.ReadData(chunk);
             AkPropBundle1.ReadData(chunk);
 
-            if (ActionType == AkActionType.Play)
-                PlayActionParams = PlayActionParams_V136.ReadData(chunk);
-            else if (ActionType == AkActionType.Pause_E_O)
-                ActiveActionParams = ActiveActionParams_V136.ReadData(chunk, ActionType);
-            else if (ActionType == AkActionType.Resume_E_O)
-                ActiveActionParams = ActiveActionParams_V136.ReadData(chunk, ActionType);
-            else if (ActionType == AkActionType.Stop_E_O)
-                ActiveActionParams = ActiveActionParams_V136.ReadData(chunk, ActionType);
+            if (IsPlay(ActionType))
+            {
+                PlayActionParams = new PlayActionParams_V136();
+                PlayActionParams.ReadData(chunk);
+            }
+            else if (ActionType == AkActionType.Pause_E_O
+                || ActionType == AkActionType.Resume_E_O
+                || ActionType == AkActionType.Stop_E_O)
+            {
+                ActiveActionParams = new ActiveActionParams_V136();
+                ActiveActionParams.ReadData(chunk, ActionType);
+            }
             else if (ActionType == AkActionType.SetState)
-                StateActionParams = StateActionParams_V136.ReadData(chunk);
+            {
+                StateActionParams = new StateActionParams_V136();
+                StateActionParams.ReadData(chunk);
+            }
+            else if (ActionType == AkActionType.SetSwitch)
+            {
+                SwitchActionParams = new SwitchActionParams_V136();
+                SwitchActionParams.ReadData(chunk);
+            }
+            else
+                AdditionalParameters = ActionParameterReader.Read(chunk, ActionType, s_versionDefinition);
         }
 
         public override byte[] WriteData()
@@ -44,7 +63,7 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
             memStream.Write(AkPropBundle0.WriteData());
             memStream.Write(AkPropBundle1.WriteData());
 
-            if (ActionType == AkActionType.Play)
+            if (IsPlay(ActionType))
                 memStream.Write(PlayActionParams!.WriteData());
             else if (ActionType == AkActionType.Pause_E_O)
                 memStream.Write(ActiveActionParams!.WriteData(ActionType));
@@ -52,6 +71,12 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
                 memStream.Write(ActiveActionParams!.WriteData(ActionType));
             else if (ActionType == AkActionType.Stop_E_O)
                 memStream.Write(ActiveActionParams!.WriteData(ActionType));
+            else if (ActionType == AkActionType.SetState)
+                memStream.Write(StateActionParams!.WriteData());
+            else if (ActionType == AkActionType.SetSwitch)
+                memStream.Write(SwitchActionParams!.WriteData());
+            else
+                memStream.Write(AdditionalParameters);
 
             var byteArray = memStream.ToArray();
 
@@ -71,44 +96,45 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
             var akPropBundle0Size = AkPropBundle0.GetSize();
             var akPropBundle1Size = AkPropBundle1.GetSize();
 
-            if (ActionType == AkActionType.Play)
-            {
-                var playActionParamsSize = PlayActionParams!.GetSize();
-                SectionSize = (ushort)(idSize + actionTypeSize + idExtSize + idExt4Size + akPropBundle0Size + akPropBundle1Size + playActionParamsSize);
-            }
+            uint parameterSize;
+            if (IsPlay(ActionType))
+                parameterSize = PlayActionParams!.GetSize();
             else if (ActionType == AkActionType.Pause_E_O)
-            {
-                var pauseActionParamsSize = ActiveActionParams!.GetSize(AkActionType.Pause_E_O);
-                SectionSize = (ushort)(idSize + actionTypeSize + idExtSize + idExt4Size + akPropBundle0Size + akPropBundle1Size + pauseActionParamsSize);
-            }
+                parameterSize = ActiveActionParams!.GetSize(AkActionType.Pause_E_O);
             else if (ActionType == AkActionType.Resume_E_O)
-            {
-                var resumeActionParamsSize = ActiveActionParams!.GetSize(AkActionType.Resume_E_O);
-                SectionSize = (ushort)(idSize + actionTypeSize + idExtSize + idExt4Size + akPropBundle0Size + akPropBundle1Size + resumeActionParamsSize);
-            }
+                parameterSize = ActiveActionParams!.GetSize(AkActionType.Resume_E_O);
             else if (ActionType == AkActionType.Stop_E_O)
-            {
-                var stopActionParamsSize = ActiveActionParams!.GetSize(AkActionType.Stop_E_O);
-                SectionSize = (ushort)(idSize + actionTypeSize + idExtSize + idExt4Size + akPropBundle0Size + akPropBundle1Size + stopActionParamsSize);
-            }
+                parameterSize = ActiveActionParams!.GetSize(AkActionType.Stop_E_O);
+            else if (ActionType == AkActionType.SetState)
+                parameterSize = StateActionParams!.GetSize();
+            else if (ActionType == AkActionType.SetSwitch)
+                parameterSize = SwitchActionParams!.GetSize();
+            else
+                parameterSize = (uint)AdditionalParameters.Length;
+
+            SectionSize = idSize + actionTypeSize + idExtSize + idExt4Size + akPropBundle0Size + akPropBundle1Size + parameterSize;
         }
 
         public AkActionType GetActionType() => ActionType;
+        public AuthoredProperties GetProperties() => WwisePropertyMap_V136.Read(AkPropBundle0, AkPropBundle1);
         public uint GetChildId() => IdExt;
-        public uint GetStateGroupId() => StateActionParams!.StateGroupId;
+        public uint GetTargetStateId() => StateActionParams?.TargetStateId ?? 0;
+        public uint GetSwitchGroupId() => SwitchActionParams?.SwitchGroupId ?? 0;
+        public uint GetSwitchValueId() => SwitchActionParams?.SwitchValueId ?? 0;
+        public uint GetStateGroupId() => StateActionParams?.StateGroupId ?? 0;
+
+        private static bool IsPlay(AkActionType actionType)
+            => s_versionDefinition.ClassifyAction(actionType) == AkActionParameter.Play;
 
         public class PlayActionParams_V136
         {
             public byte BitVector { get; set; }
             public uint BankId { get; set; }
 
-            public static PlayActionParams_V136 ReadData(ByteChunk chunk)
+            public void ReadData(ByteChunk chunk)
             {
-                return new PlayActionParams_V136()
-                {
-                    BitVector = chunk.ReadByte(),
-                    BankId = chunk.ReadUInt32()
-                };
+                BitVector = chunk.ReadByte();
+                BankId = chunk.ReadUInt32();
             }
 
             public byte[] WriteData()
@@ -135,20 +161,18 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
             public StopActionSpecificParams_V136 StopActionSpecificParams { get; set; } = new StopActionSpecificParams_V136();
             public ExceptParams_V136 ExceptParams { get; set; } = new ExceptParams_V136();
 
-            public static ActiveActionParams_V136 ReadData(ByteChunk chunk, AkActionType actionType)
+            public void ReadData(ByteChunk chunk, AkActionType actionType)
             {
-                var activeActionParams = new ActiveActionParams_V136();
-                activeActionParams.BitVector = chunk.ReadByte();
+                BitVector = chunk.ReadByte();
 
                 if (actionType == AkActionType.Pause_E_O)
-                    activeActionParams.PauseActionSpecificParams = PauseActionSpecificParams_V136.ReadData(chunk);
-                else if(actionType == AkActionType.Resume_E_O)
-                    activeActionParams.ResumeActionSpecificParams = ResumeActionSpecificParams_V136.ReadData(chunk);
+                    PauseActionSpecificParams.ReadData(chunk);
+                else if (actionType == AkActionType.Resume_E_O)
+                    ResumeActionSpecificParams.ReadData(chunk);
                 else if (actionType == AkActionType.Stop_E_O)
-                    activeActionParams.StopActionSpecificParams = StopActionSpecificParams_V136.ReadData(chunk);
+                    StopActionSpecificParams.ReadData(chunk);
 
-                activeActionParams.ExceptParams = ExceptParams_V136.ReadData(chunk);
-                return activeActionParams;
+                ExceptParams.ReadData(chunk);
             }
 
             public byte[] WriteData(AkActionType actionType)
@@ -187,12 +211,9 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
             {
                 public byte BitVector { get; set; }
 
-                public static PauseActionSpecificParams_V136 ReadData(ByteChunk chunk)
+                public void ReadData(ByteChunk chunk)
                 {
-                    return new PauseActionSpecificParams_V136()
-                    {
-                        BitVector = chunk.ReadByte()
-                    };
+                    BitVector = chunk.ReadByte();
                 }
 
                 public byte[] WriteData()
@@ -210,12 +231,9 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
             {
                 public byte BitVector { get; set; }
 
-                public static ResumeActionSpecificParams_V136 ReadData(ByteChunk chunk)
+                public void ReadData(ByteChunk chunk)
                 {
-                    return new ResumeActionSpecificParams_V136()
-                    {
-                        BitVector = chunk.ReadByte()
-                    };
+                    BitVector = chunk.ReadByte();
                 }
 
                 public byte[] WriteData()
@@ -233,12 +251,9 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
             {
                 public byte BitVector { get; set; }
 
-                public static StopActionSpecificParams_V136 ReadData(ByteChunk chunk)
+                public void ReadData(ByteChunk chunk)
                 {
-                    return new StopActionSpecificParams_V136()
-                    {
-                        BitVector = chunk.ReadByte()
-                    };
+                    BitVector = chunk.ReadByte();
                 }
 
                 public byte[] WriteData()
@@ -254,26 +269,25 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
 
             public class ExceptParams_V136
             {
-                public byte ExceptionListSize { get; set; }
+                public uint ExceptionListSize { get; set; }
                 public List<Exception_V136> ExceptionList { get; set; } = [];
 
-                public static ExceptParams_V136 ReadData(ByteChunk chunk)
+                public void ReadData(ByteChunk chunk)
                 {
-                    var exceptParams = new ExceptParams_V136
+                    ExceptionListSize = WwiseVariableUInt32Parser.Read(chunk);
+
+                    for (var i = 0; i < ExceptionListSize; i++)
                     {
-                        ExceptionListSize = chunk.ReadByte()
-                    };
-
-                    for (var i = 0; i < exceptParams.ExceptionListSize; i++)
-                        exceptParams.ExceptionList.Add(Exception_V136.ReadData(chunk));
-
-                    return exceptParams;
+                        var exception = new Exception_V136();
+                        exception.ReadData(chunk);
+                        ExceptionList.Add(exception);
+                    }
                 }
 
                 public byte[] WriteData()
                 {
                     using var memStream = new MemoryStream();
-                    memStream.Write(ByteParsers.Byte.EncodeValue((byte)ExceptionList.Count, out _));
+                    memStream.Write(WwiseVariableUInt32Parser.Encode((uint)ExceptionList.Count));
 
                     foreach (var exception in ExceptionList)
                         memStream.Write(exception.WriteData());
@@ -283,7 +297,7 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
 
                 public uint GetSize()
                 {
-                    var size = ByteHelper.GetPropertyTypeSize(ExceptionListSize);
+                    var size = WwiseVariableUInt32Parser.GetSize((uint)ExceptionList.Count);
                     foreach (var exception in ExceptionList)
                         size += exception.GetSize();
 
@@ -296,13 +310,10 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
                 public uint Id { get; set; }
                 public byte IsBus { get; set; }
 
-                public static Exception_V136 ReadData(ByteChunk chunk)
+                public void ReadData(ByteChunk chunk)
                 {
-                    return new Exception_V136
-                    {
-                        Id = chunk.ReadUInt32(),
-                        IsBus = chunk.ReadByte()
-                    };
+                    Id = chunk.ReadUInt32();
+                    IsBus = chunk.ReadByte();
                 }
 
                 public byte[] WriteData()
@@ -321,19 +332,50 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
             }
         }
 
+        public class SwitchActionParams_V136
+        {
+            public uint SwitchGroupId { get; set; }
+            public uint SwitchValueId { get; set; }
+
+            public void ReadData(ByteChunk chunk)
+            {
+                SwitchGroupId = chunk.ReadUInt32();
+                SwitchValueId = chunk.ReadUInt32();
+            }
+
+            public byte[] WriteData()
+            {
+                using var memStream = new MemoryStream();
+                memStream.Write(ByteParsers.UInt32.EncodeValue(SwitchGroupId, out _));
+                memStream.Write(ByteParsers.UInt32.EncodeValue(SwitchValueId, out _));
+                return memStream.ToArray();
+            }
+
+            public uint GetSize()
+                => ByteHelper.GetPropertyTypeSize(SwitchGroupId) + ByteHelper.GetPropertyTypeSize(SwitchValueId);
+        }
+
         public class StateActionParams_V136
         {
             public uint StateGroupId { get; set; }
             public uint TargetStateId { get; set; }
 
-            public static StateActionParams_V136 ReadData(ByteChunk chunk)
+            public void ReadData(ByteChunk chunk)
             {
-                return new StateActionParams_V136()
-                {
-                    StateGroupId = chunk.ReadUInt32(),
-                    TargetStateId = chunk.ReadUInt32()
-                };
+                StateGroupId = chunk.ReadUInt32();
+                TargetStateId = chunk.ReadUInt32();
             }
+
+            public byte[] WriteData()
+            {
+                using var memStream = new MemoryStream();
+                memStream.Write(ByteParsers.UInt32.EncodeValue(StateGroupId, out _));
+                memStream.Write(ByteParsers.UInt32.EncodeValue(TargetStateId, out _));
+                return memStream.ToArray();
+            }
+
+            public uint GetSize()
+                => ByteHelper.GetPropertyTypeSize(StateGroupId) + ByteHelper.GetPropertyTypeSize(TargetStateId);
         }
     }
 }

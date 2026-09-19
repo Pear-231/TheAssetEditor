@@ -5,7 +5,7 @@ using static Shared.GameFormats.Wwise.Hirc.ICAkSwitchCntr;
 
 namespace Shared.GameFormats.Wwise.Hirc.V112
 {
-    public class CAkSwitchCntr_V112 : HircItem, ICAkSwitchCntr
+    public class CAkSwitchCntr_V112 : HircItem, ICAkSwitchCntr, ICAkParameterNode
     {
         public NodeBaseParams_V112 NodeBaseParams { get; set; } = new NodeBaseParams_V112();
         public AkGroupType GroupType { get; set; }
@@ -27,51 +27,59 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
 
             var switchListCount = chunk.ReadUInt32();
             for (var i = 0; i < switchListCount; i++)
-                SwitchList.Add(CAkSwitchPackage_V112.ReadData(chunk));
+            {
+                var cAkSwitchPackage = new CAkSwitchPackage_V112();
+                cAkSwitchPackage.ReadData(chunk);
+                SwitchList.Add(cAkSwitchPackage);
+            }
 
             var paramCount = chunk.ReadUInt32();
             for (var i = 0; i < paramCount; i++)
-                Parameters.Add(AkSwitchNodeParams_V112.ReadData(chunk));
+            {
+                var akSwitchNodeParams = new AkSwitchNodeParams_V112();
+                akSwitchNodeParams.ReadData(chunk);
+                Parameters.Add(akSwitchNodeParams);
+            }
         }
 
         public override byte[] WriteData() => throw new NotSupportedException("Users probably don't need this complexity.");
         public override void UpdateSectionSize() => throw new NotSupportedException("Users probably don't need this complexity.");
         public uint GetDirectParentId() => NodeBaseParams.DirectParentId;
+        public AkGroupType GetGroupType() => GroupType;
+        public bool GetIsContinuousValidation() => IsContinuousValidation != 0;
+        public IReadOnlyList<IAkSwitchNodeParams> GetNodeParameters() => Parameters;
 
         public class CAkSwitchPackage_V112 : ICAkSwitchPackage
         {
             public uint SwitchId { get; set; }
             public List<uint> NodeIdList { get; set; } = [];
 
-            public static ICAkSwitchPackage ReadData(ByteChunk chunk)
+            public void ReadData(ByteChunk chunk)
             {
-                var instance = new CAkSwitchPackage_V112();
-                instance.SwitchId = chunk.ReadUInt32();
+                SwitchId = chunk.ReadUInt32();
                 var numChildren = chunk.ReadUInt32();
                 for (var i = 0; i < numChildren; i++)
-                    instance.NodeIdList.Add(chunk.ReadUInt32());
-                return instance;
+                    NodeIdList.Add(chunk.ReadUInt32());
             }
         }
 
-        public class AkSwitchNodeParams_V112
+        public class AkSwitchNodeParams_V112 : IAkSwitchNodeParams
         {
             public uint NodeId { get; set; }
             public byte BitVector0 { get; set; }
             public byte BitVector1 { get; set; }
-            public float FadeOutTime { get; set; }
-            public float FadeInTime { get; set; }
+            public int FadeOutTime { get; set; }
+            public int FadeInTime { get; set; }
 
-            public static AkSwitchNodeParams_V112 ReadData(ByteChunk chunk)
+            public void ReadData(ByteChunk chunk)
             {
-                var instance = new AkSwitchNodeParams_V112();
-                instance.NodeId = chunk.ReadUInt32();
-                instance.BitVector0 = chunk.ReadByte();
-                instance.BitVector1 = chunk.ReadByte();
-                instance.FadeOutTime = chunk.ReadSingle();
-                instance.FadeInTime = chunk.ReadSingle();
-                return instance;
+                NodeId = chunk.ReadUInt32();
+                BitVector0 = chunk.ReadByte();
+                BitVector1 = chunk.ReadByte();
+                FadeOutTime = chunk.ReadInt32();
+                FadeInTime = chunk.ReadInt32();
             }
         }
+        INodeBaseParams ICAkParameterNode.NodeBaseParams => NodeBaseParams;
     }
 }

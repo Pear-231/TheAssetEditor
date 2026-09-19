@@ -9,15 +9,12 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
         public byte IsShareSet { get; set; }
         public byte IsRendered { get; set; }
 
-        public static FxChunk_V136 ReadData(ByteChunk chunk)
+        public void ReadData(ByteChunk chunk)
         {
-            return new FxChunk_V136
-            {
-                FxIndex = chunk.ReadByte(),
-                FxId = chunk.ReadUInt32(),
-                IsShareSet = chunk.ReadByte(),
-                IsRendered = chunk.ReadByte()
-            };
+            FxIndex = chunk.ReadByte();
+            FxId = chunk.ReadUInt32();
+            IsShareSet = chunk.ReadByte();
+            IsRendered = chunk.ReadByte();
         }
     }
 }

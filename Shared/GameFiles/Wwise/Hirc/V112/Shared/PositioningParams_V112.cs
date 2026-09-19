@@ -4,6 +4,15 @@ namespace Shared.GameFormats.Wwise.Hirc.V112.Shared
 {
     public class PositioningParams_V112
     {
+        // Bit 0 says the node states its own positioning rather than inheriting its parent's, and
+        // bit 3 says three-dimensional positioning is available — a different bit from V136's, which
+        // uses bit 1. Both must be set for the 3D block below to be present, which is the same
+        // condition that decides whether a voice is positioned at all, so the reader and the engine
+        // share this one definition rather than each spelling the mask out for themselves.
+        private const byte OverridesParentPositioningBit = 0x01;
+        private const byte Is3DAvailableBit = 0x08;
+        private const byte PositionedBits = OverridesParentPositioningBit | Is3DAvailableBit;
+
         public byte ByVector { get; set; }
         public byte Bits3D { get; set; }
         public uint AttenuationId { get; set; }
@@ -13,14 +22,13 @@ namespace Shared.GameFormats.Wwise.Hirc.V112.Shared
         public List<AkPathListItemOffset_V112> PlayListItems { get; set; } = [];
         public List<Ak3DAutomationParams_V112> Params { get; set; } = [];
 
+        public bool IsPositioned => (ByVector & PositionedBits) == PositionedBits;
+
         public void ReadData(ByteChunk chunk)
         {
             ByVector = chunk.ReadByte();
 
-            var bPositioningInfoOverrideParent = (ByVector >> 0 & 1) == 1;
-            var cbIs3DPositioningAvailable = (ByVector >> 3 & 1) == 1;
-
-            if (bPositioningInfoOverrideParent && cbIs3DPositioningAvailable)
+            if (IsPositioned)
             {
                 Bits3D = chunk.ReadByte();
                 AttenuationId = chunk.ReadUInt32();
@@ -32,14 +40,26 @@ namespace Shared.GameFormats.Wwise.Hirc.V112.Shared
 
                     var numVertexes = chunk.ReadUInt32();
                     for (var i = 0; i < numVertexes; i++)
-                        VertexList.Add(AkPathVertex_V112.ReadData(chunk));
+                    {
+                        var akPathVertex = new AkPathVertex_V112();
+                        akPathVertex.ReadData(chunk);
+                        VertexList.Add(akPathVertex);
+                    }
 
                     var numPlayListItems = chunk.ReadUInt32();
                     for (var i = 0; i < numPlayListItems; i++)
-                        PlayListItems.Add(AkPathListItemOffset_V112.ReadData(chunk));
+                    {
+                        var akPathListItemOffset = new AkPathListItemOffset_V112();
+                        akPathListItemOffset.ReadData(chunk);
+                        PlayListItems.Add(akPathListItemOffset);
+                    }
 
                     for (var i = 0; i < numPlayListItems; i++)
-                        Params.Add(Ak3DAutomationParams_V112.ReadData(chunk));
+                    {
+                        var ak3DAutomationParams = new Ak3DAutomationParams_V112();
+                        ak3DAutomationParams.ReadData(chunk);
+                        Params.Add(ak3DAutomationParams);
+                    }
                 }
             }
         }
@@ -72,15 +92,12 @@ namespace Shared.GameFormats.Wwise.Hirc.V112.Shared
         public float Z { get; set; }
         public int Duration { get; set; }
 
-        public static AkPathVertex_V112 ReadData(ByteChunk chunk)
+        public void ReadData(ByteChunk chunk)
         {
-            return new AkPathVertex_V112
-            {
-                X = chunk.ReadSingle(),
-                Y = chunk.ReadSingle(),
-                Z = chunk.ReadSingle(),
-                Duration = chunk.ReadInt32()
-            };
+            X = chunk.ReadSingle();
+            Y = chunk.ReadSingle();
+            Z = chunk.ReadSingle();
+            Duration = chunk.ReadInt32();
         }
     }
 
@@ -89,13 +106,10 @@ namespace Shared.GameFormats.Wwise.Hirc.V112.Shared
         public uint VerticesOffset { get; set; }
         public uint NumVertices { get; set; }
 
-        public static AkPathListItemOffset_V112 ReadData(ByteChunk chunk)
+        public void ReadData(ByteChunk chunk)
         {
-            return new AkPathListItemOffset_V112
-            {
-                VerticesOffset = chunk.ReadUInt32(),
-                NumVertices = chunk.ReadUInt32()
-            };
+            VerticesOffset = chunk.ReadUInt32();
+            NumVertices = chunk.ReadUInt32();
         }
     }
 
@@ -105,14 +119,11 @@ namespace Shared.GameFormats.Wwise.Hirc.V112.Shared
         public float Y { get; set; }
         public float Z { get; set; }
 
-        public static Ak3DAutomationParams_V112 ReadData(ByteChunk chunk)
+        public void ReadData(ByteChunk chunk)
         {
-            return new Ak3DAutomationParams_V112
-            {
-                X = chunk.ReadSingle(),
-                Y = chunk.ReadSingle(),
-                Z = chunk.ReadSingle()
-            };
+            X = chunk.ReadSingle();
+            Y = chunk.ReadSingle();
+            Z = chunk.ReadSingle();
         }
     }
 }

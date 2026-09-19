@@ -124,6 +124,8 @@ namespace Test.Audio
 
             var didx = loaded.FindDidx(resolvedPaths);
             Assert.That(didx.Single().Length, Is.EqualTo(1024));
+            Assert.That(loaded.FindDidx(987, resolvedPaths), Has.Count.EqualTo(1));
+            Assert.That(loaded.FindDidx(988, resolvedPaths), Is.Empty);
         }
 
         [Test]

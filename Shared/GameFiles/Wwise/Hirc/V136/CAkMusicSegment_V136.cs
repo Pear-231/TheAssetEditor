@@ -13,11 +13,15 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
         protected override void ReadData(ByteChunk chunk)
         {
             MusicNodeParams.ReadData(chunk);
-            Duration = chunk.ReadInt64(); //chunk.ReadDouble();
+            Duration = chunk.ReadDouble();
 
             var ulNumMarkers = chunk.ReadUInt32();
             for (var i = 0; i < ulNumMarkers; i++)
-                ArrayMarkersList.Add(AkMusicMarkerWwise_V136.ReadData(chunk));
+            {
+                var akMusicMarkerWwise = new AkMusicMarkerWwise_V136();
+                akMusicMarkerWwise.ReadData(chunk);
+                ArrayMarkersList.Add(akMusicMarkerWwise);
+            }
         }
 
         public override byte[] WriteData() => throw new NotSupportedException("Users probably don't need this complexity.");
@@ -30,13 +34,12 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
             public uint StringSize { get; set; }
             public string? MarkerName { get; set; }
 
-            public static AkMusicMarkerWwise_V136 ReadData(ByteChunk chunk)
+            public void ReadData(ByteChunk chunk)
             {
-                var akMusicMarkerWwise = new AkMusicMarkerWwise_V136();
-                akMusicMarkerWwise.Id = chunk.ReadUInt32();
-                akMusicMarkerWwise.Position = chunk.ReadInt64();
-                akMusicMarkerWwise.MarkerName = Encoding.UTF8.GetString(chunk.ReadBytes((int)akMusicMarkerWwise.StringSize));
-                return akMusicMarkerWwise;
+                Id = chunk.ReadUInt32();
+                Position = chunk.ReadDouble();
+                StringSize = chunk.ReadUInt32();
+                MarkerName = Encoding.UTF8.GetString(chunk.ReadBytes((int)StringSize));
             }
         }
     }

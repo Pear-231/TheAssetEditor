@@ -7,11 +7,10 @@ namespace Shared.GameFormats.Wwise.Data
         public ChunkHeader ChunkHeader { get; set; } = new ChunkHeader();
         public ByteChunk Data { get; set; } = new ByteChunk([]);
 
-        public static DataChunk ReadData(string fileName, ByteChunk chunk)
+        public void ReadData(string fileName, ByteChunk chunk)
         {
-            var dataChunk = new DataChunk { ChunkHeader = ChunkHeader.ReadData(chunk) };
-            dataChunk.Data = chunk.CreateSub((int)dataChunk.ChunkHeader.ChunkSize);
-            return dataChunk;
+            ChunkHeader.ReadData(chunk);
+            Data = chunk.CreateSub((int)ChunkHeader.ChunkSize);
         }
     }
 }

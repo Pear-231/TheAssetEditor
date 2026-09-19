@@ -11,7 +11,8 @@ namespace Shared.GameFormats.Wwise.Bkhd
         public uint LanguageId { get; set; }
         public uint AltValues { get; set; }
         public uint ProjectId { get; set; }
-        public byte[] Padding { get; set; }
+        // Only present when the chunk is larger than the fields above account for.
+        public byte[]? Padding { get; set; }
 
         public void ReadData(ByteChunk chunk, uint chunkSize)
         {

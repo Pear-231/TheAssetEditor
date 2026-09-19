@@ -1,9 +1,10 @@
-﻿using Shared.ByteParsing;
+using Shared.ByteParsing;
+using Shared.GameFormats.Wwise.Enums;
 using Shared.GameFormats.Wwise.Hirc.V112.Shared;
 
 namespace Shared.GameFormats.Wwise.Hirc.V112
 {
-    public class CAkRanSeqCntr_V112 : HircItem, ICAkRanSeqCntr
+    public class CAkRanSeqCntr_V112 : HircItem, ICAkRanSeqCntr, ICAkParameterNode
     {
         public NodeBaseParams_V112 NodeBaseParams { get; set; } = new NodeBaseParams_V112();
         public ushort LoopCount { get; set; }
@@ -88,6 +89,20 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
 
         public uint GetDirectParentId() => NodeBaseParams.DirectParentId;
         public List<uint> GetChildren() => CAkPlayList.Playlist.Select(x => x.PlayId).ToList();
+        public AkContainerMode GetContainerMode() => (AkContainerMode)Mode;
+        public AkRandomMode GetRandomMode() => (AkRandomMode)RandomMode;
+        public AkTransitionMode GetTransitionMode() => (AkTransitionMode)TransitionMode;
+        public ushort GetAvoidRepeatCount() => AvoidRepeatCount;
+        public ushort GetLoopCount() => LoopCount;
+        public ushort GetLoopMinimumOffset() => LoopModMin;
+        public ushort GetLoopMaximumOffset() => LoopModMax;
+        public float GetTransitionTime() => TransitionTime;
+        public float GetTransitionTimeMinimumOffset() => TransitionTimeModMin;
+        public float GetTransitionTimeMaximumOffset() => TransitionTimeModMax;
+        public bool GetIsContinuous() => (BitVector & 0x08) != 0;
+        public bool GetIsGlobal() => (BitVector & 0x10) != 0;
+        public bool GetAlwaysResetsPlaylist() => (BitVector & 0x02) != 0;
+        public IReadOnlyList<ICAkRanSeqCntr.IAkPlaylistItem> GetPlaylist() => CAkPlayList.Playlist;
 
         public class CAkPlayList_V112
         {
@@ -98,7 +113,11 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
             {
                 PlayListItem = chunk.ReadUShort();
                 for (var i = 0; i < PlayListItem; i++)
-                    Playlist.Add(AkPlaylistItem_V112.ReadData(chunk));
+                {
+                    var akPlaylistItem = new AkPlaylistItem_V112();
+                    akPlaylistItem.ReadData(chunk);
+                    Playlist.Add(akPlaylistItem);
+                }
             }
 
             public byte[] WriteData()
@@ -119,18 +138,15 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
                 return playListItemSize + playListSize;
             }
 
-            public class AkPlaylistItem_V112
+            public class AkPlaylistItem_V112 : ICAkRanSeqCntr.IAkPlaylistItem
             {
                 public uint PlayId { get; set; }
                 public int Weight { get; set; }
 
-                public static AkPlaylistItem_V112 ReadData(ByteChunk chunk)
+                public void ReadData(ByteChunk chunk)
                 {
-                    return new AkPlaylistItem_V112
-                    {
-                        PlayId = chunk.ReadUInt32(),
-                        Weight = chunk.ReadInt32()
-                    };
+                    PlayId = chunk.ReadUInt32();
+                    Weight = chunk.ReadInt32();
                 }
 
                 public byte[] WriteData()
@@ -149,5 +165,6 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
                 }
             }
         }
+        INodeBaseParams ICAkParameterNode.NodeBaseParams => NodeBaseParams;
     }
 }

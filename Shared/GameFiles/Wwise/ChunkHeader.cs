@@ -6,22 +6,21 @@ namespace Shared.GameFormats.Wwise
     public class ChunkHeader
     {
         public static uint ChunkHeaderSize { get => 8; }
-        public string Tag { get; set; }
+        public string Tag { get; set; } = string.Empty;
         public uint ChunkSize { get; set; }
 
-        public static ChunkHeader ReadData(ByteChunk chunk)
+        public void ReadData(ByteChunk chunk)
         {
-            return new ChunkHeader
-            {
-                Tag = Encoding.UTF8.GetString(chunk.ReadBytes(4)),
-                ChunkSize = chunk.ReadUInt32()
-            };
+            Tag = Encoding.UTF8.GetString(chunk.ReadBytes(4));
+            ChunkSize = chunk.ReadUInt32();
         }
 
         public static ChunkHeader PeekFromBytes(ByteChunk chunk)
         {
             var peakBytes = chunk.PeekChunk(8);
-            return ReadData(peakBytes);
+            var header = new ChunkHeader();
+            header.ReadData(peakBytes);
+            return header;
         }
 
         public static byte[] WriteData(ChunkHeader header)
@@ -39,7 +38,7 @@ namespace Shared.GameFormats.Wwise
             var byteArray = memStream.ToArray();
 
             // Reload the object to ensure sanity
-            var reload = ReadData(new ByteChunk(byteArray));
+            new ChunkHeader().ReadData(new ByteChunk(byteArray));
             return byteArray;
         }
     }

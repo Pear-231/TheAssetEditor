@@ -14,7 +14,10 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
             //Only SrcSilence is used for WH3... maybe...
             //Actually the default case would take care of any of them, so ehhh
                 //case 0x00640002: return CAkFxSrcSineParams.ReadData(chunk, uSize);
-                case 0x00650002: return CAkFxSrcSilenceParams_V136.ReadData(chunk);
+                case 0x00650002:
+                    var silenceParams = new CAkFxSrcSilenceParams_V136();
+                    silenceParams.ReadData(chunk);
+                    return silenceParams;
                 //case 0x00660002: return CAkToneGenParams.ReadData(chunk, uSize);
                 //case 0x00690003: return CAkParameterEQFXParams.ReadData(chunk, uSize);
                 //case 0x006A0003: return CAkDelayFXParams.ReadData(chunk, uSize);
@@ -46,14 +49,11 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
             public float RandomisedLengthMinus { get; set; }
             public float RandomisedLengthPlus { get; set; }
 
-            public static CAkFxSrcSilenceParams_V136 ReadData(ByteChunk chunk)
+            public void ReadData(ByteChunk chunk)
             {
-                return new CAkFxSrcSilenceParams_V136
-                {
-                    Duration = chunk.ReadSingle(),
-                    RandomisedLengthMinus = chunk.ReadSingle(),
-                    RandomisedLengthPlus = chunk.ReadSingle()
-                };
+                Duration = chunk.ReadSingle();
+                RandomisedLengthMinus = chunk.ReadSingle();
+                RandomisedLengthPlus = chunk.ReadSingle();
             }
         }
     }

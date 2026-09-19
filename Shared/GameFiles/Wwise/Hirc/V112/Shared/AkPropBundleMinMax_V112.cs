@@ -19,8 +19,8 @@ namespace Shared.GameFormats.Wwise.Hirc.V112.Shared
             // Then read the all min and max values.
             for (byte i = 0; i < Props; i++)
             {
-                PropsList[i].Min = chunk.ReadSingle();
-                PropsList[i].Max = chunk.ReadSingle();
+                PropsList[i].Min = chunk.ReadUInt32();
+                PropsList[i].Max = chunk.ReadUInt32();
             }
         }
 
@@ -31,11 +31,11 @@ namespace Shared.GameFormats.Wwise.Hirc.V112.Shared
             foreach (var value in PropsList)
                 memStream.Write(ByteParsers.Byte.EncodeValue((byte)value.Type, out _));
 
-            // Read all the Ids first 
+            // Then write the all min and max values.
             foreach (var value in PropsList)
             {
-                memStream.Write(ByteParsers.Single.EncodeValue((byte)value.Min, out _));
-                memStream.Write(ByteParsers.Single.EncodeValue((byte)value.Max, out _));
+                memStream.Write(ByteParsers.UInt32.EncodeValue(value.Min, out _));
+                memStream.Write(ByteParsers.UInt32.EncodeValue(value.Max, out _));
             }
 
             // Then read the all min and max values.
@@ -59,8 +59,10 @@ namespace Shared.GameFormats.Wwise.Hirc.V112.Shared
         public class AkPropBundleInstance_V112
         {
             public AkPropId_V112 Type { get; set; }
-            public float Min { get; set; }
-            public float Max { get; set; }
+            // The stored 32 bits, undecoded: what a range means depends on the property, and only
+            // the property id says whether it is a float, a millisecond count or an identifier.
+            public uint Min { get; set; }
+            public uint Max { get; set; }
 
             public uint GetSize()
             {

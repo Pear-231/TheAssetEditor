@@ -22,7 +22,9 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
             //   node[5]          ch=0    // parent: [0]
             //   node[6]          ch=1    // parent: [0]
             //     node[7]        ch=0    // parent: [6]
-            PlayList.Add(AkMusicRanSeqPlaylistItem_V136.ReadData(chunk));
+            var rootPlaylistItem = new AkMusicRanSeqPlaylistItem_V136();
+            rootPlaylistItem.ReadData(chunk);
+            PlayList.Add(rootPlaylistItem);
         }
 
         public override byte[] WriteData() => throw new NotSupportedException("Users probably don't need this complexity.");
@@ -43,27 +45,26 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
             public byte IsShuffle { get; set; }
             public List<AkMusicRanSeqPlaylistItem_V136> PlayList { get; set; } = [];
 
-            public static AkMusicRanSeqPlaylistItem_V136 ReadData(ByteChunk chunk)
+            public void ReadData(ByteChunk chunk)
             {
-                var akMusicRanSeqPlaylistItem = new AkMusicRanSeqPlaylistItem_V136
+                SegmentId = chunk.ReadUInt32();
+                PlaylistItemId = chunk.ReadInt32();
+                NumChildren = chunk.ReadUInt32();
+                RsType = chunk.ReadUInt32();
+                Loop = chunk.ReadShort();
+                LoopMin = chunk.ReadShort();
+                LoopMax = chunk.ReadShort();
+                Weight = chunk.ReadUInt32();
+                AvoidRepeatCount = chunk.ReadUShort();
+                IsUsingWeight = chunk.ReadByte();
+                IsShuffle = chunk.ReadByte();
+
+                for (var i = 0; i < NumChildren; i++)
                 {
-                    SegmentId = chunk.ReadUInt32(),
-                    PlaylistItemId = chunk.ReadInt32(),
-                    NumChildren = chunk.ReadUInt32(),
-                    RsType = chunk.ReadUInt32(),
-                    Loop = chunk.ReadShort(),
-                    LoopMin = chunk.ReadShort(),
-                    LoopMax = chunk.ReadShort(),
-                    Weight = chunk.ReadUInt32(),
-                    AvoidRepeatCount = chunk.ReadUShort(),
-                    IsUsingWeight = chunk.ReadByte(),
-                    IsShuffle = chunk.ReadByte()
-                };
-
-                for (var i = 0; i < akMusicRanSeqPlaylistItem.NumChildren; i++)
-                    akMusicRanSeqPlaylistItem.PlayList.Add(ReadData(chunk));
-
-                return akMusicRanSeqPlaylistItem;
+                    var akMusicRanSeqPlaylistItem = new AkMusicRanSeqPlaylistItem_V136();
+                    akMusicRanSeqPlaylistItem.ReadData(chunk);
+                    PlayList.Add(akMusicRanSeqPlaylistItem);
+                }
             }
         }
     }

@@ -23,14 +23,22 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
 
             NumBankData = chunk.ReadByte();
             for (var i = 0; i < NumBankData; i++)
-                MediaList.Add(AkMediaMap_V136.ReadData(chunk));
+            {
+                var akMediaMap = new AkMediaMap_V136();
+                akMediaMap.ReadData(chunk);
+                MediaList.Add(akMediaMap);
+            }
 
             InitialRtpc.ReadData(chunk);
             StateChunk.ReadData(chunk);
 
             NumValues = chunk.ReadUShort();
             for (var i = 0; i < NumValues; i++)
-                PropertyValuesList.Add(PluginPropertyValue_V136.ReadData(chunk));
+            {
+                var pluginPropertyValue = new PluginPropertyValue_V136();
+                pluginPropertyValue.ReadData(chunk);
+                PropertyValuesList.Add(pluginPropertyValue);
+            }
         }
 
         public override byte[] WriteData() => throw new NotSupportedException("Users probably don't need this complexity.");

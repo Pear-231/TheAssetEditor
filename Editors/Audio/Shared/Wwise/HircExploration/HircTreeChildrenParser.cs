@@ -9,10 +9,15 @@ namespace Editors.Audio.Shared.Wwise.HircExploration
     public class HircTreeChildrenParser : HircTreeBaseParser
     {
         private record ArgumentPathLookupKey(HircTreeNode ParentNode, int Depth, uint State);
+        private readonly IHircGraphService _hircGraphService;
 
-        public HircTreeChildrenParser(IAudioRepository audioRepository, bool lazyLoadChildren = false) : base(audioRepository, lazyLoadChildren)
+        public HircTreeChildrenParser(
+            IAudioRepository audioRepository,
+            bool lazyLoadChildren = false,
+            IHircGraphService hircGraphService = null) : base(audioRepository, lazyLoadChildren)
         {
-            HircProcessChildMap.Add(AkBkHircType.Event, ProcessEvent);
+            _hircGraphService = hircGraphService ?? new HircGraphService(audioRepository);
+            HircProcessChildMap.Add(AkBkHircType.Event, ProcessActionEvent);
             HircProcessChildMap.Add(AkBkHircType.Action, ProcessAction);
             HircProcessChildMap.Add(AkBkHircType.SwitchContainer, ProcessSwitchContainer);
             HircProcessChildMap.Add(AkBkHircType.LayerContainer, ProcessBlendContainer);
@@ -64,7 +69,7 @@ namespace Editors.Audio.Shared.Wwise.HircExploration
             }
         }
 
-        private void ProcessEvent(HircItem item, HircTreeNode parent)
+        private void ProcessActionEvent(HircItem item, HircTreeNode parent)
         {
             var actionEvent = GetAsType<ICAkEvent>(item);
             var node = new HircTreeNode() { DisplayName = $"Action Event - {AudioRepository.GetNameFromId(item.Id)}", Hirc = item };
@@ -127,21 +132,16 @@ namespace Editors.Audio.Shared.Wwise.HircExploration
         private void ProcessSwitchContainer(HircItem item, HircTreeNode parent)
         {
             var switchContainer = GetAsType<ICAkSwitchCntr>(item);
-            var switchGroup = AudioRepository.GetNameFromId(switchContainer.GroupId);
+            var switchGroup = _hircGraphService.GetSwitchGroup(switchContainer);
 
-            var defaultSwitchValue = AudioRepository.GetNameFromId(switchContainer.DefaultSwitch);
-            if (defaultSwitchValue == "0")
-                defaultSwitchValue = "Any";
-
-            var node = new HircTreeNode() { DisplayName = $"Switch Container (Default Value: {defaultSwitchValue})", Hirc = item };
+            var node = new HircTreeNode() { DisplayName = $"Switch Container (Default Value: {switchGroup.DefaultValueName})", Hirc = item };
             parent.Children.Add(node);
 
-            foreach (var switchCase in switchContainer.SwitchList)
+            foreach (var switchValue in switchGroup.Values)
             {
-                var switchValue = AudioRepository.GetNameFromId(switchCase.SwitchId);
-                var switchValueNode = new HircTreeNode() { DisplayName = $"Switch [{switchGroup}] - {switchValue}", Hirc = item, IsMetaNode = true };
+                var switchValueNode = new HircTreeNode() { DisplayName = $"Switch [{switchGroup.Name}] - {switchValue.Name}", Hirc = item, IsMetaNode = true };
                 node.Children.Add(switchValueNode);
-                ProcessNext(switchCase.NodeIdList, switchValueNode);
+                ProcessNext(switchValue.ChildIds.ToList(), switchValueNode);
             }
         }
 

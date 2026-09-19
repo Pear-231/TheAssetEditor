@@ -1,10 +1,10 @@
-﻿using Shared.ByteParsing;
+using Shared.ByteParsing;
 using Shared.GameFormats.Wwise.Enums;
 using Shared.GameFormats.Wwise.Hirc.V136.Shared;
 
 namespace Shared.GameFormats.Wwise.Hirc.V136
 {
-    public class CAkLayerCntr_V136 : HircItem, ICAkLayerCntr
+    public class CAkLayerCntr_V136 : HircItem, ICAkLayerCntr, ICAkParameterNode
     {
         public NodeBaseParams_V136 NodeBaseParams { get; set; } = new NodeBaseParams_V136();
         public Children_V136 Children { get; set; } = new Children_V136();
@@ -32,9 +32,13 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
         public override void UpdateSectionSize() => throw new NotSupportedException("Users probably don't need this complexity.");
 
         public List<uint> GetChildren() => Children.ChildIds;
-        public uint GetDirectParentId() => NodeBaseParams.DirectParentId;
+        INodeBaseParams ICAkParameterNode.NodeBaseParams => NodeBaseParams;
 
-        public class CAkLayer_V136
+        public uint GetDirectParentId() => NodeBaseParams.DirectParentId;
+        public bool GetIsContinuousValidation() => IsContinuousValidation != 0;
+        public IReadOnlyList<ICAkLayerCntr.IAkLayer> GetLayers() => LayerList;
+
+        public class CAkLayer_V136 : ICAkLayerCntr.IAkLayer
         {
             public uint LayerId { get; set; }
             public InitialRtpc_V136 InitialRtpc { get; set; } = new InitialRtpc_V136();
@@ -58,9 +62,11 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
                     CAssociatedChildDataList.Add(associatedChildData);
                 }
             }
+
+            public IReadOnlyList<ICAkLayerCntr.IAkAssociatedChildData> GetAssociatedChildren() => CAssociatedChildDataList;
         }
 
-        public class CAssociatedChildData_V136
+        public class CAssociatedChildData_V136 : ICAkLayerCntr.IAkAssociatedChildData
         {
             public uint AssociatedChildId { get; set; }
             public byte UnknownCustom0 { get; set; }
@@ -75,8 +81,15 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
                 UnknownCustom1 = chunk.ReadByte();
                 CurveSize = chunk.ReadUInt32();
                 for (var i = 0; i < CurveSize; i++)
-                    AkRtpcGraphPointList.Add(AkRtpcGraphPoint_V136.ReadData(chunk));
+                {
+                    var akRtpcGraphPoint = new AkRtpcGraphPoint_V136();
+                    akRtpcGraphPoint.ReadData(chunk);
+                    AkRtpcGraphPointList.Add(akRtpcGraphPoint);
+                }
             }
+
+
+            public IReadOnlyList<ICAkLayerCntr.IAkRtpcGraphPoint> GetCurvePoints() => AkRtpcGraphPointList;
         }
     }
 }

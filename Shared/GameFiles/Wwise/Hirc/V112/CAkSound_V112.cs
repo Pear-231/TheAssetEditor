@@ -1,17 +1,17 @@
-﻿using Shared.ByteParsing;
+using Shared.ByteParsing;
 using Shared.GameFormats.Wwise.Enums;
 using Shared.GameFormats.Wwise.Hirc.V112.Shared;
 
 namespace Shared.GameFormats.Wwise.Hirc.V112
 {
-    public class CAkSound_V112 : HircItem, ICAkSound
+    public class CAkSound_V112 : HircItem, ICAkSound, ICAkParameterNode
     {
-        public AkBankSourceData_V112 AkBankSourceData { get; set; }
+        public AkBankSourceData_V112 AkBankSourceData { get; set; } = new AkBankSourceData_V112();
         public NodeBaseParams_V112 NodeBaseParams { get; set; } = new NodeBaseParams_V112();
 
         protected override void ReadData(ByteChunk chunk)
         {
-            AkBankSourceData = AkBankSourceData_V112.ReadData(chunk);
+            AkBankSourceData.ReadData(chunk);
             NodeBaseParams.ReadData(chunk);
         }
 
@@ -40,5 +40,6 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
         public uint GetDirectParentId() => NodeBaseParams.DirectParentId;
         public uint GetSourceId() => AkBankSourceData.AkMediaInformation.SourceId;
         public AKBKSourceType GetStreamType() => AkBankSourceData.StreamType;
+        INodeBaseParams ICAkParameterNode.NodeBaseParams => NodeBaseParams;
     }
 }

@@ -3,8 +3,8 @@
     public class DidxAudio
     {
         public uint Id { get; set; }
-        public byte[] ByteArray { get; set; }
-        public string OwnerFilePath { get; set; }
+        public required byte[] ByteArray { get; set; }
+        public required string OwnerFilePath { get; set; }
         public uint LanguageId { get; set; }
     }
 }

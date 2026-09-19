@@ -9,14 +9,11 @@ namespace Shared.GameFormats.Wwise.Didx
         public uint Offset { get; set; }
         public uint Size { get; set; }
 
-        public static MediaHeader ReadData(ByteChunk chunk)
+        public void ReadData(ByteChunk chunk)
         {
-            return new MediaHeader
-            {
-                Id = chunk.ReadUInt32(),
-                Offset = chunk.ReadUInt32(),
-                Size = chunk.ReadUInt32()
-            };
+            Id = chunk.ReadUInt32();
+            Offset = chunk.ReadUInt32();
+            Size = chunk.ReadUInt32();
         }
     }
 }

@@ -21,7 +21,11 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
             MeterInfoFlag = chunk.ReadByte();
             NumStingers = chunk.ReadUInt32();
             for (var i = 0; i < NumStingers; i++)
-                StingersList.Add(CAkStinger_V136.ReadData(chunk));
+            {
+                var cAkStinger = new CAkStinger_V136();
+                cAkStinger.ReadData(chunk);
+                StingersList.Add(cAkStinger);
+            }
         }
 
         public class AkMeterInfo_V136
@@ -34,8 +38,8 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
 
             public void ReadData(ByteChunk chunk)
             {
-                GridPeriod = chunk.ReadInt64();
-                GridOffset = chunk.ReadInt64();
+                GridPeriod = chunk.ReadDouble();
+                GridOffset = chunk.ReadDouble();
                 Tempo = chunk.ReadSingle();
                 TimeSigNumBeatsBar = chunk.ReadByte();
                 TimeSigBeatValue = chunk.ReadByte();
@@ -51,17 +55,14 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
             public int DontRepeatTime { get; set; }
             public uint NumSegmentLookAhead { get; set; }
 
-            public static CAkStinger_V136 ReadData(ByteChunk chunk)
+            public void ReadData(ByteChunk chunk)
             {
-                return new CAkStinger_V136
-                {
-                    TriggerId = chunk.ReadUInt32(),
-                    SegmentId = chunk.ReadUInt32(),
-                    SyncPlayAt = chunk.ReadUInt32(),
-                    CueFilterHash = chunk.ReadUInt32(),
-                    DontRepeatTime = chunk.ReadInt32(),
-                    NumSegmentLookAhead = chunk.ReadUInt32()
-                };
+                TriggerId = chunk.ReadUInt32();
+                SegmentId = chunk.ReadUInt32();
+                SyncPlayAt = chunk.ReadUInt32();
+                CueFilterHash = chunk.ReadUInt32();
+                DontRepeatTime = chunk.ReadInt32();
+                NumSegmentLookAhead = chunk.ReadUInt32();
             }
         }
     }

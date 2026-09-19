@@ -1,4 +1,4 @@
-﻿using Shared.ByteParsing;
+using Shared.ByteParsing;
 
 namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
 {
@@ -8,13 +8,11 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
         public byte RtpcAccum { get; set; }
         public float Value { get; set; }
 
-        public static PluginPropertyValue_V136 ReadData(ByteChunk chunk)
+        public void ReadData(ByteChunk chunk)
         {
-            var instance = new PluginPropertyValue_V136();
-            instance.PropertyId = chunk.ReadUInt32();
-            instance.RtpcAccum = chunk.ReadByte();
-            instance.Value = chunk.ReadSingle();
-            return instance;
+            PropertyId = WwiseVariableUInt32Parser.Read(chunk);
+            RtpcAccum = chunk.ReadByte();
+            Value = chunk.ReadSingle();
         }
     }
 }

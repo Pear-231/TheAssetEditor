@@ -68,12 +68,6 @@ namespace Shared.ByteParsing.Parsers
                     return false;
                 }
 
-                if (isOptString && bytes == 0)
-                {
-                    errorMessage = "Opstring with size = 0";
-                    return false;
-                }
-
                 stringStart = index + 2 + offset;
                 stringLength = bytes;
                 bytesInString = bytes + 2;

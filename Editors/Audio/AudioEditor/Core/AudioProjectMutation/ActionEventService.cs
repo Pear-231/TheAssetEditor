@@ -19,16 +19,16 @@ namespace Editors.Audio.AudioEditor.Core.AudioProjectMutation
         void RemoveActionEvent(string actionEventNodeName, string actionEventName);
     }
 
-    public class ActionEventService(IAudioEditorStateService audioEditorStateService, IAudioRepository audioRepository, IActionEventFactory actionEventFactory) : IActionEventService
+    public class ActionEventService(IAudioEditorStateService audioEditorStateService, IAudioBankQueries bankQueries, IActionEventFactory actionEventFactory) : IActionEventService
     {
         private readonly IAudioEditorStateService _audioEditorStateService = audioEditorStateService;
-        private readonly IAudioRepository _audioRepository = audioRepository;
+        private readonly IAudioBankQueries _bankQueries = bankQueries;
         private readonly IActionEventFactory _actionEventFactory = actionEventFactory;
 
         public void AddPlayActionEvent(string actionEventTypeName, string actionEventName, List<AudioFile> audioFiles, HircSettings hircSettings)
         {
-            var usedHircIds = IdGenerator.GetUsedHircIds(_audioRepository, _audioEditorStateService.AudioProject);
-            var usedSourceIds = IdGenerator.GetUsedSourceIds(_audioRepository, _audioEditorStateService.AudioProject);
+            var usedHircIds = IdGenerator.GetUsedHircIds(_bankQueries, _audioEditorStateService.AudioProject);
+            var usedSourceIds = IdGenerator.GetUsedSourceIds(_bankQueries, _audioEditorStateService.AudioProject);
 
             var gameSoundBankName = Wh3SoundBankInformation.GetName(Wh3ActionEventInformation.GetSoundBank(actionEventTypeName));
             var audioProjectNameWithoutExtension = Path.GetFileNameWithoutExtension(_audioEditorStateService.AudioProjectFileName);
@@ -79,7 +79,7 @@ namespace Editors.Audio.AudioEditor.Core.AudioProjectMutation
 
         public void AddPauseResumeStopActionEvent(string actionEventTypeName, string actionEventName)
         {
-            var usedHircIds = IdGenerator.GetUsedHircIds(_audioRepository, _audioEditorStateService.AudioProject);
+            var usedHircIds = IdGenerator.GetUsedHircIds(_bankQueries, _audioEditorStateService.AudioProject);
             var gameSoundBankName = Wh3SoundBankInformation.GetName(Wh3ActionEventInformation.GetSoundBank(actionEventTypeName));
             var audioProjectNameWithoutExtension = Path.GetFileNameWithoutExtension(_audioEditorStateService.AudioProjectFileName);
             var soundBankName = $"{gameSoundBankName}_{audioProjectNameWithoutExtension}";

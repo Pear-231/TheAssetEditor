@@ -51,7 +51,10 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
                 var allocTransObjectFlag = chunk.ReadByte();
                 var has_transobj = allocTransObjectFlag != 0;
                 if (has_transobj)
-                    AkMusicTransitionObject = AkMusicTransitionObject_V136.ReadData(chunk);
+                {
+                    AkMusicTransitionObject = new AkMusicTransitionObject_V136();
+                    AkMusicTransitionObject.ReadData(chunk);
+                }
             }
 
             public class AkMusicTransSrcRule_V136
@@ -102,22 +105,19 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
 
             public class AkMusicTransitionObject_V136
             {
-                public int SegmentId { get; set; }
-                public AkMusicFade_V136 FadeInParams { get; set; }
-                public AkMusicFade_V136 FadeOutParams { get; set; }
+                public uint SegmentId { get; set; }
+                public AkMusicFade_V136 FadeInParams { get; set; } = new AkMusicFade_V136();
+                public AkMusicFade_V136 FadeOutParams { get; set; } = new AkMusicFade_V136();
                 public byte PlayPreEntry { get; set; }
                 public byte PlayPostExit { get; set; }
 
-                public static AkMusicTransitionObject_V136 ReadData(ByteChunk chunk)
+                public void ReadData(ByteChunk chunk)
                 {
-                    return new AkMusicTransitionObject_V136
-                    {
-                        SegmentId = chunk.ReadInt32(),
-                        FadeInParams = AkMusicFade_V136.ReadData(chunk),
-                        FadeOutParams = AkMusicFade_V136.ReadData(chunk),
-                        PlayPreEntry = chunk.ReadByte(),
-                        PlayPostExit = chunk.ReadByte()
-                    };
+                    SegmentId = chunk.ReadUInt32();
+                    FadeInParams.ReadData(chunk);
+                    FadeOutParams.ReadData(chunk);
+                    PlayPreEntry = chunk.ReadByte();
+                    PlayPostExit = chunk.ReadByte();
                 }
 
                 public class AkMusicFade_V136
@@ -126,14 +126,11 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
                     public uint FadeCurve { get; set; }
                     public int FadeOffset { get; set; }
 
-                    public static AkMusicFade_V136 ReadData(ByteChunk chunk)
+                    public void ReadData(ByteChunk chunk)
                     {
-                        return new AkMusicFade_V136
-                        {
-                            TransitionTime = chunk.ReadInt32(),
-                            FadeCurve = chunk.ReadUInt32(),
-                            FadeOffset = chunk.ReadInt32()
-                        };
+                        TransitionTime = chunk.ReadInt32();
+                        FadeCurve = chunk.ReadUInt32();
+                        FadeOffset = chunk.ReadInt32();
                     }
                 }
             }

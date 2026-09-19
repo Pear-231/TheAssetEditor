@@ -1,12 +1,15 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Editors.Audio.Shared.GameInformation.Warhammer3;
 using Editors.Audio.Shared.Storage;
+using Editors.Audio.Shared.Wwise.Engine;
+using Editors.Audio.Shared.Wwise.Engine.Hierarchy;
 using Editors.Audio.Shared.Wwise.HircExploration;
 using Editors.Audio.WaveformVisualiser.Presentation;
 using Shared.Core.ToolCreation;
@@ -26,6 +29,13 @@ namespace Editors.Audio.AudioExplorer
     public partial class AudioExplorerViewModel : ObservableObject, IEditorInterface
     {
         private readonly IAudioRepository _audioRepository;
+        private readonly ISoundEngine _soundEngine;
+        private readonly IHierarchyProvider _hierarchyProvider;
+
+        // The emitter the explorer auditions on. Switches, and later states and RTPCs, are held
+        // per game object, so the explorer has its own rather than sharing Super View preview.
+        private readonly GameObjectId _auditionedObject;
+        private PlayingId _auditionedPost;
 
         [ObservableProperty] private ExplorerListSelectionFilter _explorerFilter;
         [ObservableProperty] private ObservableCollection<HircTreeNode> _treeList = [];
@@ -38,15 +48,24 @@ namespace Editors.Audio.AudioExplorer
         [ObservableProperty] private bool _searchByDialogueEvent = true;
         [ObservableProperty] private bool _searchByHircId = false;
         [ObservableProperty] private bool _searchByVOActor = false;
+        [ObservableProperty] private bool _canPlaySelectedNode = false;
 
         public WaveformVisualiserViewModel WaveformVisualiserViewModel { get; }
 
         public string DisplayName { get; set; } = "Audio Explorer";
 
-        public AudioExplorerViewModel(IAudioRepository audioRepository, WaveformVisualiserViewModel waveformVisualiserViewModel)
+        public AudioExplorerViewModel(
+            IAudioRepository audioRepository,
+            WaveformVisualiserViewModel waveformVisualiserViewModel,
+            ISoundEngine soundEngine,
+            IHierarchyProvider hierarchyProvider)
         {
             _audioRepository = audioRepository;
             WaveformVisualiserViewModel = waveformVisualiserViewModel;
+            _soundEngine = soundEngine;
+            _hierarchyProvider = hierarchyProvider;
+            _auditionedObject = _soundEngine.RegisterGameObject("Audio Explorer audition");
+            _soundEngine.PostCompleted += OnPostCompleted;
 
             // Remove SFX as we don't allow for filtering it out in the AudioRepository so we don't need to display it
             var languages = Enum.GetValues<Wh3Language>()
@@ -131,6 +150,10 @@ namespace Editors.Audio.AudioExplorer
         {
             SelectedNodeText = string.Empty;
 
+            WaveformVisualiserViewModel.StopPlayback();
+            StopAudition();
+            CanPlaySelectedNode = CanSound(selectedNode);
+
             if (selectedNode == null || selectedNode.Hirc == null)
                 return;
 
@@ -181,6 +204,74 @@ namespace Editors.Audio.AudioExplorer
                 WaveformVisualiserViewModel.PreloadWemWaveforms(sources);
         }
 
+        // One handler, and the target chosen by what the node is. An event has an action list to
+        // carry out; a container, an actor mixer or a sound is entered by the walker directly.
+        // A node with only a WEM under it — a music track — is the waveform visualiser job, and
+        // it plays that through the engine as media, which is why nothing here reaches for it.
+        //
+        // Clicking a container is where the difference shows: it varies per press the way the
+        // game does, because it is the same walker Super View drives.
+        [RelayCommand]
+        private void PlaySelectedNode()
+        {
+            var selectedHirc = SelectedNode?.Hirc;
+            if (selectedHirc == null)
+                return;
+
+            WaveformVisualiserViewModel.StopPlayback();
+            StopAudition();
+
+            // The engine is shared, so it is told which banks to resolve against at the moment
+            // the explorer asks it for a sound rather than once at startup, when another editor
+            // may since have handed it different ones.
+            _soundEngine.LoadHierarchy(_hierarchyProvider);
+
+            _auditionedPost = selectedHirc is ICAkEvent
+                ? _soundEngine.PostEvent(selectedHirc.Id, _auditionedObject)
+                : _soundEngine.PlayNode(selectedHirc.Id, _auditionedObject);
+        }
+
+        private void StopAudition()
+        {
+            if (_auditionedPost == default)
+                return;
+
+            _soundEngine.StopPlayingId(_auditionedPost);
+            _auditionedPost = default;
+        }
+
+        // Without this, an audition that finishes on its own (rather than being stopped by
+        // selecting another node or clicking play again) leaves _auditionedPost pointing at a post
+        // the engine has already forgotten. StopAudition would then be a harmless no-op against a
+        // stale id, but the explorer has no way to know the sound actually stopped until that
+        // happens to run.
+        private void OnPostCompleted(PlayingId playingId)
+        {
+            if (_auditionedPost == default || _auditionedPost != playingId)
+                return;
+
+            void ForgetCompletedPost()
+            {
+                if (_auditionedPost == playingId)
+                    _auditionedPost = default;
+            }
+
+            var dispatcher = Application.Current?.Dispatcher;
+            if (dispatcher != null && !dispatcher.CheckAccess())
+                dispatcher.BeginInvoke(ForgetCompletedPost);
+            else
+                ForgetCompletedPost();
+        }
+
+        // What the walker knows how to enter. Anything else — a music track, a state, a meta
+        // node the tree added — has nothing for the upper engine to resolve.
+        private static bool CanSound(HircTreeNode node)
+            => node?.Hirc is ICAkEvent
+                or ICAkSound
+                or ICAkRanSeqCntr
+                or ICAkLayerCntr
+                or ICAkSwitchCntr;
+
         private WemWaveformSource CreateWemWaveformSource(HircTreeNode node)
         {
             if (node?.Hirc is ICAkSound sound)
@@ -195,7 +286,7 @@ namespace Editors.Audio.AudioExplorer
                     var mediaInformation = soundV112.AkBankSourceData.AkMediaInformation;
                     return new WemWaveformSource(
                         $"data-wem:{mediaInformation.FileId}:{mediaInformation.FileOffset}:{mediaInformation.InMemoryMediaSize}",
-                        () => _audioRepository.FindDataWem(mediaInformation.FileId, (int)mediaInformation.FileOffset, (int)mediaInformation.InMemoryMediaSize));
+                        () => _audioRepository.FindDidxWem(mediaInformation.FileId, (int)mediaInformation.FileOffset, (int)mediaInformation.InMemoryMediaSize));
                 }
 
                 var sourceId = sound.GetSourceId();
@@ -442,6 +533,9 @@ namespace Editors.Audio.AudioExplorer
 
         public void Close()
         {
+            StopAudition();
+            _soundEngine.PostCompleted -= OnPostCompleted;
+            _soundEngine.UnregisterGameObject(_auditionedObject);
             ExplorerFilter.ExplorerList.SelectedItemChanged -= OnEventSelected;
 
             Languages.CollectionChanged -= OnLanguagesCollectionChanged;

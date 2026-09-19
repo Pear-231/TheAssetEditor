@@ -6,55 +6,80 @@ namespace Shared.GameFormats.Wwise.Wem.V132.Encoding
 {
     public class WwiseCodebookLibrary
     {
-        private readonly byte[] _packedCodebooks;
-        private readonly int[] _codebookOffsets;
-        private readonly Dictionary<string, int> _libraryIdByCodebookBits;
+        private static readonly Lazy<SharedCodebookCache> s_sharedCache = new(
+            CreateSharedCache,
+            LazyThreadSafetyMode.ExecutionAndPublication);
 
-        public WwiseCodebookLibrary()
-        {
-            _packedCodebooks = ResourceLoader.LoadBytes("Resources.Wwise.packed_codebooks_aoTuV_603.bin");
-            _codebookOffsets = ParseCodebookOffsets(_packedCodebooks);
-            _libraryIdByCodebookBits = BuildLibraryIdLookup();
-        }
-
-        public int LibraryCount => Math.Max(0, _codebookOffsets.Length - 1);
+        public int LibraryCount => s_sharedCache.Value.ExpandedCodebooks.Length;
 
         public VorbisCodebook GetCodebook(int codebookId)
         {
-            var packed = GetPackedEntry(codebookId);
-            var writer = new BitWriter(Math.Max(packed.Length * 4, 64));
-            TranscribeFromPackedEntry(writer, packed);
-            return new VorbisCodebook(writer.ToArray(), writer.BitPosition);
+            var cache = s_sharedCache.Value;
+            if (codebookId < 0 || codebookId >= cache.ExpandedCodebooks.Length)
+                throw new InvalidDataException($"Wwise Vorbis codebook {codebookId} was not found in the codebook library.");
+
+            var cachedCodebook = cache.ExpandedCodebooks[codebookId].Value;
+            return new VorbisCodebook((byte[])cachedCodebook.Data.Clone(), cachedCodebook.BitCount);
         }
 
         public int FindLibraryId(byte[] standardCodebookBits, int bitCount)
         {
             var fingerprint = BuildFingerprint(standardCodebookBits, bitCount);
-            if (_libraryIdByCodebookBits.TryGetValue(fingerprint, out var matchedId))
+            if (s_sharedCache.Value.LibraryIdByCodebookBits.Value.TryGetValue(fingerprint, out var matchedId))
                 return matchedId;
 
             throw new InvalidDataException($"Vorbis codebook with bitCount {bitCount} was not found");
         }
 
-        private ReadOnlySpan<byte> GetPackedEntry(int codebookId)
+        private static SharedCodebookCache CreateSharedCache()
         {
-            if (codebookId < 0 || codebookId + 1 >= _codebookOffsets.Length)
-                throw new InvalidDataException($"Wwise Vorbis codebook {codebookId} was not found in the codebook library.");
+            var packedCodebooks = ResourceLoader.LoadBytes("Resources.Wwise.packed_codebooks_aoTuV_603.bin");
+            var codebookOffsets = ParseCodebookOffsets(packedCodebooks);
+            var codebookCount = Math.Max(0, codebookOffsets.Length - 1);
+            var expandedCodebooks = new Lazy<CachedCodebook>[codebookCount];
 
-            var startOffset = _codebookOffsets[codebookId];
-            var endOffset = _codebookOffsets[codebookId + 1];
-            if (startOffset < 0 || endOffset < startOffset || endOffset > _packedCodebooks.Length)
-                throw new InvalidDataException($"Wwise Vorbis codebook {codebookId} has an invalid packed offset range.");
+            for (var codebookId = 0; codebookId < codebookCount; codebookId++)
+            {
+                var capturedCodebookId = codebookId;
+                expandedCodebooks[codebookId] = new Lazy<CachedCodebook>(
+                    () => ExpandCodebook(packedCodebooks, codebookOffsets, capturedCodebookId),
+                    LazyThreadSafetyMode.ExecutionAndPublication);
+            }
 
-            return _packedCodebooks.AsSpan(startOffset, endOffset - startOffset);
+            var libraryIdByCodebookBits = new Lazy<Dictionary<string, int>>(
+                () => BuildLibraryIdLookup(expandedCodebooks),
+                LazyThreadSafetyMode.ExecutionAndPublication);
+
+            return new SharedCodebookCache(expandedCodebooks, libraryIdByCodebookBits);
         }
 
-        private Dictionary<string, int> BuildLibraryIdLookup()
+        private static CachedCodebook ExpandCodebook(byte[] packedCodebooks, int[] codebookOffsets, int codebookId)
         {
-            var lookup = new Dictionary<string, int>(LibraryCount);
-            for (var codebookId = 0; codebookId < LibraryCount; codebookId++)
+            var packed = GetPackedEntry(packedCodebooks, codebookOffsets, codebookId);
+            var writer = new BitWriter(Math.Max(packed.Length * 4, 64));
+            TranscribeFromPackedEntry(writer, packed);
+            return new CachedCodebook(writer.ToArray(), writer.BitPosition);
+        }
+
+        private static ReadOnlySpan<byte> GetPackedEntry(byte[] packedCodebooks, int[] codebookOffsets, int codebookId)
+        {
+            if (codebookId < 0 || codebookId + 1 >= codebookOffsets.Length)
+                throw new InvalidDataException($"Wwise Vorbis codebook {codebookId} was not found in the codebook library.");
+
+            var startOffset = codebookOffsets[codebookId];
+            var endOffset = codebookOffsets[codebookId + 1];
+            if (startOffset < 0 || endOffset < startOffset || endOffset > packedCodebooks.Length)
+                throw new InvalidDataException($"Wwise Vorbis codebook {codebookId} has an invalid packed offset range.");
+
+            return packedCodebooks.AsSpan(startOffset, endOffset - startOffset);
+        }
+
+        private static Dictionary<string, int> BuildLibraryIdLookup(IReadOnlyList<Lazy<CachedCodebook>> expandedCodebooks)
+        {
+            var lookup = new Dictionary<string, int>(expandedCodebooks.Count);
+            for (var codebookId = 0; codebookId < expandedCodebooks.Count; codebookId++)
             {
-                var codebook = GetCodebook(codebookId);
+                var codebook = expandedCodebooks[codebookId].Value;
                 lookup[BuildFingerprint(codebook.Data, codebook.BitCount)] = codebookId;
             }
             return lookup;
@@ -72,7 +97,7 @@ namespace Shared.GameFormats.Wwise.Wem.V132.Encoding
             return offsets;
         }
 
-        private static string BuildFingerprint(byte[] bits, int bitCount) => bitCount.ToString() + ':' + Convert.ToHexString(bits);
+        private static string BuildFingerprint(ReadOnlySpan<byte> bits, int bitCount) => bitCount.ToString() + ':' + Convert.ToHexString(bits);
 
         private static void TranscribeFromPackedEntry(BitWriter output, ReadOnlySpan<byte> codebookBytes)
         {
@@ -148,5 +173,11 @@ namespace Shared.GameFormats.Wwise.Wem.V132.Encoding
             for (var quantisedIndex = 0; quantisedIndex < quantisedValueCount; quantisedIndex++)
                 output.WriteBits(input.ReadBits((int)valueLength + 1), (int)valueLength + 1);
         }
+
+        private sealed record SharedCodebookCache(
+            Lazy<CachedCodebook>[] ExpandedCodebooks,
+            Lazy<Dictionary<string, int>> LibraryIdByCodebookBits);
+
+        private sealed record CachedCodebook(byte[] Data, int BitCount);
     }
 }
