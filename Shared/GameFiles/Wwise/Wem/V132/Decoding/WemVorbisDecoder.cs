@@ -4,10 +4,8 @@ using Shared.GameFormats.Wwise.Wem.V132.Encoding;
 
 namespace Shared.GameFormats.Wwise.Wem.V132.Decoding
 {
-    public class WemVorbisDecoder(WwiseCodebookLibrary codebookLibrary)
+    public class WemVorbisDecoder()
     {
-        private readonly WwiseCodebookLibrary _codebookLibrary = codebookLibrary;
-
         private const int XiphCodecPrivatePrefixLength = 16;
         private const int XiphLacingContinuationValue = 255;
         private const int VorbisModeTypeBitWidth = 16;
@@ -209,7 +207,7 @@ namespace Shared.GameFormats.Wwise.Wem.V132.Decoding
             for (var codebookIndex = 0; codebookIndex < codebookCount; codebookIndex++)
             {
                 var codebookId = (int)input.ReadBits(10);
-                var codebook = _codebookLibrary.GetCodebook(codebookId);
+                var codebook = WwiseCodebookLibrary.GetCodebook(codebookId);
                 
                 var codebookInput = new BitChunk(codebook.Data);
                 for (var bitIndex = 0; bitIndex < codebook.BitCount; bitIndex += 32)

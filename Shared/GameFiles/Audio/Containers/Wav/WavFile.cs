@@ -58,9 +58,11 @@ namespace Shared.GameFormats.Audio.Containers.Wav
             if (fmtChunk == null || dataChunk == null)
                 throw new InvalidDataException("WAV file is missing required fmt or data chunk.");
 
-            if (fmtChunk.FormatTag == 0 || fmtChunk.Channels <= 0 || fmtChunk.SampleRate <= 0 || 
-                fmtChunk.BitsPerSample <= 0 || dataChunk.Data.Length == 0)
-                throw new InvalidDataException("WAV file has invalid fmt or data chunk information.");
+            fmtChunk.Validate();
+            if (dataChunk.Data.Length == 0)
+                throw new InvalidDataException("WAV file has no sample data.");
+            if (dataChunk.Data.Length % fmtChunk.BlockAlign != 0)
+                throw new InvalidDataException("WAV data does not contain complete sample frames.");
 
             FmtChunk = fmtChunk;
             DataChunk = dataChunk;
@@ -70,6 +72,7 @@ namespace Shared.GameFormats.Audio.Containers.Wav
                 Channels = fmtChunk.Channels,
                 Data = dataChunk.Data,
                 SampleRate = fmtChunk.SampleRate,
+                SampleFormat = fmtChunk.GetFormatType(),
             };
         }
 
@@ -80,7 +83,7 @@ namespace Shared.GameFormats.Audio.Containers.Wav
             FmtChunk.BitsPerSample = Audio.BitsPerSample;
             FmtChunk.Channels = Audio.Channels;
             FmtChunk.SampleRate = Audio.SampleRate;
-            FmtChunk.FormatTag = FmtChunk.PcmFormatTag;
+            FmtChunk.FormatTag = FmtChunk.GetFormatTag(Audio.SampleFormat);
             DataChunk.Data = Audio.Data;
 
             var bitsPerSample = Audio.BitsPerSample;

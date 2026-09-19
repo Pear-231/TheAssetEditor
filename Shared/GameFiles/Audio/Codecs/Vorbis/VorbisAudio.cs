@@ -18,8 +18,7 @@ namespace Shared.GameFormats.Audio.Codecs.Vorbis
         public static VorbisAudio CreateFromWemBytes(byte[] wemBytes)
         {
             var wemFile = WemFile.CreateFromWemBytes(wemBytes);
-            var codebookLibrary = new WwiseCodebookLibrary();
-            var decoder = new WemVorbisDecoder(codebookLibrary);
+            var decoder = new WemVorbisDecoder();
             return decoder.Decode(wemFile);
         }
     }

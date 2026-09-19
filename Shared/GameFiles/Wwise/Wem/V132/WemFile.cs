@@ -11,6 +11,7 @@ namespace Shared.GameFormats.Wwise.Wem.V132
         public JunkChunk? JunkChunk { get; set; }
         public AkdChunk? AkdChunk { get; set; }
         public CueChunk? CueChunk { get; set; }
+        public SmplChunk? SmplChunk { get; set; }
         public List<UnknownChunk> UnknownChunks { get; set; } = [];
 
         public static WemFile CreateFromWemBytes(byte[] wemBytes)
@@ -22,8 +23,7 @@ namespace Shared.GameFormats.Wwise.Wem.V132
 
         public static WemFile CreateFromWavBytes(byte[] wavBytes, WemEncodingSettings? encodingSettings = null)
         {
-            var codebookLibrary = new WwiseCodebookLibrary();
-            var encoder = new WemVorbisEncoder(codebookLibrary);
+            var encoder = new WemVorbisEncoder();
             if (encodingSettings != null)
                 encoder.EncodingSettings = encodingSettings;
             return encoder.EncodeFromWavBytes(wavBytes);
@@ -31,7 +31,8 @@ namespace Shared.GameFormats.Wwise.Wem.V132
 
         public void ReadData(ByteChunk chunk)
         {
-            Header = WemFileHeader.ReadData(chunk);
+            Header = new WemFileHeader();
+            Header.ReadData(chunk);
 
             var hasFmt = false;
             var hasData = false;
@@ -39,7 +40,8 @@ namespace Shared.GameFormats.Wwise.Wem.V132
             while (chunk.BytesLeft >= RiffChunkHeader.HeaderSize)
             {
                 var chunkStartIndex = chunk.Index;
-                var chunkHeader = RiffChunkHeader.ReadData(chunk);
+                var chunkHeader = new RiffChunkHeader();
+                chunkHeader.ReadData(chunk);
                 var tag = chunkHeader.Tag;
                 var size = chunkHeader.ChunkSize;
 
@@ -90,6 +92,8 @@ namespace Shared.GameFormats.Wwise.Wem.V132
                     AkdChunk = riffChunk as AkdChunk;
                 else if (tag == CueChunk.ChunkTag)
                     CueChunk = riffChunk as CueChunk;
+                else if (tag == SmplChunk.ChunkTag)
+                    SmplChunk = riffChunk as SmplChunk;
                 else
                 {
                     if (riffChunk is UnknownChunk unknown)
@@ -97,7 +101,7 @@ namespace Shared.GameFormats.Wwise.Wem.V132
                 }
 
                 // Padding
-                if (size % RiffChunkHeader.ChunkPaddingAlignment != 0)
+                if (size % RiffChunkHeader.ChunkPaddingAlignment != 0 && chunk.BytesLeft != 0)
                     chunk.Advance(1);
             }
 
@@ -109,6 +113,8 @@ namespace Shared.GameFormats.Wwise.Wem.V132
         {
             if (CueChunk != null)
                 throw new NotSupportedException("Writing WEM files with a cue chunk is not supported.");
+            if (SmplChunk != null)
+                throw new NotSupportedException("Writing WEM files with a smpl chunk is not supported.");
             if (UnknownChunks.Count > 0)
                 throw new NotSupportedException($"Writing WEM files with unknown chunks is not supported: {string.Join(", ", UnknownChunks.Select(c => c.Tag))}.");
 
@@ -155,8 +161,6 @@ namespace Shared.GameFormats.Wwise.Wem.V132
             var dataChunkHeaderData = RiffChunkHeader.WriteData(dataChunkHeader);
             stream.Write(dataChunkHeaderData);
             stream.Write(dataData);
-            if (dataData.Length % RiffChunkHeader.ChunkPaddingAlignment != 0)
-                RiffChunk.WritePadding(stream);
 
             // Update RIFF size
             var totalSize = (uint)(stream.Length - WemFileHeader.BytesBeforeSize);

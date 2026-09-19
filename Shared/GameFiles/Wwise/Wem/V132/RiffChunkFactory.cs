@@ -1,6 +1,5 @@
 ﻿namespace Shared.GameFormats.Wwise.Wem.V132
 {
-
     public static class RiffChunkFactory
     {
         private static readonly Dictionary<string, Func<RiffChunk>> s_chunkFactories = BuildChunkFactories();
@@ -14,6 +13,7 @@
                 [JunkChunk.ChunkTag] = static () => new JunkChunk(),
                 [CueChunk.ChunkTag] = static () => new CueChunk(),
                 [AkdChunk.ChunkTag] = static () => new AkdChunk(),
+                [SmplChunk.ChunkTag] = static () => new SmplChunk()
             };
         }
 
