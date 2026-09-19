@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Windows;
 using GameWorld.Core.Animation;
 using Shared.Core.Misc;
@@ -30,6 +31,23 @@ namespace Editors.Shared.Core.Common.AnimationPlayer
         {
             IsEnabled.Value = false;
             IsEnabled.PropertyChanged += (x, y) => OnAnimationPlayerEnabled(IsEnabled.Value);
+            LoopAnimation.PropertyChanged += OnLoopAnimationChanged;
+        }
+
+        private void OnLoopAnimationChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            foreach (var asset in _assetList)
+                ApplyLoopAnimation(asset);
+        }
+
+        private void ApplyLoopAnimation(SceneObject asset)
+        {
+            asset.Player.LoopAnimation = LoopAnimation.Value;
+            foreach (var metaItem in asset.MetaDataItems)
+            {
+                if (metaItem.Player != null)
+                    metaItem.Player.LoopAnimation = LoopAnimation.Value;
+            }
         }
 
         private void OnMainAnimationChanged(AssetPlayerItem oldAnimation, AssetPlayerItem mainAnimation)
@@ -47,7 +65,7 @@ namespace Editors.Shared.Core.Common.AnimationPlayer
             var playerItem = new AssetPlayerItem() { Asset = asset };
             PlayerItems.Add(playerItem);
 
-            asset.Player.LoopAnimation = false;
+            ApplyLoopAnimation(asset);
             if (SelectedMainAnimation == null)
                 SelectedMainAnimation = playerItem;
 
@@ -81,9 +99,9 @@ namespace Editors.Shared.Core.Common.AnimationPlayer
 
         public void SetAnimationLastFrame()
         {
-            LoopAnimation.Value = false;
+            var lastFrame = Math.Max(0, SelectedMainAnimation.Asset.Player.FrameCount() - 1);
             foreach (var item in _assetList)
-                SetFrame(item, SelectedMainAnimation.Asset.Player.FrameCount());
+                SetFrame(item, lastFrame);
         }
 
         private void OnAnimationFrameChanged(int currentFrame)
@@ -93,15 +111,6 @@ namespace Editors.Shared.Core.Common.AnimationPlayer
             SelectedAnimationCurrentTime.Value = (float)SelectedMainAnimation.Asset.Player.GetTimeUs() / 1_000_000;
             SelectedAnimationMaxTime.Value = (float)SelectedMainAnimation.Asset.Player.GetAnimationLengthUs() / 1_000_000;
             SelectedAnimationFps.Value = SelectedMainAnimation.Asset.Player.GetFps();
-
-            if (SelectedAnimationCurrentFrame.Value + 1 == SelectedMainAnimation.Asset.Player.FrameCount())
-            {
-                if (LoopAnimation.Value)
-                {
-                    SetAnimationFirstFrame();
-                    ToggleAnimationPausePlay();
-                }
-            }
         }
 
         private void OnAnimationPlayerEnabled(bool isEnabled)
@@ -125,14 +134,15 @@ namespace Editors.Shared.Core.Common.AnimationPlayer
 
         void Play(SceneObject asset)
         {
-            asset.Player.CurrentFrame = 0;
+            ApplyLoopAnimation(asset);
+            asset.Player.Rewind();
             asset.Player.Play();
 
             foreach (var metaItem in asset.MetaDataItems)
             {
                 if (metaItem.Player != null)
                 {
-                    metaItem.Player.CurrentFrame = 0;
+                    metaItem.Player.Rewind();
                     metaItem.Player.Play();
                 }
             }
@@ -213,6 +223,8 @@ namespace Editors.Shared.Core.Common.AnimationPlayer
 
             if (_selectedMainAnimation != null)
                 _selectedMainAnimation.Asset.Player.OnFrameChanged -= OnAnimationFrameChanged;
+
+            LoopAnimation.PropertyChanged -= OnLoopAnimationChanged;
 
             for (var i = 0; i < _assetList.Count; i++)
             {

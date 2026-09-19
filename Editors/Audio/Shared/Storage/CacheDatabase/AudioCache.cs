@@ -251,6 +251,28 @@ namespace Editors.Audio.Shared.Storage.CacheDatabase
             return references.Where(x => resolvedBnkPaths.Contains(x.BnkPath)).ToList();
         }
 
+        internal List<BnkDidxReference> FindDidx(uint sourceId, IReadOnlySet<string> resolvedBnkPaths)
+        {
+            var databaseSourceId = (long)sourceId;
+            List<BnkDidxReference> references;
+            lock (_dbLock)
+            {
+                references = (
+                    from didx in _db.Didx
+                    join bnk in _db.Bnks on didx.SoundBankId equals bnk.Id
+                    where didx.SourceId == databaseSourceId
+                    select new BnkDidxReference(
+                        (uint)didx.SourceId,
+                        bnk.Path,
+                        (uint)bnk.LanguageId,
+                        didx.Offset,
+                        didx.Length))
+                    .ToList();
+            }
+
+            return references.Where(x => resolvedBnkPaths.Contains(x.BnkPath)).ToList();
+        }
+
         internal CachedAudioDatData LoadDatData()
         {
             Dictionary<string, byte[]> data;

@@ -14,6 +14,31 @@
 	  <None Remove="C:\Users\george\.nuget\packages\naudio.vorbis\1.5.0\contentFiles\any\netstandard2.0\README.md" />
 	  <Compile Remove="AudioCacheTests.cs" />
 	  <Compile Remove="AudioExplorerTests.cs" />
+	  <Compile Remove="FakeAudioOutputDevice.cs" />
+	  <Compile Remove="FakeHierarchy.cs" />
+	  <Compile Remove="LimiterTests.cs" />
+	  <Compile Remove="PlayheadTrackingTests.cs" />
+	  <Compile Remove="AuthoredParameterTests.cs" />
+	  <Compile Remove="ContainerFidelityTests.cs" />
+	  <Compile Remove="EventActionTests.cs" />
+	  <Compile Remove="AuthoredPropertyTests.cs" />
+	  <Compile Remove="SoundEngineContractTests.cs" />
+	  <Compile Remove="PlaybackOwnershipTests.cs" />
+	  <Compile Remove="MixerProbe.cs" />
+	  <Compile Remove="NodeWalkerTests.cs" />
+	  <Compile Remove="SoundEngineConcurrencyTests.cs" />
+	  <Compile Remove="SoundEngineContinuityTests.cs" />
+	  <Compile Remove="SoundEngineTests.cs" />
+	  <Compile Remove="SoundEngineTimingTests.cs" />
+	  <Compile Remove="VoicePoolTests.cs" />
+	  <Compile Remove="SoundEngineSourceFormatTests.cs" />
+	  <Compile Remove="Phase13CompletionTests.cs" />
+	  <Compile Remove="ParameterRampTests.cs" />
+	  <Compile Remove="BankReadingTests.cs" />
+	  <Compile Remove="WwiseCorpusTests.cs" />
+	  <Compile Remove="WemCorpusAudit.cs" />
+	  <Compile Remove="Phase14SinkHarness.cs" />
+	  <Compile Remove="ListeningChecks.cs" />
 	</ItemGroup>
 
     <ItemGroup>

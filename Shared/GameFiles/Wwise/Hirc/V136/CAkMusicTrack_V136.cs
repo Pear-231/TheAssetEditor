@@ -14,6 +14,8 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
         public List<AkClipAutomation_V136> ItemsList { get; set; } = [];
         public NodeBaseParams_V136 NodeBaseParams { get; set; } = new NodeBaseParams_V136();
         public byte TrackType { get; set; }
+        public TrackSwitchParams_V136? SwitchParams { get; set; }
+        public TrackTransitionParams_V136? TransitionParams { get; set; }
         public int LookAheadTime { get; set; }
 
         protected override void ReadData(ByteChunk chunk)
@@ -36,6 +38,11 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
 
             NodeBaseParams.ReadData(chunk);
             TrackType = chunk.ReadByte();
+            if (TrackType == 3)
+            {
+                SwitchParams = TrackSwitchParams_V136.ReadData(chunk);
+                TransitionParams = TrackTransitionParams_V136.ReadData(chunk);
+            }
             LookAheadTime = chunk.ReadInt32();
         }
 
@@ -61,10 +68,10 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
                     TrackId = chunk.ReadUInt32(),
                     SourceId = chunk.ReadUInt32(),
                     EventId = chunk.ReadUInt32(),
-                    PlayAt = chunk.ReadInt64(),
-                    BeginTrimOffset = chunk.ReadInt64(),
-                    EndTrimOffset = chunk.ReadInt64(),
-                    SrcDuration = chunk.ReadInt64(),
+                    PlayAt = chunk.ReadDouble(),
+                    BeginTrimOffset = chunk.ReadDouble(),
+                    EndTrimOffset = chunk.ReadDouble(),
+                    SrcDuration = chunk.ReadDouble(),
                 };
                 return akTrackSrcInfo;
             }
@@ -86,6 +93,60 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
                     akClipAutomation.RtpcMgr.Add(AkRtpcGraphPoint_V136.ReadData(chunk));
                 return akClipAutomation;
             }
+        }
+
+        public class TrackSwitchParams_V136
+        {
+            public byte GroupType { get; set; }
+            public uint GroupId { get; set; }
+            public uint DefaultSwitch { get; set; }
+            public List<uint> SwitchAssociations { get; set; } = [];
+
+            public static TrackSwitchParams_V136 ReadData(ByteChunk chunk)
+            {
+                var instance = new TrackSwitchParams_V136
+                {
+                    GroupType = chunk.ReadByte(),
+                    GroupId = chunk.ReadUInt32(),
+                    DefaultSwitch = chunk.ReadUInt32()
+                };
+                var count = chunk.ReadUInt32();
+                for (var index = 0; index < count; index++)
+                    instance.SwitchAssociations.Add(chunk.ReadUInt32());
+                return instance;
+            }
+        }
+
+        public class TrackTransitionParams_V136
+        {
+            public MusicFade_V136 SourceFade { get; set; } = new MusicFade_V136();
+            public uint SyncType { get; set; }
+            public uint CueFilterHash { get; set; }
+            public MusicFade_V136 DestinationFade { get; set; } = new MusicFade_V136();
+
+            public static TrackTransitionParams_V136 ReadData(ByteChunk chunk)
+                => new TrackTransitionParams_V136
+                {
+                    SourceFade = MusicFade_V136.ReadData(chunk),
+                    SyncType = chunk.ReadUInt32(),
+                    CueFilterHash = chunk.ReadUInt32(),
+                    DestinationFade = MusicFade_V136.ReadData(chunk)
+                };
+        }
+
+        public class MusicFade_V136
+        {
+            public int TransitionTime { get; set; }
+            public uint Curve { get; set; }
+            public int FadeOffset { get; set; }
+
+            public static MusicFade_V136 ReadData(ByteChunk chunk)
+                => new MusicFade_V136
+                {
+                    TransitionTime = chunk.ReadInt32(),
+                    Curve = chunk.ReadUInt32(),
+                    FadeOffset = chunk.ReadInt32()
+                };
         }
     }
 }

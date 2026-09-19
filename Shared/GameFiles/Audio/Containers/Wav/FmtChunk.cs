@@ -1,4 +1,5 @@
 ﻿using Shared.ByteParsing;
+using Shared.GameFormats.Audio.Formats.Pcm;
 
 namespace Shared.GameFormats.Audio.Containers.Wav
 {
@@ -7,6 +8,11 @@ namespace Shared.GameFormats.Audio.Containers.Wav
         public const int ChunkSize = 16;
         public const string ChunkTag = "fmt ";
         public const ushort PcmFormatTag = 1;
+        public const ushort IeeeFloatFormatTag = 3;
+        public const ushort ExtensibleFormatTag = 0xFFFE;
+
+        private static readonly Guid PcmSubFormat = new(PcmFormatTag, 0, 0x0010, 0x80, 0, 0, 0xAA, 0, 0x38, 0x9B, 0x71);
+        private static readonly Guid IeeeFloatSubFormat = new(IeeeFloatFormatTag, 0, 0x0010, 0x80, 0, 0, 0xAA, 0, 0x38, 0x9B, 0x71);
 
         public int Size { get; set; } = ChunkSize;
         public ushort FormatTag { get; set; } = PcmFormatTag;
@@ -15,6 +21,26 @@ namespace Shared.GameFormats.Audio.Containers.Wav
         public uint ByteRate { get; set; }
         public ushort BlockAlign { get; set; }
         public ushort BitsPerSample { get; set; }
+        public ushort ExtensionSize { get; private set; }
+        public ushort ValidBitsPerSample { get; private set; }
+        public uint ChannelMask { get; private set; }
+        public Guid SubFormat { get; private set; }
+
+        public SampleFormat SampleFormat => EffectiveFormatTag switch
+        {
+            PcmFormatTag => SampleFormat.Integer,
+            IeeeFloatFormatTag => SampleFormat.Float,
+            _ => throw new InvalidDataException($"Unsupported WAV format tag: 0x{FormatTag:X4}.")
+        };
+
+        private ushort EffectiveFormatTag
+            => FormatTag != ExtensibleFormatTag
+                ? FormatTag
+                : SubFormat == PcmSubFormat
+                    ? PcmFormatTag
+                    : SubFormat == IeeeFloatSubFormat
+                        ? IeeeFloatFormatTag
+                        : (ushort)0;
 
         public FmtChunk()
         {
@@ -32,6 +58,41 @@ namespace Shared.GameFormats.Audio.Containers.Wav
             ByteRate = chunk.ReadUInt32();
             BlockAlign = chunk.ReadUShort();
             BitsPerSample = chunk.ReadUShort();
+
+            if (chunk.BytesLeft >= sizeof(ushort))
+            {
+                ExtensionSize = chunk.ReadUShort();
+                if (ExtensionSize > chunk.BytesLeft)
+                    throw new InvalidDataException("WAV fmt extension extends beyond the fmt chunk.");
+            }
+
+            if (FormatTag == ExtensibleFormatTag)
+            {
+                if (ExtensionSize < 22 || chunk.BytesLeft < 22)
+                    throw new InvalidDataException("WAVE_FORMAT_EXTENSIBLE requires a 22-byte fmt extension.");
+                ValidBitsPerSample = chunk.ReadUShort();
+                ChannelMask = chunk.ReadUInt32();
+                SubFormat = new Guid(chunk.ReadBytes(16));
+            }
+        }
+
+        public void Validate()
+        {
+            if (Channels == 0 || SampleRate == 0 || BitsPerSample == 0)
+                throw new InvalidDataException("WAV fmt chunk has zero channels, sample rate or bits per sample.");
+
+            var sampleFormat = SampleFormat;
+            if (sampleFormat == SampleFormat.Float && BitsPerSample != 32)
+                throw new InvalidDataException("Only 32-bit IEEE float WAV data is supported.");
+            if (sampleFormat == SampleFormat.Integer && BitsPerSample is not (8 or 16 or 24 or 32))
+                throw new InvalidDataException("Only 8-bit, 16-bit, 24-bit and 32-bit PCM WAV data is supported.");
+            if (FormatTag == ExtensibleFormatTag && ValidBitsPerSample != BitsPerSample)
+                throw new InvalidDataException("WAVE_FORMAT_EXTENSIBLE valid bits must match the sample container size.");
+
+            var expectedBlockAlign = checked((ushort)(Channels * (BitsPerSample / 8)));
+            var expectedByteRate = checked(SampleRate * expectedBlockAlign);
+            if (BlockAlign != expectedBlockAlign || ByteRate != expectedByteRate)
+                throw new InvalidDataException("WAV fmt block alignment or byte rate is inconsistent with its sample format.");
         }
 
         public override byte[] WriteData()
@@ -45,5 +106,7 @@ namespace Shared.GameFormats.Audio.Containers.Wav
             stream.Write(ByteParsers.UShort.EncodeValue(BitsPerSample, out _));
             return stream.ToArray();
         }
+
+        public static ushort GetFormatTag(SampleFormat sampleFormat) => sampleFormat == SampleFormat.Float ? IeeeFloatFormatTag : PcmFormatTag;
     }
 }

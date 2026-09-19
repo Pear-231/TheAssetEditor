@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Editors.Audio.Shared.Storage;
@@ -93,7 +93,9 @@ namespace Editors.Audio.Shared.Wwise.HircExploration
 
         private static void Traverse(IAkDecisionNode node, List<IAkDecisionNode> current, List<List<IAkDecisionNode>> results)
         {
-            if (node == null)
+            const int maximumDepth = 1024;
+
+            if (node == null || current.Count >= maximumDepth || current.Contains(node))
                 return;
 
             current.Add(node);

@@ -80,6 +80,7 @@ namespace Shared.Core.PackFiles.Utility
                 container.PackFileSettings.GameVersion = _settingsService.CurrentSettings.CurrentGame;
                 container.SaveSettings();
             }
+            StampGameType(container, container.PackFileSettings.GameVersion.Value);
             return container;
         }
 
@@ -95,6 +96,7 @@ namespace Shared.Core.PackFiles.Utility
             
             container.PackFileSettings.GameVersion = game;
             container.SaveSettings();
+            StampGameType(container, container.PackFileSettings.GameVersion.Value);
             return container;
         }
 
@@ -179,6 +181,7 @@ namespace Shared.Core.PackFiles.Utility
             container.IsCaPackFile = true;
             container.PackFileSettings.GameVersion = gameEnum;
             container.SaveSettings();
+            StampGameType(container, gameEnum);
             return container;
         }
 

@@ -1,4 +1,5 @@
-﻿using Shared.ByteParsing;
+using Shared.ByteParsing;
+using Shared.GameFormats.Wwise.Enums;
 
 namespace Shared.GameFormats.Wwise.Hirc
 {
@@ -8,6 +9,7 @@ namespace Shared.GameFormats.Wwise.Hirc
         public ChunkHeader ChunkHeader { get; set; } = new ChunkHeader();
         public uint NumHircItems { get; set; }
         public List<HircItem> HircItems { get; set; } = [];
+        public Dictionary<AkBkHircType, uint> UnknownHircTypeCounts { get; } = [];
 
         public static HircChunk ReadData(string filePath, ByteChunk chunk, uint bankGeneratorVersion, uint languageId, bool isCA)
         {
@@ -26,6 +28,9 @@ namespace Shared.GameFormats.Wwise.Hirc
                         languageId,
                         isCA,
                         itemIndex));
+
+            foreach (var unknown in hircChunk.HircItems.OfType<UnknownHircItem>())
+                hircChunk.UnknownHircTypeCounts[unknown.HircType] = hircChunk.UnknownHircTypeCounts.GetValueOrDefault(unknown.HircType) + 1;
 
             var expectedChunkSize = ChunkHeaderSize + hircChunk.HircItems.Sum(hirc => HircHeader.PrefixSize + hirc.SectionSize);
             if (expectedChunkSize != hircChunk.ChunkHeader.ChunkSize)
@@ -81,6 +86,7 @@ namespace Shared.GameFormats.Wwise.Hirc
 
             foreach (var hircItem in hircChunk.HircItems)
             {
+                hircItem.Header.RawHircType = HircItem.EncodeHircType(hircItem.HircType, gameBankGeneratorVersion);
                 var bytes = hircItem.WriteData();
                 memStream.Write(bytes);
             }

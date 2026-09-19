@@ -5,7 +5,7 @@ using static Shared.GameFormats.Wwise.Hirc.ICAkSwitchCntr;
 
 namespace Shared.GameFormats.Wwise.Hirc.V136
 {
-    public class CAkSwitchCntr_V136 : HircItem, ICAkSwitchCntr
+    public class CAkSwitchCntr_V136 : HircItem, ICAkSwitchCntr, ICAkParameterNode
     {
         public NodeBaseParams_V136 NodeBaseParams { get; set; } = new NodeBaseParams_V136();
         public AkGroupType EGroupType { get; set; }
@@ -18,6 +18,19 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
         public uint NumSwitchParams { get; set; }
         public List<AkSwitchNodeParams_V136> Parameters { get; set; } = [];
         public uint GetDirectParentId() => NodeBaseParams.DirectParentId;
+        public AkGroupType GetGroupType() => EGroupType;
+        public ushort GetMaxInstanceCount() => NodeBaseParams.AdvSettingsParams.MaxNumInstance;
+        public AuthoredProperties GetProperties() => NodeBaseParams.GetAuthoredProperties();
+        public bool GetOverridesParentPriority() => NodeBaseParams.OverridesParentPriority;
+        public bool GetIsGlobalLimit() => NodeBaseParams.AdvSettingsParams.IsGlobalLimit;
+        public bool GetDiscardsNewestOnLimit() => NodeBaseParams.AdvSettingsParams.DiscardsNewest;
+        public bool GetUsesVirtualVoiceOnLimit() => NodeBaseParams.AdvSettingsParams.UsesVirtualVoice;
+        public uint GetOutputBusId() => NodeBaseParams.OverrideBusId;
+        public bool GetIsPositioned() => (NodeBaseParams.PositioningParams.BitsPositioning & 0x03) == 0x03;
+        public byte GetVirtualQueueBehaviour() => NodeBaseParams.AdvSettingsParams.VirtualQueueBehavior;
+        public byte GetBelowThresholdBehaviour() => NodeBaseParams.AdvSettingsParams.BelowThresholdBehavior;
+        public bool GetIsContinuousValidation() => BIsContinuousValidation != 0;
+        public IReadOnlyList<IAkSwitchNodeParams> GetNodeParameters() => Parameters;
 
         protected override void ReadData(ByteChunk chunk)
         {
@@ -62,21 +75,21 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
             }
         }
 
-        public class AkSwitchNodeParams_V136
+        public class AkSwitchNodeParams_V136 : IAkSwitchNodeParams
         {
             public uint NodeId { get; set; }
             public byte BitVector0 { get; set; }
             public byte BitVector1 { get; set; }
-            public float FadeOutTime { get; set; }
-            public float FadeInTime { get; set; }
+            public int FadeOutTime { get; set; }
+            public int FadeInTime { get; set; }
 
             public void ReadData(ByteChunk chunk)
             {
                 NodeId = chunk.ReadUInt32();
                 BitVector0 = chunk.ReadByte();
                 BitVector1 = chunk.ReadByte();
-                FadeOutTime = chunk.ReadSingle();
-                FadeInTime = chunk.ReadSingle();
+                FadeOutTime = chunk.ReadInt32();
+                FadeInTime = chunk.ReadInt32();
             }
         }
     }

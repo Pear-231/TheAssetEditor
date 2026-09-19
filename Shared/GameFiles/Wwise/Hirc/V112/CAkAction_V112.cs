@@ -10,9 +10,11 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
         public uint IdExt { get; set; }
         public byte IdExt4 { get; set; }
         public AkPropBundle_V112 AkPropBundle0 { get; set; } = new AkPropBundle_V112();
-        public AkPropBundle_V112 AkPropBundle1 { get; set; } = new AkPropBundle_V112();
+        public AkPropBundleMinMax_V112 AkPropBundle1 { get; set; } = new AkPropBundleMinMax_V112();
         public PlayActionParams_V112? PlayActionParams { get; set; }
         public StateActionParams_V112? StateActionParams { get; set; }
+        public SwitchActionParams_V112? SwitchActionParams { get; set; }
+        public byte[] AdditionalParameters { get; set; } = [];
 
         protected override void ReadData(ByteChunk chunk)
         {
@@ -22,10 +24,14 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
             AkPropBundle0. ReadData(chunk);
             AkPropBundle1.ReadData(chunk);
 
-            if (ActionType == AkActionType.Play)
+            if (IsPlay(ActionType))
                 PlayActionParams = PlayActionParams_V112.ReadData(chunk);
             else if (ActionType == AkActionType.SetState)
                 StateActionParams = StateActionParams_V112.ReadData(chunk);
+            else if (ActionType == AkActionType.SetSwitch)
+                SwitchActionParams = SwitchActionParams_V112.ReadData(chunk);
+            else
+                AdditionalParameters = ActionParameterReader.Read(chunk, ActionType, 112);
         }
 
         public override byte[] WriteData()
@@ -37,10 +43,14 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
             memStream.Write(AkPropBundle0.ReadData());
             memStream.Write(AkPropBundle1.ReadData());
 
-            if (ActionType == AkActionType.Play)
+            if (IsPlay(ActionType))
                 memStream.Write(PlayActionParams!.WriteData());
             else if (ActionType == AkActionType.SetState)
-                throw new NotSupportedException("Users probably don't need this complexity.");
+                memStream.Write(StateActionParams!.WriteData());
+            else if (ActionType == AkActionType.SetSwitch)
+                memStream.Write(SwitchActionParams!.WriteData());
+            else
+                memStream.Write(AdditionalParameters);
 
             var byteArray = memStream.ToArray();
 
@@ -60,18 +70,23 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
             var akPropBundle0Size = AkPropBundle0.GetSize();
             var akPropBundle1Size = AkPropBundle1.GetSize();
 
-            if (ActionType == AkActionType.Play)
-            {
-                var playActionParamsSize = PlayActionParams.GetSize();
-                SectionSize = idSize + actionTypeSize + idExtSize + idExt4Size + akPropBundle0Size + akPropBundle1Size + playActionParamsSize;
-            }
-            else if (ActionType == AkActionType.SetState)
-                throw new NotSupportedException("Users probably don't need this complexity.");
+            var parameterSize = IsPlay(ActionType) ? PlayActionParams!.GetSize()
+                : ActionType == AkActionType.SetState ? StateActionParams!.GetSize()
+                : ActionType == AkActionType.SetSwitch ? SwitchActionParams!.GetSize()
+                : (uint)AdditionalParameters.Length;
+            SectionSize = idSize + actionTypeSize + idExtSize + idExt4Size + akPropBundle0Size + akPropBundle1Size + parameterSize;
         }
 
         public AkActionType GetActionType() => ActionType;
+        public AuthoredProperties GetProperties() => WwisePropertyMap_V112.Read(AkPropBundle0, AkPropBundle1);
         public uint GetChildId() => IdExt;
-        public uint GetStateGroupId() => StateActionParams.StateGroupId;
+        public uint GetTargetStateId() => StateActionParams?.TargetStateId ?? 0;
+        public uint GetSwitchGroupId() => SwitchActionParams?.SwitchGroupId ?? 0;
+        public uint GetSwitchValueId() => SwitchActionParams?.SwitchValueId ?? 0;
+        public uint GetStateGroupId() => StateActionParams?.StateGroupId ?? 0;
+
+        private static bool IsPlay(AkActionType actionType)
+            => actionType is AkActionType.Play or AkActionType.PlayAndContinue || ((ushort)actionType & 0xFF00) == 0x2300;
 
         public class PlayActionParams_V112
         {
@@ -103,6 +118,35 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
             }
         }
 
+        // What a SetSwitch action selects: the group, then the value within it. Eight bytes, and
+        // reading them is what took the 22 SetSwitch actions in Warhammer III's banks from stopping
+        // eight bytes short of their own end to accounting for every byte the bank states.
+        public class SwitchActionParams_V112
+        {
+            public uint SwitchGroupId { get; set; }
+            public uint SwitchValueId { get; set; }
+
+            public static SwitchActionParams_V112 ReadData(ByteChunk chunk)
+            {
+                return new SwitchActionParams_V112()
+                {
+                    SwitchGroupId = chunk.ReadUInt32(),
+                    SwitchValueId = chunk.ReadUInt32()
+                };
+            }
+
+            public byte[] WriteData()
+            {
+                using var memStream = new MemoryStream();
+                memStream.Write(ByteParsers.UInt32.EncodeValue(SwitchGroupId, out _));
+                memStream.Write(ByteParsers.UInt32.EncodeValue(SwitchValueId, out _));
+                return memStream.ToArray();
+            }
+
+            public uint GetSize()
+                => ByteHelper.GetPropertyTypeSize(SwitchGroupId) + ByteHelper.GetPropertyTypeSize(SwitchValueId);
+        }
+
         public class StateActionParams_V112
         {
             public uint StateGroupId { get; set; }
@@ -116,6 +160,17 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
                     TargetStateId = chunk.ReadUInt32()
                 };
             }
+
+            public byte[] WriteData()
+            {
+                using var memStream = new MemoryStream();
+                memStream.Write(ByteParsers.UInt32.EncodeValue(StateGroupId, out _));
+                memStream.Write(ByteParsers.UInt32.EncodeValue(TargetStateId, out _));
+                return memStream.ToArray();
+            }
+
+            public uint GetSize()
+                => ByteHelper.GetPropertyTypeSize(StateGroupId) + ByteHelper.GetPropertyTypeSize(TargetStateId);
         }
     }
 }

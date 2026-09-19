@@ -9,11 +9,11 @@ using Shared.Core.Events;
 
 namespace Editors.Audio.AudioEditor.Commands.AudioFilesExplorer
 {
-    public class SetAudioFilesCommand(IAudioEditorStateService audioEditorStateService, IEventHub eventHub, IAudioRepository audioRepository) : IAeCommand
+    public class SetAudioFilesCommand(IAudioEditorStateService audioEditorStateService, IEventHub eventHub, IAudioBankQueries bankQueries) : IAeCommand
     {
         private readonly IAudioEditorStateService _audioEditorStateService = audioEditorStateService;
         private readonly IEventHub _eventHub = eventHub;
-        private readonly IAudioRepository _audioRepository = audioRepository;
+        private readonly IAudioBankQueries _bankQueries = bankQueries;
         private List<AudioFilesTreeNode> _selectedAudioFiles = new();
         private bool _addToExistingAudioFiles;
 
@@ -25,7 +25,7 @@ namespace Editors.Audio.AudioEditor.Commands.AudioFilesExplorer
 
         public void Execute()
         {
-            var usedSourceIds = IdGenerator.GetUsedSourceIds(_audioRepository, _audioEditorStateService.AudioProject);
+            var usedSourceIds = IdGenerator.GetUsedSourceIds(_bankQueries, _audioEditorStateService.AudioProject);
 
             var audioFiles = new List<AudioFile>();
             foreach (var wavFile in _selectedAudioFiles)

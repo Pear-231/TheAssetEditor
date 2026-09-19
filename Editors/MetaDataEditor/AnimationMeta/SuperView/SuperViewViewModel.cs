@@ -4,6 +4,7 @@ using Editors.AnimationMeta.SuperView.Visualisation;
 using Editors.Shared.Core.Common;
 using Editors.Shared.Core.Common.BaseControl;
 using Editors.Shared.Core.Common.ReferenceModel;
+using GameWorld.Core.Animation;
 using Microsoft.Xna.Framework;
 using Shared.Core.Events;
 using Shared.Core.Events.Scoped;
@@ -23,6 +24,9 @@ namespace Editors.AnimationMeta.SuperView
         private readonly IPackFileService _packFileService;
         private readonly IEventHub _eventHub;
         private readonly IUiCommandFactory _uiCommandFactory;
+        private PackFile? _animationAudioOwner;
+        private string _animationAudioVariantMeshName = "";
+        private GameTypeEnum? _animationAudioGame;
 
         [ObservableProperty] string _persistentMetaFilePath = "";
         [ObservableProperty] string _metaFilePath = "";
@@ -31,12 +35,12 @@ namespace Editors.AnimationMeta.SuperView
         [ObservableProperty] int _selectedTabControllerIndex = 0;
         public override Type EditorViewModelType => typeof(EditorView);
         public bool HasUnsavedChanges
-        { 
-            get 
+        {
+            get
             {
                 return PersistentMetaEditor.HasUnsavedChanges || MetaEditor.HasUnsavedChanges;
             }
-            set 
+            set
             {
                 PersistentMetaEditor.HasUnsavedChanges = value;
                 MetaEditor.HasUnsavedChanges = value;
@@ -54,13 +58,20 @@ namespace Editors.AnimationMeta.SuperView
             IMetaDataBuilder metaDataFactory)
             : base(editorHostParameters)
         {
-            DisplayName = "Super view";
+            DisplayName = "Super View";
             _packFileService = packFileService;
             _eventHub = eventHub;
             _uiCommandFactory = uiCommandFactory;
             _sceneObjectBuilder = sceneObjectBuilder;
             _metaDataFileParser = metaDataFileParser;
             _metaDataFactory = metaDataFactory;
+            audioRepository.Load([Wh3LanguageInformation.GetLanguageAsString(Wh3Language.EnglishUK)]);
+
+            // The engine outlives this editor and is shared with the others, so it is told which
+            // banks to resolve events against and which emitter the preview is, rather than
+            // working either out for itself.
+            _soundEngine.LoadHierarchy(hierarchyProvider);
+            _previewedUnit = _soundEngine.RegisterGameObject("Super View preview");
             Initialize();
             eventHub.Register<ScopedFileSavedEvent>(this, OnFileSaved);
             eventHub.Register<SceneObjectUpdateEvent>(this, OnSceneObjectUpdated);
@@ -92,9 +103,38 @@ namespace Editors.AnimationMeta.SuperView
             SceneObjects.Add(assetViewModel);
 
             assetViewModel.Data.MetaDataChanged += OnMetaDataChanged;
+            assetViewModel.Data.AnimationChanged += OnAnimationChanged;
 
             _asset = assetViewModel;
+            _audioTimeline = new AnimationAudioTimeline(_soundEngine, _asset.Data, _previewedUnit);
+            _asset.Data.Player.OnFrameChanged += OnAnimationFrameChanged;
+            _asset.Data.Player.OnPlaybackChanged += OnAnimationPlaybackChanged;
             OnSceneObjectUpdated(new SceneObjectUpdateEvent(_asset.Data, false, false, false, true));
+        }
+
+        private void OnAnimationPlaybackChanged(bool isPlaying)
+        {
+            // Another editor may have taken the sound engine over since this timeline was
+            // built, in which case it has to be rebuilt before it can be started.
+            if (isPlaying && !_audioTimeline.IsCurrent)
+            {
+                _audioTimeline.Release();
+                SynchroniseAudioTimeline();
+                return;
+            }
+
+            _audioTimeline.OnAnimationPlaybackChanged(isPlaying);
+        }
+
+        private void OnAnimationFrameChanged(int currentFrame)
+        {
+            // Looping and animation length are inputs to the scheduled timeline that nothing
+            // raises an event for, so a stale timeline is noticed here rather than left until
+            // some unrelated edit happens to rebuild it.
+            if (_audioTimeline.NeedsResynchronisation)
+                SynchroniseAudioTimeline();
+
+            _audioTimeline.OnAnimationFrameChanged();
         }
 
         void RecreateMetaDataInformation()
@@ -117,15 +157,20 @@ namespace Editors.AnimationMeta.SuperView
 
         private void OnSceneObjectUpdated(SceneObjectUpdateEvent e)
         {
+            if (!ReferenceEquals(AudioMetaEditor.CurrentFile, e.Owner.AudioMetaData))
+                ClearAnimationAudioCache();
             PersistentMetaEditor.LoadFile(e.Owner.PersistMetaData);
             MetaEditor.LoadFile(e.Owner.MetaData);
 
             RecreateMetaDataInformation();
+            EnsureAnimationAudioCacheIsCurrent();
+            SynchroniseAudioTimeline();
         }
 
         public void Load(AnimationToolInput debugDataToLoad)
         {
             _sceneObjectBuilder.SetMesh(_asset.Data, debugDataToLoad.Mesh);
+            EnsureAnimationAudioCacheIsCurrent();
 
             // Hack :(
             if (debugDataToLoad.AnimationSlot != null)
@@ -136,6 +181,7 @@ namespace Editors.AnimationMeta.SuperView
                 var slot = _asset.FragAndSlotSelection.FragmentSlotList.PossibleValues.First(x => x.SlotName == debugDataToLoad.AnimationSlot.Value);
                 _asset.FragAndSlotSelection.FragmentSlotList.SelectedItem = slot;
             }
+            SynchroniseAudioTimeline();
         }
 
 
@@ -143,6 +189,12 @@ namespace Editors.AnimationMeta.SuperView
 
         public override void Close()
         {
+            _asset.Data.Player.OnFrameChanged -= OnAnimationFrameChanged;
+            _asset.Data.Player.OnPlaybackChanged -= OnAnimationPlaybackChanged;
+            _asset.Data.AnimationChanged -= OnAnimationChanged;
+            _asset.Data.MetaDataChanged -= OnMetaDataChanged;
+            ClearAnimationAudioCache();
+            _soundEngine.UnregisterGameObject(_previewedUnit);
             _eventHub?.UnRegister(this);
             base.Close();
         }

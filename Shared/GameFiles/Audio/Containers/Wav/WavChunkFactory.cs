@@ -8,6 +8,7 @@
             {
                 FmtChunk.ChunkTag => new FmtChunk(),
                 DataChunk.ChunkTag => new DataChunk(),
+                SmplChunk.ChunkTag => new SmplChunk(),
                 _ => null,
             };
         }

@@ -23,6 +23,31 @@
   <ItemGroup>
     <Compile Include="AudioCacheTests.cs" />
     <Compile Include="AudioExplorerTests.cs" />
+    <Compile Include="FakeAudioOutputDevice.cs" />
+    <Compile Include="FakeHierarchy.cs" />
+    <Compile Include="LimiterTests.cs" />
+    <Compile Include="PlayheadTrackingTests.cs" />
+    <Compile Include="AuthoredParameterTests.cs" />
+    <Compile Include="ContainerFidelityTests.cs" />
+    <Compile Include="EventActionTests.cs" />
+    <Compile Include="AuthoredPropertyTests.cs" />
+    <Compile Include="SoundEngineContractTests.cs" />
+    <Compile Include="PlaybackOwnershipTests.cs" />
+    <Compile Include="MixerProbe.cs" />
+    <Compile Include="NodeWalkerTests.cs" />
+    <Compile Include="SoundEngineConcurrencyTests.cs" />
+    <Compile Include="SoundEngineContinuityTests.cs" />
+    <Compile Include="SoundEngineTests.cs" />
+    <Compile Include="SoundEngineTimingTests.cs" />
+    <Compile Include="VoicePoolTests.cs" />
+    <Compile Include="SoundEngineSourceFormatTests.cs" />
+    <Compile Include="Phase13CompletionTests.cs" />
+    <Compile Include="ParameterRampTests.cs" />
+    <Compile Include="BankReadingTests.cs" />
+    <Compile Include="WwiseCorpusTests.cs" />
+    <Compile Include="WemCorpusAudit.cs" />
+    <Compile Include="Phase14SinkHarness.cs" />
+    <Compile Include="ListeningChecks.cs" />
     <Using Include="NUnit.Framework" />
   </ItemGroup>
 

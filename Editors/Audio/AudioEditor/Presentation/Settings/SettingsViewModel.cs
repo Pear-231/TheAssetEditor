@@ -28,6 +28,7 @@ namespace Editors.Audio.AudioEditor.Presentation.Settings
         private readonly IEventHub _eventHub;
         private readonly IAudioEditorStateService _audioEditorStateService;
         private readonly IAudioRepository _audioRepository;
+        private readonly IAudioBankQueries _bankQueries;
 
         [ObservableProperty] public ObservableCollection<AudioFile> _audioFiles = [];
 
@@ -77,11 +78,12 @@ namespace Editors.Audio.AudioEditor.Presentation.Settings
 
         private List<AudioFile> _selectedAudioFiles = [];
 
-        public SettingsViewModel(IEventHub eventHub, IAudioEditorStateService audioEditorStateService, IAudioRepository audioRepository)
+        public SettingsViewModel(IEventHub eventHub, IAudioEditorStateService audioEditorStateService, IAudioRepository audioRepository, IAudioBankQueries bankQueries)
         {
             _eventHub = eventHub;
             _audioEditorStateService = audioEditorStateService;
             _audioRepository = audioRepository;
+            _bankQueries = bankQueries;
 
             SetInitialSettings();
 
@@ -153,7 +155,7 @@ namespace Editors.Audio.AudioEditor.Presentation.Settings
 
         public void SetAudioFilesViaDrop(IEnumerable<AudioFilesTreeNode> audioFilesTreeNodes)
         {
-            var usedSourceIds = IdGenerator.GetUsedSourceIds(_audioRepository, _audioEditorStateService.AudioProject);
+            var usedSourceIds = IdGenerator.GetUsedSourceIds(_bankQueries, _audioEditorStateService.AudioProject);
 
             var audioFiles = new List<AudioFile>();
             foreach (var node in audioFilesTreeNodes)

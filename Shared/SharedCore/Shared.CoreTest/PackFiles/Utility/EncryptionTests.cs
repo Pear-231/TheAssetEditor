@@ -41,11 +41,13 @@ namespace Shared.CoreTest.PackFiles.Utility
 
             Assert.That(files, Has.Count.EqualTo(3));
 
+            var originalPlaintext = new Dictionary<string, byte[]>();
             foreach (var entry in files)
             {
                 var source = (PackedFileSource)entry.Value.DataSource;
                 Assert.That(source.IsEncrypted, Is.True, $"{entry.Key} should be flagged encrypted by the fixture pack's header.");
 
+                var plaintext = source.ReadData();
                 var expectedPlaintext = s_fileContent[Path.GetFileName(entry.Key)];
                 var plaintext = source.ReadData();
                 Assert.That(Encoding.ASCII.GetString(plaintext), Is.EqualTo(expectedPlaintext), $"{entry.Key} plaintext.");
@@ -54,19 +56,19 @@ namespace Shared.CoreTest.PackFiles.Utility
                 {
                     var ciphertext = ReadCiphertext(source);
                     Assert.That(FileEncryption.Encrypt(plaintext, game), Is.EqualTo(ciphertext), $"{entry.Key} ciphertext.");
-                }
+            }
             }
         }
 
         [TestCaseSource(nameof(GamesWithFixturePacks))]
         public void DecryptInPlace_UsesGamesKeystream(GameTypeEnum game)
-        {
+            {
             var sourceContainer = LoadPack(s_packsByGame[game], game);
             var files = sourceContainer.GetAllFiles();
 
             foreach (var entry in files)
-            {
-                var source = (PackedFileSource)entry.Value.DataSource;
+                {
+                    var source = (PackedFileSource)entry.Value.DataSource;
                 if (source.IsCompressed)
                     continue;
 

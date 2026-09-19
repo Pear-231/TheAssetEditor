@@ -1,4 +1,7 @@
-﻿using Shared.ByteParsing;
+﻿using System.Text;
+using Shared.ByteParsing;
+using Shared.Core.Settings;
+using Shared.Core.PackFiles.Serialization;
 using Shared.Core.PackFiles.Utility;
 using Shared.Core.Settings;
 

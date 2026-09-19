@@ -14,6 +14,7 @@
                 [JunkChunk.ChunkTag] = static () => new JunkChunk(),
                 [CueChunk.ChunkTag] = static () => new CueChunk(),
                 [AkdChunk.ChunkTag] = static () => new AkdChunk(),
+                [SmplChunk.ChunkTag] = static () => new SmplChunk(),
             };
         }
 
