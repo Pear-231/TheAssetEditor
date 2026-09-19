@@ -28,7 +28,12 @@ using Editors.Audio.Shared.Storage;
 using Editors.Audio.Shared.Storage.CacheDatabase;
 using Editors.Audio.Shared.Utilities;
 using Editors.Audio.Shared.Wwise;
+using Editors.Audio.Shared.Wwise.Engine;
+using Editors.Audio.Shared.Wwise.Engine.Hierarchy;
+using Editors.Audio.Shared.Wwise.Engine.Media;
+using Editors.Audio.Shared.Wwise.Engine.Output;
 using Editors.Audio.Shared.Wwise.Generators;
+using Editors.Audio.Shared.Wwise.HircExploration;
 using Editors.Audio.WaveformVisualiser.Presentation;
 using Microsoft.Extensions.DependencyInjection;
 using Shared.Core.DependencyInjection;
@@ -108,9 +113,10 @@ namespace Editors.Audio
             serviceCollection.AddScoped<IViewerTableService, ViewerStateGroupTableService>();
 
             // Waveform Visualiser services
-            serviceCollection.AddSingleton<IWaveformVisualisationCacheService, WaveformVisualisationCacheService>();
-            serviceCollection.AddTransient<IWaveformRendererService, WaveformRendererService>();
-            serviceCollection.AddTransient<ISoundEngine, SoundEngine>();
+            serviceCollection.AddSingleton<WaveformVisualisationService>();
+            serviceCollection.AddSingleton<MediaCache>();
+            serviceCollection.AddSingleton<ISoundEngine>(_ => new SoundEngine(
+                new AudioOutputDevice()));
 
             // Audio Project
             serviceCollection.AddScoped<IAudioProjectFileService, AudioProjectFileService>();
@@ -133,7 +139,10 @@ namespace Editors.Audio
 
             // Shared audio stuff 
             serviceCollection.AddScoped<IAudioRepository, AudioRepository>();
+            serviceCollection.AddScoped<IAudioBankQueries, AudioBankQueries>();
             serviceCollection.AddScoped<IAudioCacheHelper, AudioCacheHelper>();
+            serviceCollection.AddScoped<IHircGraphService, HircGraphService>();
+            serviceCollection.AddScoped<IHierarchyProvider, AudioRepositoryHierarchy>();
             serviceCollection.AddScoped<IMovieAudioResolver, MovieAudioResolver>();
             serviceCollection.AddSingleton<BnkLoader>();
             serviceCollection.AddSingleton<DatLoader>();

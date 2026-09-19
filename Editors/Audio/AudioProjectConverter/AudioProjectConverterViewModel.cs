@@ -25,6 +25,7 @@ namespace Editors.Audio.AudioProjectConverter
         private readonly IStandardDialogs _standardDialogs;
         private readonly IFileSaveService _fileSaveService;
         private readonly IAudioRepository _audioRepository;
+        private readonly IAudioBankQueries _bankQueries;
         private readonly IAudioEditorFileService _audioEditorFileService;
         private readonly ApplicationSettingsService _applicationSettingsService;
 
@@ -51,12 +52,14 @@ namespace Editors.Audio.AudioProjectConverter
             IStandardDialogs standardDialogs,
             IFileSaveService fileSaveService,
             IAudioRepository audioRepository,
+            IAudioBankQueries bankQueries,
             IAudioEditorFileService audioEditorFileService,
             ApplicationSettingsService applicationSettingsService)
         {
             _standardDialogs = standardDialogs;
             _fileSaveService = fileSaveService;
             _audioRepository = audioRepository;
+            _bankQueries = bankQueries;
             _audioEditorFileService = audioEditorFileService;
             _applicationSettingsService = applicationSettingsService;
 
@@ -104,8 +107,8 @@ namespace Editors.Audio.AudioProjectConverter
                     dialogueEventsToProcess,
                     moddedStateGroups);
 
-            var usedHircIds = IdGenerator.GetUsedHircIds(_audioRepository, audioProject);
-            var usedSourceIds = IdGenerator.GetUsedSourceIds(_audioRepository, audioProject);
+            var usedHircIds = IdGenerator.GetUsedHircIds(_bankQueries, audioProject);
+            var usedSourceIds = IdGenerator.GetUsedSourceIds(_bankQueries, audioProject);
 
             foreach (var dialogueEvent in dialogueEventsToProcess)
                 ProcessDialogueEvent(

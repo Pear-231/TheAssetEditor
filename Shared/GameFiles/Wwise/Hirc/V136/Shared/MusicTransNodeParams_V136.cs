@@ -102,7 +102,7 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
 
             public class AkMusicTransitionObject_V136
             {
-                public int SegmentId { get; set; }
+                public uint SegmentId { get; set; }
                 public AkMusicFade_V136 FadeInParams { get; set; }
                 public AkMusicFade_V136 FadeOutParams { get; set; }
                 public byte PlayPreEntry { get; set; }
@@ -112,7 +112,7 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
                 {
                     return new AkMusicTransitionObject_V136
                     {
-                        SegmentId = chunk.ReadInt32(),
+                        SegmentId = chunk.ReadUInt32(),
                         FadeInParams = AkMusicFade_V136.ReadData(chunk),
                         FadeOutParams = AkMusicFade_V136.ReadData(chunk),
                         PlayPreEntry = chunk.ReadByte(),

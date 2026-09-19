@@ -13,7 +13,7 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
         protected override void ReadData(ByteChunk chunk)
         {
             MusicNodeParams.ReadData(chunk);
-            Duration = chunk.ReadInt64(); //chunk.ReadDouble();
+            Duration = chunk.ReadDouble();
 
             var ulNumMarkers = chunk.ReadUInt32();
             for (var i = 0; i < ulNumMarkers; i++)
@@ -34,7 +34,8 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
             {
                 var akMusicMarkerWwise = new AkMusicMarkerWwise_V136();
                 akMusicMarkerWwise.Id = chunk.ReadUInt32();
-                akMusicMarkerWwise.Position = chunk.ReadInt64();
+                akMusicMarkerWwise.Position = chunk.ReadDouble();
+                akMusicMarkerWwise.StringSize = chunk.ReadUInt32();
                 akMusicMarkerWwise.MarkerName = Encoding.UTF8.GetString(chunk.ReadBytes((int)akMusicMarkerWwise.StringSize));
                 return akMusicMarkerWwise;
             }

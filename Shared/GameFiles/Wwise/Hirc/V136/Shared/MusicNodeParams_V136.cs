@@ -34,8 +34,8 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
 
             public void ReadData(ByteChunk chunk)
             {
-                GridPeriod = chunk.ReadInt64();
-                GridOffset = chunk.ReadInt64();
+                GridPeriod = chunk.ReadDouble();
+                GridOffset = chunk.ReadDouble();
                 Tempo = chunk.ReadSingle();
                 TimeSigNumBeatsBar = chunk.ReadByte();
                 TimeSigBeatValue = chunk.ReadByte();

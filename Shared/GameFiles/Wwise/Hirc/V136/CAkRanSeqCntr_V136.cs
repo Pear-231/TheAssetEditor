@@ -1,9 +1,10 @@
-﻿using Shared.ByteParsing;
+using Shared.ByteParsing;
+using Shared.GameFormats.Wwise.Enums;
 using Shared.GameFormats.Wwise.Hirc.V136.Shared;
 
 namespace Shared.GameFormats.Wwise.Hirc.V136
 {
-    public class CAkRanSeqCntr_V136 : HircItem, ICAkRanSeqCntr
+    public class CAkRanSeqCntr_V136 : HircItem, ICAkRanSeqCntr, ICAkParameterNode
     {
         public NodeBaseParams_V136 NodeBaseParams { get; set; } = new NodeBaseParams_V136();
         public ushort LoopCount { get; set; }
@@ -86,8 +87,34 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
                 transitionTimeModMaxSize + avoidRepeatCountSize + transitionModeSize + randomModeSize + modeSize + bitVectorSize + childrenSize + playListSize;
         }
 
+        INodeBaseParams ICAkParameterNode.NodeBaseParams => NodeBaseParams;
+
         public uint GetDirectParentId() => NodeBaseParams.DirectParentId;
+        public ushort GetMaxInstanceCount() => NodeBaseParams.AdvSettingsParams.MaxNumInstance;
+        public AuthoredProperties GetProperties() => NodeBaseParams.GetAuthoredProperties();
+        public bool GetOverridesParentPriority() => NodeBaseParams.OverridesParentPriority;
+        public bool GetIsGlobalLimit() => NodeBaseParams.AdvSettingsParams.IsGlobalLimit;
+        public bool GetDiscardsNewestOnLimit() => NodeBaseParams.AdvSettingsParams.DiscardsNewest;
+        public bool GetUsesVirtualVoiceOnLimit() => NodeBaseParams.AdvSettingsParams.UsesVirtualVoice;
+        public uint GetOutputBusId() => NodeBaseParams.OverrideBusId;
+        public bool GetIsPositioned() => (NodeBaseParams.PositioningParams.BitsPositioning & 0x03) == 0x03;
+        public byte GetVirtualQueueBehaviour() => NodeBaseParams.AdvSettingsParams.VirtualQueueBehavior;
+        public byte GetBelowThresholdBehaviour() => NodeBaseParams.AdvSettingsParams.BelowThresholdBehavior;
         public List<uint> GetChildren() => CAkPlayList.Playlist.Select(x => x.PlayId).ToList();
+        public AkContainerMode GetContainerMode() => (AkContainerMode)Mode;
+        public AkRandomMode GetRandomMode() => (AkRandomMode)RandomMode;
+        public AkTransitionMode GetTransitionMode() => (AkTransitionMode)TransitionMode;
+        public ushort GetAvoidRepeatCount() => AvoidRepeatCount;
+        public ushort GetLoopCount() => LoopCount;
+        public ushort GetLoopMinimumOffset() => LoopModMin;
+        public ushort GetLoopMaximumOffset() => LoopModMax;
+        public float GetTransitionTime() => TransitionTime;
+        public float GetTransitionTimeMinimumOffset() => TransitionTimeModMin;
+        public float GetTransitionTimeMaximumOffset() => TransitionTimeModMax;
+        public bool GetIsContinuous() => (BitVector & 0x08) != 0;
+        public bool GetIsGlobal() => (BitVector & 0x10) != 0;
+        public bool GetAlwaysResetsPlaylist() => (BitVector & 0x02) != 0;
+        public IReadOnlyList<ICAkRanSeqCntr.IAkPlaylistItem> GetPlaylist() => CAkPlayList.Playlist;
 
         public class CAkPlayList_V136
         {
@@ -119,7 +146,7 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
                 return playListItemSize + playListSize;
             }
 
-            public class AkPlaylistItem_V136
+            public class AkPlaylistItem_V136 : ICAkRanSeqCntr.IAkPlaylistItem
             {
                 public uint PlayId { get; set; }
                 public int Weight { get; set; }
@@ -137,7 +164,7 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
                 {
                     using var memStream = new MemoryStream();
                     memStream.Write(ByteParsers.UInt32.EncodeValue(PlayId, out _));
-                    memStream.Write(ByteParsers.Int32.EncodeValue(Weight, out _)); 
+                    memStream.Write(ByteParsers.Int32.EncodeValue(Weight, out _));
                     return memStream.ToArray();
                 }
 

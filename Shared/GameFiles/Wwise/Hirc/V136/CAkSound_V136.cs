@@ -1,10 +1,10 @@
-﻿using Shared.ByteParsing;
+using Shared.ByteParsing;
 using Shared.GameFormats.Wwise.Enums;
 using Shared.GameFormats.Wwise.Hirc.V136.Shared;
 
 namespace Shared.GameFormats.Wwise.Hirc.V136
 {
-    public class CAkSound_V136 : HircItem, ICAkSound
+    public class CAkSound_V136 : HircItem, ICAkSound, ICAkParameterNode
     {
         public AkBankSourceData_V136 AkBankSourceData { get; set; }
         public NodeBaseParams_V136 NodeBaseParams { get; set; } = new NodeBaseParams_V136();
@@ -35,8 +35,20 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
             SectionSize = idSize + AkBankSourceData.GetSize() + NodeBaseParams.GetSize();
         }
 
+        INodeBaseParams ICAkParameterNode.NodeBaseParams => NodeBaseParams;
+
         public uint GetDirectParentId() => NodeBaseParams.DirectParentId;
         public uint GetSourceId() => AkBankSourceData.AkMediaInformation.SourceId;
         public AKBKSourceType GetStreamType() => AkBankSourceData.StreamType;
+        public ushort GetMaxInstanceCount() => NodeBaseParams.AdvSettingsParams.MaxNumInstance;
+        public AuthoredProperties GetProperties() => NodeBaseParams.GetAuthoredProperties();
+        public bool GetOverridesParentPriority() => NodeBaseParams.OverridesParentPriority;
+        public bool GetIsGlobalLimit() => NodeBaseParams.AdvSettingsParams.IsGlobalLimit;
+        public bool GetDiscardsNewestOnLimit() => NodeBaseParams.AdvSettingsParams.DiscardsNewest;
+        public bool GetUsesVirtualVoiceOnLimit() => NodeBaseParams.AdvSettingsParams.UsesVirtualVoice;
+        public uint GetOutputBusId() => NodeBaseParams.OverrideBusId;
+        public bool GetIsPositioned() => (NodeBaseParams.PositioningParams.BitsPositioning & 0x03) == 0x03;
+        public byte GetVirtualQueueBehaviour() => NodeBaseParams.AdvSettingsParams.VirtualQueueBehavior;
+        public byte GetBelowThresholdBehaviour() => NodeBaseParams.AdvSettingsParams.BelowThresholdBehavior;
     }
 }

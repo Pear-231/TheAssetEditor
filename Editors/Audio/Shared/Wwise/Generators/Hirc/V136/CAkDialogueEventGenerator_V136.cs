@@ -29,7 +29,7 @@ namespace Editors.Audio.Shared.Wwise.Generators.Hirc.V136
 
             var decisionTree = CreateDecisionTree(audioProjectDialogueEvent);
             dialogueEventHirc.AkDecisionTree = decisionTree;
-            dialogueEventHirc.TreeDataSize = (uint)decisionTree.Nodes.Count * new AkDecisionTree_V136.Node_V136().GetSize();
+            dialogueEventHirc.TreeDataSize = (uint)decisionTree.FlattenedDecisionTree.Count * new AkDecisionTree_V136.Node_V136().GetSize();
 
             dialogueEventHirc.Mode = (byte)AkMode.BestMatch;
             dialogueEventHirc.AkPropBundle0 = new AkPropBundle_V136() { PropsList = [] };
@@ -85,7 +85,7 @@ namespace Editors.Audio.Shared.Wwise.Generators.Hirc.V136
             return new AkDecisionTree_V136
             {
                 DecisionTree = rootNode,
-                Nodes = flattenedDecisionTree
+                FlattenedDecisionTree = flattenedDecisionTree
             };
         }
 

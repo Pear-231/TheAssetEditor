@@ -1,14 +1,22 @@
-﻿using Shared.ByteParsing;
+using Shared.ByteParsing;
 
 namespace Shared.GameFormats.Wwise.Hirc.V112.Shared
 {
     public class AdvSettingsParams_V112
     {
+        private const byte DiscardNewestBit = 0x01;
+        private const byte UseVirtualVoiceBit = 0x02;
+        private const byte GlobalLimitBit = 0x04;
+
         public byte BitVector { get; set; }
         public byte VirtualQueueBehavior { get; set; }
         public ushort MaxNumInstance { get; set; }
         public byte BelowThresholdBehavior { get; set; }
         public byte BitVector2 { get; set; }
+
+        public bool DiscardsNewest => (BitVector & DiscardNewestBit) != 0;
+        public bool UsesVirtualVoice => (BitVector & UseVirtualVoiceBit) != 0;
+        public bool IsGlobalLimit => (BitVector & GlobalLimitBit) != 0;
 
         public void ReadData(ByteChunk chunk)
         {

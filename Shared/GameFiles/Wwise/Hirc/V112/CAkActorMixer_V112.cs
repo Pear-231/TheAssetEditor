@@ -1,9 +1,9 @@
-﻿using Shared.ByteParsing;
+using Shared.ByteParsing;
 using Shared.GameFormats.Wwise.Hirc.V112.Shared;
 
 namespace Shared.GameFormats.Wwise.Hirc.V112
 {
-    public class CAkActorMixer_V112 : HircItem, ICAkActorMixer
+    public class CAkActorMixer_V112 : HircItem, ICAkActorMixer, ICAkParameterNode
     {
         public NodeBaseParams_V112 NodeBaseParams { get; set; } = new NodeBaseParams_V112();
         public Children_V112 Children { get; set; } = new Children_V112();
@@ -36,5 +36,6 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
 
         public List<uint> GetChildren() => Children.ChildIds;
         public uint GetDirectParentId() => NodeBaseParams.DirectParentId;
+        INodeBaseParams ICAkParameterNode.NodeBaseParams => NodeBaseParams;
     }
 }

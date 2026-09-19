@@ -8,6 +8,7 @@ using Shared.GameFormats.Wwise;
 using Shared.GameFormats.Wwise.Didx;
 using Shared.GameFormats.Wwise.Enums;
 using Shared.GameFormats.Wwise.Hirc;
+using Shared.GameFormats.Wwise.Versions;
 
 namespace Editors.Audio.Shared.Storage
 {
@@ -76,6 +77,7 @@ namespace Editors.Audio.Shared.Storage
                     continue;
 
                 var orderedReferences = bnkReferences.OrderBy(x => x.Offset).ToList();
+                var versionDefinition = WwiseVersionResolver.Resolve(orderedReferences[0].BankGeneratorVersion);
                 var rangeOffset = orderedReferences[0].Offset;
                 var rangeEnd = orderedReferences.Max(x => checked(x.Offset + x.Length));
                 var rangeLength = checked(rangeEnd - rangeOffset);
@@ -90,7 +92,7 @@ namespace Editors.Audio.Shared.Storage
                     var bnkRange = ReadData(bnk, bnkReferences.Key, rangeOffset, (int)rangeLength);
                     foreach (var reference in orderedReferences)
                     {
-                        var hirc = LoadHirc(bnkRange, rangeOffset, reference);
+                        var hirc = LoadHirc(bnkRange, rangeOffset, reference, versionDefinition);
                         if (hirc != null)
                             result.Add(hirc);
                     }
@@ -127,11 +129,11 @@ namespace Editors.Audio.Shared.Storage
             }
         }
 
-        private HircItem LoadHirc(byte[] bnkRange, long rangeOffset, BnkHircReference reference)
+        private HircItem LoadHirc(byte[] bnkRange, long rangeOffset, BnkHircReference reference, WwiseVersionDefinition versionDefinition)
         {
             try
             {
-                return ParseHirc(bnkRange, rangeOffset, reference);
+                return ParseHirc(bnkRange, rangeOffset, reference, versionDefinition);
             }
             catch (Exception exception)
             {
@@ -148,7 +150,7 @@ namespace Editors.Audio.Shared.Storage
             return bnk;
         }
 
-        private static HircItem ParseHirc(byte[] bnkRange, long rangeOffset, BnkHircReference reference)
+        private static HircItem ParseHirc(byte[] bnkRange, long rangeOffset, BnkHircReference reference, WwiseVersionDefinition versionDefinition)
         {
             var relativeOffset = checked(reference.Offset - rangeOffset);
             if (relativeOffset < 0 || relativeOffset > int.MaxValue || reference.Length > bnkRange.Length - relativeOffset)
@@ -157,7 +159,7 @@ namespace Editors.Audio.Shared.Storage
             var hirc = HircItem.ReadData(
                 reference.BnkPath,
                 new ByteChunk(bnkRange, (int)relativeOffset),
-                reference.BankGeneratorVersion,
+                versionDefinition,
                 reference.LanguageId,
                 reference.IsCA,
                 reference.IndexInBnk,

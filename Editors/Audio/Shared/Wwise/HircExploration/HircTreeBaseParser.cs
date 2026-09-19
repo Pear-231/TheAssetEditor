@@ -1,4 +1,4 @@
-﻿using Editors.Audio.AudioExplorer;
+using Editors.Audio.AudioExplorer;
 using Editors.Audio.Shared.Storage;
 using Shared.GameFormats.Wwise.Enums;
 using Shared.GameFormats.Wwise.Hirc;
@@ -162,7 +162,9 @@ namespace Editors.Audio.Shared.Wwise.HircExploration
                 foreach (var pendingNode in currentDepth)
                 {
                     var request = new HircReferenceRequest(pendingNode.HircId, pendingNode.ReferringBnkFilePath ?? string.Empty);
-                    if (resolvedHircs.TryGetValue(request, out var hirc))
+                    if (IsHircInAncestry(pendingNode.Parent, pendingNode.HircId))
+                        pendingNode.Parent.Children.Add(new HircTreeNode() { DisplayName = $"Circular HIRC reference to ID {pendingNode.HircId}" });
+                    else if (resolvedHircs.TryGetValue(request, out var hirc))
                         ProcessHircObject(hirc, pendingNode.Parent);
                     else
                         pendingNode.Parent.Children.Add(new HircTreeNode() { DisplayName = $"Error: Unable to find Hirc with ID {pendingNode.HircId}" });
