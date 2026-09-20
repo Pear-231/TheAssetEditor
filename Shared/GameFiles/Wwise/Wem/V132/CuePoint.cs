@@ -11,15 +11,15 @@ namespace Shared.GameFormats.Wwise.Wem.V132
         public uint BlockStart { get; set; }
         public uint SampleOffset { get; set; }
 
-        public static CuePoint ReadData(ByteChunk chunk) => new()
+        public void ReadData(ByteChunk chunk)
         {
-            Id = chunk.ReadUInt32(),
-            Position = chunk.ReadUInt32(),
-            DataChunkId = chunk.ReadUInt32(),
-            ChunkStart = chunk.ReadUInt32(),
-            BlockStart = chunk.ReadUInt32(),
-            SampleOffset = chunk.ReadUInt32(),
-        };
+            Id = chunk.ReadUInt32();
+            Position = chunk.ReadUInt32();
+            DataChunkId = chunk.ReadUInt32();
+            ChunkStart = chunk.ReadUInt32();
+            BlockStart = chunk.ReadUInt32();
+            SampleOffset = chunk.ReadUInt32();
+        }
 
         public byte[] WriteData()
         {

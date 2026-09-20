@@ -9,12 +9,10 @@ namespace Shared.GameFormats.Wwise.Wem.V132.Encoding
         public byte[] Data { get; set; } = [];
         public long GranulePosition { get; set; }
 
-        public static WemAudioPacket ReadData(ByteChunk chunk)
+        public void ReadData(ByteChunk chunk)
         {
-            var packet = new WemAudioPacket();
             var dataSize = chunk.ReadUShort();
-            packet.Data = chunk.ReadBytes(dataSize);
-            return packet;
+            Data = chunk.ReadBytes(dataSize);
         }
 
         public byte[] WriteData()

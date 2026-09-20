@@ -9,13 +9,10 @@ namespace Shared.GameFormats.Wwise.Wem.V132.Encoding
         public ushort GranuleDelta { get; set; }
         public ushort ByteCount { get; set; }
 
-        public static WemSeekTableRecord ReadData(ByteChunk chunk)
+        public void ReadData(ByteChunk chunk)
         {
-            return new WemSeekTableRecord
-            {
-                GranuleDelta = chunk.ReadUShort(),
-                ByteCount = chunk.ReadUShort()
-            };
+            GranuleDelta = chunk.ReadUShort();
+            ByteCount = chunk.ReadUShort();
         }
 
         public byte[] WriteData()

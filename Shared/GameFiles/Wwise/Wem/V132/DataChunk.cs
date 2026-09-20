@@ -26,7 +26,11 @@ namespace Shared.GameFormats.Wwise.Wem.V132
 
             var recordCount = FmtChunk.SeekTableSize / WemSeekTableRecord.Size;
             for (var i = 0; i < recordCount; i++)
-                SeekTable.Add(WemSeekTableRecord.ReadData(chunk));
+            {
+                var seekTableRecord = new WemSeekTableRecord();
+                seekTableRecord.ReadData(chunk);
+                SeekTable.Add(seekTableRecord);
+            }
 
             var setupPacketSize = chunk.ReadUShort();
             SetupPacket = chunk.ReadBytes(setupPacketSize);
@@ -37,7 +41,11 @@ namespace Shared.GameFormats.Wwise.Wem.V132
                 chunk.Advance(audioStart - bytesConsumed);
 
             while (chunk.BytesLeft >= WemAudioPacket.LengthPrefixSize)
-                AudioPackets.Add(WemAudioPacket.ReadData(chunk));
+            {
+                var audioPacket = new WemAudioPacket();
+                audioPacket.ReadData(chunk);
+                AudioPackets.Add(audioPacket);
+            }
         }
 
         public override byte[] WriteData()

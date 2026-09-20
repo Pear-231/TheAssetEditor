@@ -18,7 +18,11 @@ namespace Shared.GameFormats.Wwise.Wem.V132
         {
             var count = checked((int)chunk.ReadUInt32());
             for (var i = 0; i < count; i++)
-                CuePoints.Add(CuePoint.ReadData(chunk));
+            {
+                var cuePoint = new CuePoint();
+                cuePoint.ReadData(chunk);
+                CuePoints.Add(cuePoint);
+            }
         }
 
         public override byte[] WriteData()
