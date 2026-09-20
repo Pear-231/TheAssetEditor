@@ -1,4 +1,5 @@
 ﻿using Shared.ByteParsing;
+using Shared.GameFormats.Wwise.Versions;
 
 namespace Shared.GameFormats.Wwise.Hirc.V112.Shared
 {
@@ -7,17 +8,17 @@ namespace Shared.GameFormats.Wwise.Hirc.V112.Shared
         public AkPropBundle_V112 AkPropBundle0 { get; set; } = new AkPropBundle_V112();
         public AkPropBundleMinMax_V112 AkPropBundle1 { get; set; } = new AkPropBundleMinMax_V112();
 
-        public void ReadData(ByteChunk chunk)
+        public void ReadData(ByteChunk chunk, BankVersion bankVersion)
         {
-            AkPropBundle0.ReadData(chunk);
-            AkPropBundle1.ReadData(chunk);
+            AkPropBundle0.ReadData(chunk, bankVersion);
+            AkPropBundle1.ReadData(chunk, bankVersion);
         }
 
-        public byte[] WriteData()
+        public byte[] WriteData(BankVersion bankVersion)
         {
             using var memStream = new MemoryStream();
-            memStream.Write(AkPropBundle0.ReadData());
-            memStream.Write(AkPropBundle1.ReadData());
+            memStream.Write(AkPropBundle0.WriteData(bankVersion));
+            memStream.Write(AkPropBundle1.WriteData(bankVersion));
             return memStream.ToArray();
         }
 

@@ -1,6 +1,7 @@
 ﻿using Shared.ByteParsing;
 using Shared.GameFormats.Wwise.Enums;
 using Shared.GameFormats.Wwise.Hirc.V136.Shared;
+using Shared.GameFormats.Wwise.Versions;
 
 namespace Shared.GameFormats.Wwise.Hirc.V136
 {
@@ -12,23 +13,23 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
         public List<CAkLayer_V136> LayerList { get; set; } = [];
         public byte IsContinuousValidation { get; set; }
 
-        protected override void ReadData(ByteChunk chunk)
+        protected override void ReadData(ByteChunk chunk, BankVersion bankVersion)
         {
-            NodeBaseParams.ReadData(chunk);
+            NodeBaseParams.ReadData(chunk, bankVersion);
             Children.ReadData(chunk);
 
             NumLayers = chunk.ReadUInt32();
             for (var i = 0; i < NumLayers; i++)
             {
                 var layer = new CAkLayer_V136();
-                layer.ReadData(chunk);
+                layer.ReadData(chunk, bankVersion);
                 LayerList.Add(layer);
             }
 
             IsContinuousValidation = chunk.ReadByte();
         }
 
-        public override byte[] WriteData() => throw new NotSupportedException("Users probably don't need this complexity.");
+        public override byte[] WriteData(BankVersion bankVersion) => throw new NotSupportedException("Users probably don't need this complexity.");
         public override void UpdateSectionSize() => throw new NotSupportedException("Users probably don't need this complexity.");
 
         public List<uint> GetChildren() => Children.ChildIds;
@@ -43,12 +44,12 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
             public uint NumAssoc { get; set; }
             public List<CAssociatedChildData_V136> CAssociatedChildDataList { get; set; } = [];
 
-            public void ReadData(ByteChunk chunk)
+            public void ReadData(ByteChunk chunk, BankVersion bankVersion)
             {
                 LayerId = chunk.ReadUInt32();
                 InitialRtpc.ReadData(chunk);
                 RtpcId = chunk.ReadUInt32();
-                RtpcType = (AkRtpcType)chunk.ReadByte();
+                RtpcType = bankVersion.DecodeRtpcType(chunk.ReadByte());
 
                 NumAssoc = chunk.ReadUInt32();
                 for (var i = 0; i < NumAssoc; i++)
@@ -75,7 +76,11 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
                 UnknownCustom1 = chunk.ReadByte();
                 CurveSize = chunk.ReadUInt32();
                 for (var i = 0; i < CurveSize; i++)
-                    AkRtpcGraphPointList.Add(AkRtpcGraphPoint_V136.ReadData(chunk));
+                {
+                    var rtpcGraphPoint = new AkRtpcGraphPoint_V136();
+                    rtpcGraphPoint.ReadData(chunk);
+                    AkRtpcGraphPointList.Add(rtpcGraphPoint);
+                }
             }
         }
     }

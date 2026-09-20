@@ -1,5 +1,6 @@
 ﻿using Shared.ByteParsing;
-using static Shared.GameFormats.Wwise.Enums.Enums_V112;
+using Shared.GameFormats.Wwise.Enums;
+using Shared.GameFormats.Wwise.Versions;
 
 namespace Shared.GameFormats.Wwise.Hirc.V112.Shared
 {
@@ -8,27 +9,27 @@ namespace Shared.GameFormats.Wwise.Hirc.V112.Shared
         public byte Props {  get; set; }
         public List<AkPropBundleInstance_V112> PropsList { get; set; } = [];
 
-        public void ReadData(ByteChunk chunk)
+        public void ReadData(ByteChunk chunk, BankVersion bankVersion)
         {
             Props = chunk.ReadByte();
 
             // Read all the Ids first
             for (byte i = 0; i < Props; i++)
-                PropsList.Add(new AkPropBundleInstance_V112() { Id = (AkPropId_V112)chunk.ReadByte() });
+                PropsList.Add(new AkPropBundleInstance_V112() { Id = bankVersion.DecodePropertyId(chunk.ReadByte()) });
             
             // Then write all the values
             for (byte i = 0; i < Props; i++)
                 PropsList[i].Value = chunk.ReadUInt32();
         }
 
-        public byte[] ReadData()
+        public byte[] WriteData(BankVersion bankVersion)
         {
             using var memStream = new MemoryStream();
             memStream.Write(ByteParsers.Byte.EncodeValue((byte)PropsList.Count, out _));
 
             // Write all the Ids first
             foreach (var akProp in PropsList)
-                memStream.Write(ByteParsers.Byte.EncodeValue((byte)akProp.Id, out _));
+                memStream.Write(ByteParsers.Byte.EncodeValue(bankVersion.EncodePropertyId(akProp.Id), out _));
 
             // Then write all the values
             foreach (var akProp in PropsList)
@@ -50,12 +51,12 @@ namespace Shared.GameFormats.Wwise.Hirc.V112.Shared
 
         public class AkPropBundleInstance_V112
         {
-            public AkPropId_V112 Id { get; set; }
+            public AkPropId Id { get; set; }
             public uint Value { get; set; }
 
             public uint GetSize()
             {
-                var idSize = ByteHelper.GetPropertyTypeSize(Id);
+                var idSize = (uint)sizeof(byte);
                 var valueSize = ByteHelper.GetPropertyTypeSize(Value);
                 return idSize + valueSize;
             }

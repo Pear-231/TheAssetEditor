@@ -12,33 +12,35 @@
         public const string INIT = "INIT"; // The INIT (Initialisation) section contains the game's global config such as busses, states, plugins etc.
     }
 
-    // TODO: need to account for the different hirc types in different versions, hmm
-    public enum AkBkHircType : byte
+    public enum AkBkHircType
     {
-        None = 0x00,
-        State = 0x01,
-        Sound = 0x02,
-        Action = 0x03,
-        Event = 0x04,
-        RandomSequenceContainer = 0x05,
-        SwitchContainer = 0x06,
-        ActorMixer = 0x07,
-        Audio_Bus = 0x08,
-        LayerContainer = 0x09,
-        Music_Segment = 0x0a,
-        Music_Track = 0x0b,
-        Music_Switch = 0x0c,
-        Music_Random_Sequence = 0x0d,
-        Attenuation = 0x0e,
-        Dialogue_Event = 0x0f,
-        FxShareSet = 0x10,
-        FxCustom = 0x11,
-        AuxiliaryBus = 0x12,
-        LFO = 0x13,
-        Envelope = 0x14,
-        AudioDevice = 0x15,
-        TimeMod = 0x16,
-        Didx_Audio = 0x17
+        None,
+        Unknown,
+        State,
+        Sound,
+        Action,
+        Event,
+        RandomSequenceContainer,
+        SwitchContainer,
+        ActorMixer,
+        Audio_Bus,
+        LayerContainer,
+        Music_Segment,
+        Music_Track,
+        Music_Switch,
+        Music_Random_Sequence,
+        Attenuation,
+        Dialogue_Event,
+        FxShareSet,
+        FxCustom,
+        AuxiliaryBus,
+        LFO,
+        Envelope,
+        AudioDevice,
+        TimeMod,
+        FeedbackBus,
+        FeedbackNode,
+        SidechainMix
     }
 
     public enum AkActionType : ushort
@@ -156,43 +158,146 @@
         Streaming = 0x02,
     }
 
-    public enum AkGroupType : byte
+    public enum AkGroupType
     {
-        Switch = 0x00,
-        State = 0x01,
+        Unknown,
+        Switch,
+        State,
     }
 
-    public enum AkMode : byte
+    public enum AkMode
     {
-        BestMatch = 0x00
+        Unknown,
+        BestMatch,
+        Weighted,
     }
 
-    public enum AkRtpcType : byte
+    public enum AkRtpcType
     {
-        GameParameter = 0x00,
-        Modulator = 0x01,
-        MIDIParameter = 0x01,
+        Unknown,
+        GameParameter,
+        MIDIParameter,
+        Modulator,
+        Switch,
+        State,
     }
 
-    public enum AkTransitionMode : byte
+    public enum AkTransitionMode
     {
-        Disabled = 0x00,
-        CrossFadeAmp = 0x01,
-        CrossFadePower = 0x02,
-        Delay = 0x03,
-        SampleAccurate = 0x04,
-        TriggerRate = 0x05,
+        Unknown,
+        Disabled,
+        CrossFadeAmp,
+        CrossFadePower,
+        Delay,
+        SampleAccurate,
+        TriggerRate,
     }
 
-    public enum AkRandomMode : byte
+    public enum AkRandomMode
     {
-        Normal = 0x00,
-        Shuffle = 0x01,
+        Unknown,
+        Normal,
+        Shuffle,
     }
 
-    public enum AkContainerMode : byte
+    public enum AkContainerMode
     {
-        Random = 0x00,
-        Sequence = 0x01,
+        Unknown,
+        Random,
+        Sequence,
+    }
+
+    public enum AkPluginType
+    {
+        Unknown,
+        None,
+        Codec,
+        Source,
+        Effect,
+        MotionDevice,
+        MotionSource,
+        Mixer,
+        Sink,
+        GlobalExtension,
+    }
+
+    public enum AkPropId
+    {
+        Unknown,
+        Volume,
+        LFE,
+        Pitch,
+        LPF,
+        HPF,
+        BusVolume,
+        Priority,
+        PriorityDistanceOffset,
+        FeedbackVolume,
+        FeedbackLPF,
+        MuteRatio,
+        PAN_LR,
+        PAN_FR,
+        CenterPCT,
+        DelayTime,
+        TransitionTime,
+        Probability,
+        DialogueMode,
+        UserAuxSendVolume0,
+        UserAuxSendVolume1,
+        UserAuxSendVolume2,
+        UserAuxSendVolume3,
+        GameAuxSendVolume,
+        OutputBusVolume,
+        OutputBusHPF,
+        OutputBusLPF,
+        HDRBusThreshold,
+        HDRBusRatio,
+        HDRBusReleaseTime,
+        HDRBusGameParam,
+        HDRBusGameParamMin,
+        HDRBusGameParamMax,
+        HDRActiveRange,
+        MakeUpGain,
+        LoopStart,
+        LoopEnd,
+        TrimInTime,
+        TrimOutTime,
+        FadeInTime,
+        FadeOutTime,
+        FadeInCurve,
+        FadeOutCurve,
+        LoopCrossfadeDuration,
+        CrossfadeUpCurve,
+        CrossfadeDownCurve,
+        MidiTrackingRootNote,
+        MidiPlayOnNoteType,
+        MidiTransposition,
+        MidiVelocityOffset,
+        MidiKeyRangeMin,
+        MidiKeyRangeMax,
+        MidiVelocityRangeMin,
+        MidiVelocityRangeMax,
+        MidiChannelMask,
+        PlaybackSpeed,
+        MidiTempoSource,
+        MidiTargetNode,
+        AttachedPluginFXID,
+        Loop,
+        InitialDelay,
+        RemovedFeedbackVolume,
+        RemovedFeedbackLPF,
+        UserAuxSendLPF0,
+        UserAuxSendLPF1,
+        UserAuxSendLPF2,
+        UserAuxSendLPF3,
+        UserAuxSendHPF0,
+        UserAuxSendHPF1,
+        UserAuxSendHPF2,
+        UserAuxSendHPF3,
+        GameAuxSendLPF,
+        GameAuxSendHPF,
+        AttenuationID,
+        PositioningTypeBlend,
+        ReflectionBusVolume,
     }
 }

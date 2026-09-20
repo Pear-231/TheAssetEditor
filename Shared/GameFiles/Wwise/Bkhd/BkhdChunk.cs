@@ -4,19 +4,15 @@ namespace Shared.GameFormats.Wwise.Bkhd
 {
     public class BkhdChunk
     {
-        public string OwnerFilePath { get; set; }
+        public string OwnerFilePath { get; set; } = string.Empty;
         public ChunkHeader ChunkHeader { get; set; } = new ChunkHeader();
         public AkBankHeader AkBankHeader { get; set; } = new AkBankHeader();
 
-        public static BkhdChunk ReadData(string fileName, ByteChunk chunk)
+        public void ReadData(string fileName, ByteChunk chunk)
         {
-            var bkdh = new BkhdChunk()
-            {
-                OwnerFilePath = fileName,
-                ChunkHeader = ChunkHeader.ReadData(chunk),
-            };
-            bkdh.AkBankHeader.ReadData(chunk, bkdh.ChunkHeader.ChunkSize);
-            return bkdh;
+            OwnerFilePath = fileName;
+            ChunkHeader.ReadData(chunk);
+            AkBankHeader.ReadData(chunk, ChunkHeader.ChunkSize);
         }
 
         public static byte[] WriteData(BkhdChunk bkhdChunk)
@@ -27,7 +23,8 @@ namespace Shared.GameFormats.Wwise.Bkhd
             var byteArray = memStream.ToArray();
 
             // Reload the object to ensure sanity
-            ReadData("name", new ByteChunk(byteArray));
+            var reload = new BkhdChunk();
+            reload.ReadData("name", new ByteChunk(byteArray));
 
             return byteArray;
         }

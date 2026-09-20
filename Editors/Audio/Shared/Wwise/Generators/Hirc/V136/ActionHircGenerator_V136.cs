@@ -44,7 +44,7 @@ namespace Editors.Audio.Shared.Wwise.Generators.Hirc.V136
             {
                 action.AkPropBundle0.PropsList.Add(new PropBundleInstance_V136
                 {
-                    Id = AkPropId_V136.TransitionTime,
+                    Id = AkPropId.TransitionTime,
                     Value = 1000
                 });
             }

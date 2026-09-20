@@ -1,4 +1,5 @@
 ﻿using Editors.Audio.Shared.AudioProject.Models;
+using Shared.GameFormats.Wwise.Enums;
 using Shared.GameFormats.Wwise.Hirc;
 using Shared.GameFormats.Wwise.Hirc.V136;
 
@@ -36,20 +37,34 @@ namespace Editors.Audio.Shared.Wwise.Generators.Hirc.V136
             else
                 randomSequenceContainerHirc.AvoidRepeatCount = 1;
 
-            randomSequenceContainerHirc.TransitionMode = (byte)audioProjectRandomSequenceContainer.HircSettings.TransitionType;
+            var transitionType = audioProjectRandomSequenceContainer.HircSettings.TransitionType;
+            if (transitionType == TransitionType.Disabled)
+                randomSequenceContainerHirc.TransitionMode = AkTransitionMode.Disabled;
+            else if (transitionType == TransitionType.XfadeAmp)
+                randomSequenceContainerHirc.TransitionMode = AkTransitionMode.CrossFadeAmp;
+            else if (transitionType == TransitionType.XfadePower)
+                randomSequenceContainerHirc.TransitionMode = AkTransitionMode.CrossFadePower;
+            else if (transitionType == TransitionType.Delay)
+                randomSequenceContainerHirc.TransitionMode = AkTransitionMode.Delay;
+            else if (transitionType == TransitionType.SampleAccurate)
+                randomSequenceContainerHirc.TransitionMode = AkTransitionMode.SampleAccurate;
+            else if (transitionType == TransitionType.TriggerRate)
+                randomSequenceContainerHirc.TransitionMode = AkTransitionMode.TriggerRate;
+            else
+                throw new ArgumentOutOfRangeException(nameof(transitionType), transitionType, "Unsupported transition type.");
 
             if (audioProjectRandomSequenceContainer.HircSettings.ContainerType == ContainerType.Random)
             {
                 if (audioProjectRandomSequenceContainer.HircSettings.RandomType == RandomType.Shuffle)
-                    randomSequenceContainerHirc.RandomMode = 1;
+                    randomSequenceContainerHirc.RandomMode = AkRandomMode.Shuffle;
                 else
-                    randomSequenceContainerHirc.RandomMode = 0;
+                    randomSequenceContainerHirc.RandomMode = AkRandomMode.Normal;
             }
 
             if (audioProjectRandomSequenceContainer.HircSettings.ContainerType == ContainerType.Sequence)
-                randomSequenceContainerHirc.Mode = 1;
+                randomSequenceContainerHirc.Mode = AkContainerMode.Sequence;
             else
-                randomSequenceContainerHirc.Mode = 0;
+                randomSequenceContainerHirc.Mode = AkContainerMode.Random;
 
             var isUsingWeight = 0;
 

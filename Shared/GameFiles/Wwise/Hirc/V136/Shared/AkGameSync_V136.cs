@@ -12,7 +12,7 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
         public uint GetSize()
         {
             var groupIdSize = ByteHelper.GetPropertyTypeSize(GroupId);
-            var groupTypeSize = ByteHelper.GetPropertyTypeSize(GroupType);
+            var groupTypeSize = (uint)sizeof(byte);
             return groupIdSize + groupTypeSize;
         }
 

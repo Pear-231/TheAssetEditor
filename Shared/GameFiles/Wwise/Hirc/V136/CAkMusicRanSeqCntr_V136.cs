@@ -1,5 +1,6 @@
 ﻿using Shared.ByteParsing;
 using Shared.GameFormats.Wwise.Hirc.V136.Shared;
+using Shared.GameFormats.Wwise.Versions;
 
 namespace Shared.GameFormats.Wwise.Hirc.V136
 {
@@ -9,9 +10,9 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
         public uint NumPlaylistItems { get; set; }
         public List<AkMusicRanSeqPlaylistItem_V136> PlayList { get; set; } = [];
 
-        protected override void ReadData(ByteChunk chunk)
+        protected override void ReadData(ByteChunk chunk, BankVersion bankVersion)
         {
-            MusicTransNodeParams.ReadData(chunk);
+            MusicTransNodeParams.ReadData(chunk, bankVersion);
             NumPlaylistItems = chunk.ReadUInt32();
             // Playlists work linearly (unlike decision trees):
             // node[0]            ch=3
@@ -22,10 +23,12 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
             //   node[5]          ch=0    // parent: [0]
             //   node[6]          ch=1    // parent: [0]
             //     node[7]        ch=0    // parent: [6]
-            PlayList.Add(AkMusicRanSeqPlaylistItem_V136.ReadData(chunk));
+            var playlistItem = new AkMusicRanSeqPlaylistItem_V136();
+            playlistItem.ReadData(chunk);
+            PlayList.Add(playlistItem);
         }
 
-        public override byte[] WriteData() => throw new NotSupportedException("Users probably don't need this complexity.");
+        public override byte[] WriteData(BankVersion bankVersion) => throw new NotSupportedException("Users probably don't need this complexity.");
         public override void UpdateSectionSize() => throw new NotSupportedException("Users probably don't need this complexity.");
 
         public class AkMusicRanSeqPlaylistItem_V136
@@ -43,27 +46,26 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
             public byte IsShuffle { get; set; }
             public List<AkMusicRanSeqPlaylistItem_V136> PlayList { get; set; } = [];
 
-            public static AkMusicRanSeqPlaylistItem_V136 ReadData(ByteChunk chunk)
+            public void ReadData(ByteChunk chunk)
             {
-                var akMusicRanSeqPlaylistItem = new AkMusicRanSeqPlaylistItem_V136
+                SegmentId = chunk.ReadUInt32();
+                PlaylistItemId = chunk.ReadInt32();
+                NumChildren = chunk.ReadUInt32();
+                RsType = chunk.ReadUInt32();
+                Loop = chunk.ReadShort();
+                LoopMin = chunk.ReadShort();
+                LoopMax = chunk.ReadShort();
+                Weight = chunk.ReadUInt32();
+                AvoidRepeatCount = chunk.ReadUShort();
+                IsUsingWeight = chunk.ReadByte();
+                IsShuffle = chunk.ReadByte();
+
+                for (var i = 0; i < NumChildren; i++)
                 {
-                    SegmentId = chunk.ReadUInt32(),
-                    PlaylistItemId = chunk.ReadInt32(),
-                    NumChildren = chunk.ReadUInt32(),
-                    RsType = chunk.ReadUInt32(),
-                    Loop = chunk.ReadShort(),
-                    LoopMin = chunk.ReadShort(),
-                    LoopMax = chunk.ReadShort(),
-                    Weight = chunk.ReadUInt32(),
-                    AvoidRepeatCount = chunk.ReadUShort(),
-                    IsUsingWeight = chunk.ReadByte(),
-                    IsShuffle = chunk.ReadByte()
-                };
-
-                for (var i = 0; i < akMusicRanSeqPlaylistItem.NumChildren; i++)
-                    akMusicRanSeqPlaylistItem.PlayList.Add(ReadData(chunk));
-
-                return akMusicRanSeqPlaylistItem;
+                    var childPlaylistItem = new AkMusicRanSeqPlaylistItem_V136();
+                    childPlaylistItem.ReadData(chunk);
+                    PlayList.Add(childPlaylistItem);
+                }
             }
         }
     }

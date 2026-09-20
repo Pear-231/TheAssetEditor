@@ -1,6 +1,7 @@
 ﻿using Shared.ByteParsing;
 using Shared.GameFormats.Wwise.Enums;
 using Shared.GameFormats.Wwise.Hirc.V136.Shared;
+using Shared.GameFormats.Wwise.Versions;
 using static Shared.GameFormats.Wwise.Hirc.ICAkSwitchCntr;
 
 namespace Shared.GameFormats.Wwise.Hirc.V136
@@ -19,10 +20,10 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
         public List<AkSwitchNodeParams_V136> Parameters { get; set; } = [];
         public uint GetDirectParentId() => NodeBaseParams.DirectParentId;
 
-        protected override void ReadData(ByteChunk chunk)
+        protected override void ReadData(ByteChunk chunk, BankVersion bankVersion)
         {
-            NodeBaseParams.ReadData(chunk);
-            EGroupType = (AkGroupType)chunk.ReadByte();
+            NodeBaseParams.ReadData(chunk, bankVersion);
+            EGroupType = BankVersion.DecodeGroupType(chunk.ReadByte());
             GroupId = chunk.ReadUInt32();
             DefaultSwitch = chunk.ReadUInt32();
             BIsContinuousValidation = chunk.ReadByte();
@@ -45,7 +46,7 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
             }
         }
 
-        public override byte[] WriteData() => throw new NotSupportedException("Users probably don't need this complexity.");
+        public override byte[] WriteData(BankVersion bankVersion) => throw new NotSupportedException("Users probably don't need this complexity.");
         public override void UpdateSectionSize() => throw new NotSupportedException("Users probably don't need this complexity.");
 
         public class CAkSwitchPackage_V136 : ICAkSwitchPackage

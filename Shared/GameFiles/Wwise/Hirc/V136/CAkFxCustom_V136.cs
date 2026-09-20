@@ -1,5 +1,6 @@
 ﻿using Shared.ByteParsing;
 using Shared.GameFormats.Wwise.Hirc.V136.Shared;
+using Shared.GameFormats.Wwise.Versions;
 
 namespace Shared.GameFormats.Wwise.Hirc.V136
 {
@@ -15,25 +16,33 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
         public short NumValues { get; set; }
         public List<PluginPropertyValue_V136> PropertyValuesList { get; set; } = [];
 
-        protected override void ReadData(ByteChunk chunk)
+        protected override void ReadData(ByteChunk chunk, BankVersion bankVersion)
         {
             PluginId = chunk.ReadUInt32();
             Size = chunk.ReadUInt32();
-            AkPluginParam = AkPluginParam_V136.ReadData(chunk, PluginId, Size);
+            AkPluginParam = AkPluginParam_V136.CreateFromBytes(chunk, PluginId, Size);
 
             NumBankData = chunk.ReadByte();
             for (var i = 0; i < NumBankData; i++)
-                MediaList.Add(AkMediaMap_V136.ReadData(chunk));
+            {
+                var mediaMap = new AkMediaMap_V136();
+                mediaMap.ReadData(chunk);
+                MediaList.Add(mediaMap);
+            }
 
             InitialRtpc.ReadData(chunk);
             StateChunk.ReadData(chunk);
 
             NumValues = chunk.ReadShort();
             for (var i = 0; i < NumValues; i++)
-                PropertyValuesList.Add(PluginPropertyValue_V136.ReadData(chunk));
+            {
+                var propertyValue = new PluginPropertyValue_V136();
+                propertyValue.ReadData(chunk);
+                PropertyValuesList.Add(propertyValue);
+            }
         }
 
-        public override byte[] WriteData() => throw new NotSupportedException("Users probably don't need this complexity.");
+        public override byte[] WriteData(BankVersion bankVersion) => throw new NotSupportedException("Users probably don't need this complexity.");
         public override void UpdateSectionSize() => throw new NotSupportedException("Users probably don't need this complexity.");
     }
 }

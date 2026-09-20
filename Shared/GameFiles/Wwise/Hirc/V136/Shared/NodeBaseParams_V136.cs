@@ -1,4 +1,5 @@
 ﻿using Shared.ByteParsing;
+using Shared.GameFormats.Wwise.Versions;
 
 namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
 {
@@ -16,14 +17,14 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
         public StateChunk_V136 StateChunk { get; set; } = new StateChunk_V136();
         public InitialRtpc_V136 InitialRtpc { get; set; } = new InitialRtpc_V136();
 
-        public void ReadData(ByteChunk chunk)
+        public void ReadData(ByteChunk chunk, BankVersion bankVersion)
         {
             NodeInitialFxParams.ReadData(chunk);
             OverrideAttachmentParams = chunk.ReadByte();
             OverrideBusId = chunk.ReadUInt32();
             DirectParentId = chunk.ReadUInt32();
             BitVector = chunk.ReadByte();
-            NodeInitialParams.ReadData(chunk);
+            NodeInitialParams.ReadData(chunk, bankVersion);
             PositioningParams.ReadData(chunk);
             AuxParams.ReadData(chunk);
             AdvSettingsParams.ReadData(chunk);
@@ -31,7 +32,7 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
             InitialRtpc.ReadData(chunk);
         }
 
-        public byte[] WriteData()
+        public byte[] WriteData(BankVersion bankVersion)
         {
             using var memStream = new MemoryStream();
             memStream.Write(NodeInitialFxParams.WriteData());
@@ -39,7 +40,7 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
             memStream.Write(ByteParsers.UInt32.EncodeValue(OverrideBusId, out _));
             memStream.Write(ByteParsers.UInt32.EncodeValue(DirectParentId, out _));
             memStream.Write(ByteParsers.Byte.EncodeValue(BitVector, out _));
-            memStream.Write(NodeInitialParams.WriteData());
+            memStream.Write(NodeInitialParams.WriteData(bankVersion));
             memStream.Write(PositioningParams.WriteData());
             memStream.Write(AuxParams.WriteData());
             memStream.Write(AdvSettingsParams.WriteData());

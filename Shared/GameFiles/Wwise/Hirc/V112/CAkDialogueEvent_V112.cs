@@ -1,6 +1,7 @@
 ﻿using Shared.ByteParsing;
 using Shared.GameFormats.Wwise.Enums;
 using Shared.GameFormats.Wwise.Hirc.V112.Shared;
+using Shared.GameFormats.Wwise.Versions;
 using static Shared.GameFormats.Wwise.Hirc.ICAkDialogueEvent;
 
 namespace Shared.GameFormats.Wwise.Hirc.V112
@@ -11,10 +12,10 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
         public uint TreeDepth { get; set; }
         public List<IAkGameSync> Arguments { get; set; } = [];
         public uint TreeDataSize { get; set; }
-        public byte Mode { get; set; }
+        public AkMode Mode { get; set; }
         public IAkDecisionTree AkDecisionTree { get; set; } = new AkDecisionTree_V112();
 
-        protected override void ReadData(ByteChunk chunk)
+        protected override void ReadData(ByteChunk chunk, BankVersion bankVersion)
         {
             Probability = chunk.ReadByte();
 
@@ -28,14 +29,14 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
 
             // Then read all the group types
             for (var i = 0; i < TreeDepth; i++)
-                Arguments[i].GroupType = (AkGroupType)chunk.ReadByte();
+                Arguments[i].GroupType = BankVersion.DecodeGroupType(chunk.ReadByte());
 
             TreeDataSize = chunk.ReadUInt32();
-            Mode = chunk.ReadByte();
+            Mode = BankVersion.DecodeDecisionTreeMode(chunk.ReadByte());
             AkDecisionTree.ReadData(chunk, TreeDataSize, TreeDepth);
         }
 
         public override void UpdateSectionSize() => throw new NotImplementedException();
-        public override byte[] WriteData() => throw new NotImplementedException();
+        public override byte[] WriteData(BankVersion bankVersion) => throw new NotImplementedException();
     }
 }

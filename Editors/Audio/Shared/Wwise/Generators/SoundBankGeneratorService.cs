@@ -105,7 +105,7 @@ namespace Editors.Audio.Shared.Wwise.Generators
                 var mergedDecisionTree = new AkDecisionTree_V136
                 {
                     DecisionTree = decisionTree,
-                    Nodes = nodes
+                    FlattenedDecisionTree = nodes
                 };
                 compilerDialogueEvent.AkDecisionTree = mergedDecisionTree;
                 compilerDialogueEvent.TreeDataSize = mergedDecisionTree.GetSize();
@@ -369,7 +369,7 @@ namespace Editors.Audio.Shared.Wwise.Generators
 
                     var mergedDecisionTree = new AkDecisionTree_V136();
                     mergedDecisionTree.DecisionTree = AkDecisionTree_V136.MergeDecisionTrees(currentDecisionTree.DecisionTree, moddedDecisionTree.DecisionTree);
-                    mergedDecisionTree.Nodes = AkDecisionTree_V136.FlattenDecisionTree(mergedDecisionTree.DecisionTree);
+                    mergedDecisionTree.FlattenedDecisionTree = AkDecisionTree_V136.FlattenDecisionTree(mergedDecisionTree.DecisionTree);
 
                     mergedDialogueEvent.AkDecisionTree = mergedDecisionTree;
                     mergedDialogueEvent.TreeDataSize = mergedDecisionTree.GetSize();

@@ -1,6 +1,7 @@
 ﻿using Shared.ByteParsing;
 using Shared.GameFormats.Wwise.Enums;
 using Shared.GameFormats.Wwise.Hirc.V136.Shared;
+using Shared.GameFormats.Wwise.Versions;
 
 namespace Shared.GameFormats.Wwise.Hirc.V136
 {
@@ -11,12 +12,12 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
         public uint TreeDepth { get; set; }
         public List<AkGameSync_V136> Arguments { get; set; } = [];
         public uint TreeDataSize { get; set; }
-        public byte Mode { get; set; }
+        public AkMode Mode { get; set; }
         public AkDecisionTree_V136 AkDecisionTree { get; set; } = new AkDecisionTree_V136();
 
-        protected override void ReadData(ByteChunk chunk)
+        protected override void ReadData(ByteChunk chunk, BankVersion bankVersion)
         {
-            MusicTransNodeParams.ReadData(chunk);
+            MusicTransNodeParams.ReadData(chunk, bankVersion);
             IsContinuePlayback = chunk.ReadByte();
 
             TreeDepth = chunk.ReadUInt32();
@@ -29,14 +30,14 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
 
             // Then read all the group types
             for (var i = 0; i < TreeDepth; i++)
-                Arguments[i].GroupType = (AkGroupType)chunk.ReadByte();
+                Arguments[i].GroupType = BankVersion.DecodeGroupType(chunk.ReadByte());
 
             TreeDataSize = chunk.ReadUInt32();
-            Mode = chunk.ReadByte();
+            Mode = BankVersion.DecodeDecisionTreeMode(chunk.ReadByte());
             AkDecisionTree.ReadData(chunk, TreeDataSize, TreeDepth);
         }
 
-        public override byte[] WriteData() => throw new NotSupportedException("Users probably don't need this complexity.");
+        public override byte[] WriteData(BankVersion bankVersion) => throw new NotSupportedException("Users probably don't need this complexity.");
         public override void UpdateSectionSize() => throw new NotSupportedException("Users probably don't need this complexity.");
     }
 }

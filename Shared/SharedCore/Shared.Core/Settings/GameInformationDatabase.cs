@@ -21,9 +21,15 @@ namespace Shared.Core.Settings
         Pharaoh
     }
 
+    // Each major release of Wwise has a 'bank generator version'. CA sometimes use an in-house
+    // compiled version of Wwise which is based on a public release with some custom modifications.
+
     public enum GameBnkVersion : uint
     {
         Unsupported = 0,
+        // Wwise version 2019.2.15.7667 has the bank generator version 135 and is the version CA's in-house
+        // version for WH3 is based off. Their in-house version has the bank generator version 2147483784.
+        // Wwiser calls this V136 for internal use but really it's 2147483784.
         Warhammer3 = 2147483784,
         Attila = 112
     }

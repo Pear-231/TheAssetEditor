@@ -14,7 +14,7 @@ namespace Editors.Audio.Shared.Storage.CacheDatabase
     {
         private static readonly ILogger s_logger = Logging.CreateStatic(typeof(AudioCache));
         private static readonly JsonSerializerOptions s_jsonOptions = new();
-        private const int CurrentSchemaVersion = 2;
+        private const int CurrentSchemaVersion = 3;
 
         private readonly DbContextOptions<AudioCacheDbContext> _dbOptions;
         private readonly Lock _dbLock = new();
@@ -384,7 +384,7 @@ namespace Editors.Audio.Shared.Storage.CacheDatabase
             command.ExecuteNonQuery();
         }
 
-        private static long InsertBnk(SqliteConnection connection, SqliteTransaction transaction, string path, bool isCA, BnkFile.Index index)
+        private static long InsertBnk(SqliteConnection connection, SqliteTransaction transaction, string path, bool isCA, BnkIndex index)
         {
             using var command = connection.CreateCommand();
             command.Transaction = transaction;
@@ -400,7 +400,7 @@ namespace Editors.Audio.Shared.Storage.CacheDatabase
             return (long)command.ExecuteScalar()!;
         }
 
-        private static void InsertHircs(SqliteConnection connection, SqliteTransaction transaction, BnkFile.Index index, long bnkId)
+        private static void InsertHircs(SqliteConnection connection, SqliteTransaction transaction, BnkIndex index, long bnkId)
         {
             using var command = connection.CreateCommand();
             command.Transaction = transaction;
@@ -419,7 +419,7 @@ namespace Editors.Audio.Shared.Storage.CacheDatabase
             foreach (var hirc in index.HircEntries)
             {
                 id.Value = (long)hirc.Header.Id;
-                type.Value = (int)hirc.Header.HircType;
+                type.Value = (int)hirc.HircType;
                 offset.Value = hirc.Offset;
                 length.Value = hirc.Length;
                 hircIndex.Value = (long)hirc.Index;
@@ -427,7 +427,7 @@ namespace Editors.Audio.Shared.Storage.CacheDatabase
             }
         }
 
-        private static void InsertDidx(SqliteConnection connection, SqliteTransaction transaction, BnkFile.Index index, long bnkId)
+        private static void InsertDidx(SqliteConnection connection, SqliteTransaction transaction, BnkIndex index, long bnkId)
         {
             if (!index.DataOffset.HasValue)
                 return;

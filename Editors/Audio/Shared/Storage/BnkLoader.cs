@@ -8,6 +8,7 @@ using Shared.GameFormats.Wwise;
 using Shared.GameFormats.Wwise.Didx;
 using Shared.GameFormats.Wwise.Enums;
 using Shared.GameFormats.Wwise.Hirc;
+using Shared.GameFormats.Wwise.Versions;
 
 namespace Editors.Audio.Shared.Storage
 {
@@ -55,7 +56,7 @@ namespace Editors.Audio.Shared.Storage
             return resolvedBnks.Values.ToList();
         }
 
-        internal BnkFile.Index LoadIndex(PackFile bnk, string bnkPath)
+        internal BnkIndex LoadIndex(PackFile bnk, string bnkPath)
         {
             var source = bnk.DataSource;
             var decodedSize = GetDecodedSize(source);
@@ -154,10 +155,11 @@ namespace Editors.Audio.Shared.Storage
             if (relativeOffset < 0 || relativeOffset > int.MaxValue || reference.Length > bnkRange.Length - relativeOffset)
                 throw new InvalidDataException( $"HIRC range in '{reference.BnkPath}' is outside the supplied bank data.");
 
-            var hirc = HircItem.ReadData(
+            var bankVersion = BankVersionResolver.Resolve(reference.BankGeneratorVersion);
+            var hirc = bankVersion.HircFactory.ReadHirc(
                 reference.BnkPath,
                 new ByteChunk(bnkRange, (int)relativeOffset),
-                reference.BankGeneratorVersion,
+                bankVersion,
                 reference.LanguageId,
                 reference.IsCA,
                 reference.IndexInBnk,

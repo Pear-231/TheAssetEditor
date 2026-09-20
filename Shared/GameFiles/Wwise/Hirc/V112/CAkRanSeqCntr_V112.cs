@@ -1,5 +1,7 @@
 ﻿using Shared.ByteParsing;
+using Shared.GameFormats.Wwise.Enums;
 using Shared.GameFormats.Wwise.Hirc.V112.Shared;
+using Shared.GameFormats.Wwise.Versions;
 
 namespace Shared.GameFormats.Wwise.Hirc.V112
 {
@@ -13,16 +15,16 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
         public float TransitionTimeModMin { get; set; }
         public float TransitionTimeModMax { get; set; }
         public ushort AvoidRepeatCount { get; set; }
-        public byte TransitionMode { get; set; }
-        public byte RandomMode { get; set; }
-        public byte Mode { get; set; }
+        public AkTransitionMode TransitionMode { get; set; }
+        public AkRandomMode RandomMode { get; set; }
+        public AkContainerMode Mode { get; set; }
         public byte BitVector { get; set; }
         public Children_V112 Children { get; set; } = new Children_V112();
         public CAkPlayList_V112 CAkPlayList { get; set; } = new CAkPlayList_V112();
 
-        protected override void ReadData(ByteChunk chunk)
+        protected override void ReadData(ByteChunk chunk, BankVersion bankVersion)
         {
-            NodeBaseParams.ReadData(chunk);
+            NodeBaseParams.ReadData(chunk, bankVersion);
             LoopCount = chunk.ReadUShort();
             LoopModMin = chunk.ReadUShort();
             LoopModMax = chunk.ReadUShort();
@@ -30,18 +32,18 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
             TransitionTimeModMin = chunk.ReadSingle();
             TransitionTimeModMax = chunk.ReadSingle();
             AvoidRepeatCount = chunk.ReadUShort();
-            TransitionMode = chunk.ReadByte();
-            RandomMode = chunk.ReadByte();
-            Mode = chunk.ReadByte();
+            TransitionMode = BankVersion.DecodeTransitionMode(chunk.ReadByte());
+            RandomMode = BankVersion.DecodeRandomMode(chunk.ReadByte());
+            Mode = BankVersion.DecodeContainerMode(chunk.ReadByte());
             BitVector = chunk.ReadByte();
             Children.ReadData(chunk);
             CAkPlayList.ReadData(chunk);
         }
 
-        public override byte[] WriteData()
+        public override byte[] WriteData(BankVersion bankVersion)
         {
             using var memStream = WriteHeader();
-            memStream.Write(NodeBaseParams.WriteData());
+            memStream.Write(NodeBaseParams.WriteData(bankVersion));
             memStream.Write(ByteParsers.UShort.EncodeValue(LoopCount, out _));
             memStream.Write(ByteParsers.UShort.EncodeValue(LoopModMin, out _));
             memStream.Write(ByteParsers.UShort.EncodeValue(LoopModMax, out _));
@@ -49,9 +51,9 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
             memStream.Write(ByteParsers.Single.EncodeValue(TransitionTimeModMin, out _));
             memStream.Write(ByteParsers.Single.EncodeValue(TransitionTimeModMax, out _));
             memStream.Write(ByteParsers.UShort.EncodeValue(AvoidRepeatCount, out _));
-            memStream.Write(ByteParsers.Byte.EncodeValue(TransitionMode, out _));
-            memStream.Write(ByteParsers.Byte.EncodeValue(RandomMode, out _));
-            memStream.Write(ByteParsers.Byte.EncodeValue(Mode, out _));
+            memStream.Write(ByteParsers.Byte.EncodeValue(BankVersion.EncodeTransitionMode(TransitionMode), out _));
+            memStream.Write(ByteParsers.Byte.EncodeValue(BankVersion.EncodeRandomMode(RandomMode), out _));
+            memStream.Write(ByteParsers.Byte.EncodeValue(BankVersion.EncodeContainerMode(Mode), out _));
             memStream.Write(ByteParsers.Byte.EncodeValue(BitVector, out _));
             memStream.Write(Children.WriteData());
             memStream.Write(CAkPlayList.WriteData());
@@ -59,7 +61,7 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
 
             // Reload the object to ensure sanity
             var sanityReload = new CAkRanSeqCntr_V112();
-            sanityReload.ReadHirc(new ByteChunk(byteArray));
+            sanityReload.ReadHirc(new ByteChunk(byteArray), bankVersion);
 
             return byteArray;
         }
@@ -75,9 +77,9 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
             var transitionTimeModMinSize = ByteHelper.GetPropertyTypeSize(TransitionTimeModMin);
             var transitionTimeModMaxSize = ByteHelper.GetPropertyTypeSize(TransitionTimeModMax);
             var avoidRepeatCountSize = ByteHelper.GetPropertyTypeSize(AvoidRepeatCount);
-            var transitionModeSize = ByteHelper.GetPropertyTypeSize(TransitionMode);
-            var randomModeSize = ByteHelper.GetPropertyTypeSize(RandomMode);
-            var modeSize = ByteHelper.GetPropertyTypeSize(Mode);
+            var transitionModeSize = (uint)sizeof(byte);
+            var randomModeSize = (uint)sizeof(byte);
+            var modeSize = (uint)sizeof(byte);
             var bitVectorSize = ByteHelper.GetPropertyTypeSize(BitVector);
             var childrenSize = Children.GetSize();
             var playListSize = CAkPlayList.GetSize();
@@ -98,7 +100,11 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
             {
                 PlayListItem = chunk.ReadUShort();
                 for (var i = 0; i < PlayListItem; i++)
-                    Playlist.Add(AkPlaylistItem_V112.ReadData(chunk));
+                {
+                    var playlistItem = new AkPlaylistItem_V112();
+                    playlistItem.ReadData(chunk);
+                    Playlist.Add(playlistItem);
+                }
             }
 
             public byte[] WriteData()
@@ -124,13 +130,10 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
                 public uint PlayId { get; set; }
                 public int Weight { get; set; }
 
-                public static AkPlaylistItem_V112 ReadData(ByteChunk chunk)
+                public void ReadData(ByteChunk chunk)
                 {
-                    return new AkPlaylistItem_V112
-                    {
-                        PlayId = chunk.ReadUInt32(),
-                        Weight = chunk.ReadInt32()
-                    };
+                    PlayId = chunk.ReadUInt32();
+                    Weight = chunk.ReadInt32();
                 }
 
                 public byte[] WriteData()

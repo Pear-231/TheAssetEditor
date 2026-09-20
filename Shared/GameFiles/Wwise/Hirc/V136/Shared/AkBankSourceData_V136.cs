@@ -1,30 +1,28 @@
 ﻿using Shared.ByteParsing;
 using Shared.GameFormats.Wwise.Enums;
+using Shared.GameFormats.Wwise.Versions;
 
 namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
 {
     public class AkBankSourceData_V136
     {
         public uint PluginId { get; set; }
-        public AkPluginType_V136 PluginIdType { get; set; }
+        public AkPluginType PluginIdType { get; set; }
         public ushort PluginIdCompany { get; set; }
         public AKBKSourceType StreamType { get; set; }
         public AkMediaInformation_V136 AkMediaInformation { get; set; } = new AkMediaInformation_V136();
         public uint Size { get; set; }
 
-        public static AkBankSourceData_V136 ReadData(ByteChunk chunk)
+        public void ReadData(ByteChunk chunk, BankVersion bankVersion)
         {
-            var akBankSourceData_V136 = new AkBankSourceData_V136();
-            akBankSourceData_V136.PluginId = chunk.ReadUInt32();
-            akBankSourceData_V136.PluginIdType = (AkPluginType_V136)(ushort)(akBankSourceData_V136.PluginId >> 0 & 0x000F);
-            akBankSourceData_V136.PluginIdCompany = (ushort)(akBankSourceData_V136.PluginId >> 4 & 0x03FF); // Apparently CA doesn't have one
-            akBankSourceData_V136.StreamType = (AKBKSourceType)chunk.ReadByte();
-            akBankSourceData_V136.AkMediaInformation.ReadData(chunk); 
+            PluginId = chunk.ReadUInt32();
+            PluginIdType = bankVersion.DecodePluginType((byte)(PluginId & 0x000F));
+            PluginIdCompany = (ushort)(PluginId >> 4 & 0x03FF); // Apparently CA doesn't have one
+            StreamType = (AKBKSourceType)chunk.ReadByte();
+            AkMediaInformation.ReadData(chunk);
             
-            if (akBankSourceData_V136.PluginIdType == AkPluginType_V136.Source)
-                akBankSourceData_V136.Size = chunk.ReadUInt32();
-
-            return akBankSourceData_V136;
+            if (PluginIdType == AkPluginType.Source)
+                Size = chunk.ReadUInt32();
         }
 
         public byte[] WriteData()
@@ -33,7 +31,7 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
             memStream.Write(ByteParsers.UInt32.EncodeValue(PluginId, out _));
             memStream.Write(ByteParsers.Byte.EncodeValue((byte)StreamType, out _));
             memStream.Write(AkMediaInformation.WriteData());
-            if (PluginIdType == AkPluginType_V136.Source)
+            if (PluginIdType == AkPluginType.Source)
                 memStream.Write(ByteParsers.UInt32.EncodeValue(Size, out _));
             return memStream.ToArray();
         }
@@ -45,7 +43,7 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
             var mediaInfoSize = AkMediaInformation.GetSize();
 
             uint sizeSize = 0;
-            if (PluginIdType == AkPluginType_V136.Source)
+            if (PluginIdType == AkPluginType.Source)
                 sizeSize += (uint)ByteHelper.GetPropertyTypeSize(Size);
 
             return pluginIdSize + streamTypeSize + mediaInfoSize + sizeSize;

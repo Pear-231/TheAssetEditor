@@ -2,6 +2,8 @@
 
 namespace Shared.GameFormats.Wwise.Hirc
 {
+    using Shared.GameFormats.Wwise.Versions;
+
     public class HircChunk
     {
         public static uint ChunkHeaderSize { get => 4; }
@@ -9,32 +11,20 @@ namespace Shared.GameFormats.Wwise.Hirc
         public uint NumHircItems { get; set; }
         public List<HircItem> HircItems { get; set; } = [];
 
-        public static HircChunk ReadData(string filePath, ByteChunk chunk, uint bankGeneratorVersion, uint languageId, bool isCA)
+        public void ReadData(string filePath, ByteChunk chunk, BankVersion bankVersion, uint languageId, bool isCA)
         {
-            var hircChunk = new HircChunk
-            {
-                ChunkHeader = ChunkHeader.ReadData(chunk),
-                NumHircItems = chunk.ReadUInt32()
-            };
+            ChunkHeader.ReadData(chunk);
+            NumHircItems = chunk.ReadUInt32();
 
-            for (uint itemIndex = 0; itemIndex < hircChunk.NumHircItems; itemIndex++)
-                hircChunk.HircItems.Add(
-                    HircItem.ReadData(
-                        filePath,
-                        chunk,
-                        bankGeneratorVersion,
-                        languageId,
-                        isCA,
-                        itemIndex));
+            for (uint itemIndex = 0; itemIndex < NumHircItems; itemIndex++)
+                HircItems.Add(bankVersion.HircFactory.ReadHirc(filePath, chunk, bankVersion, languageId, isCA, itemIndex));
 
-            var expectedChunkSize = ChunkHeaderSize + hircChunk.HircItems.Sum(hirc => HircHeader.PrefixSize + hirc.SectionSize);
-            if (expectedChunkSize != hircChunk.ChunkHeader.ChunkSize)
+            var expectedChunkSize = ChunkHeaderSize + HircItems.Sum(hirc => HircHeader.PrefixSize + hirc.SectionSize);
+            if (expectedChunkSize != ChunkHeader.ChunkSize)
                 throw new Exception("Error parsing HIRC in bnk, expected and actual not matching");
-
-            return hircChunk;
         }
 
-        public static List<HircIndexEntry> BuildIndex(long payloadOffset, uint chunkSize, ByteChunk chunk)
+        public static List<HircIndexEntry> BuildIndex(long payloadOffset, uint chunkSize, ByteChunk chunk, BankVersion bankVersion)
         {
             if (chunkSize < sizeof(uint))
                 throw new InvalidDataException($"HIRC chunk is only {chunkSize} bytes.");
@@ -48,7 +38,9 @@ namespace Shared.GameFormats.Wwise.Hirc
                     throw new InvalidDataException($"HIRC item {itemIndex} does not contain a complete header.");
 
                 var itemOffsetInChunk = chunk.Index;
-                var header = HircHeader.ReadData(chunk);
+                var header = new HircHeader();
+                header.ReadData(chunk);
+                var hircType = bankVersion.DecodeHircType(header.HircType);
                 if (header.SectionSize < sizeof(uint))
                     throw new InvalidDataException($"HIRC item {itemIndex} has an invalid section size of {header.SectionSize}.");
 
@@ -59,6 +51,7 @@ namespace Shared.GameFormats.Wwise.Hirc
                 result.Add(
                     new HircIndexEntry
                     {
+                        HircType = hircType,
                         Header = header,
                         Offset = payloadOffset + itemOffsetInChunk,
                         Length = (int)hircLength,
@@ -75,20 +68,23 @@ namespace Shared.GameFormats.Wwise.Hirc
 
         public static byte[] WriteData(HircChunk hircChunk, uint gameBankGeneratorVersion)
         {
+            var bankVersion = BankVersionResolver.Resolve(gameBankGeneratorVersion);
             using var memStream = new MemoryStream();
             memStream.Write(ChunkHeader.WriteData(hircChunk.ChunkHeader));
             memStream.Write(ByteParsers.UInt32.EncodeValue(hircChunk.NumHircItems, out _));
 
             foreach (var hircItem in hircChunk.HircItems)
             {
-                var bytes = hircItem.WriteData();
+                hircItem.Header.HircType = bankVersion.EncodeHircType(hircItem.HircType);
+                var bytes = hircItem.WriteData(bankVersion);
                 memStream.Write(bytes);
             }
 
             var byteArray = memStream.ToArray();
 
             // Reload to ensure sanity
-            ReadData("name", new ByteChunk(byteArray), gameBankGeneratorVersion, 0, true);
+            var sanityReload = new HircChunk();
+            sanityReload.ReadData("name", new ByteChunk(byteArray), bankVersion, 0, true);
 
             return byteArray;
         }

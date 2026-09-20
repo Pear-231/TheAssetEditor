@@ -1,6 +1,7 @@
 ﻿using Shared.ByteParsing;
 using Shared.GameFormats.Wwise.Enums;
 using Shared.GameFormats.Wwise.Hirc.V112.Shared;
+using Shared.GameFormats.Wwise.Versions;
 
 namespace Shared.GameFormats.Wwise.Hirc.V112
 {
@@ -14,28 +15,34 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
         public PlayActionParams_V112? PlayActionParams { get; set; }
         public StateActionParams_V112? StateActionParams { get; set; }
 
-        protected override void ReadData(ByteChunk chunk)
+        protected override void ReadData(ByteChunk chunk, BankVersion bankVersion)
         {
             ActionType = (AkActionType)chunk.ReadUShort();
             IdExt = chunk.ReadUInt32();
             IdExt4 = chunk.ReadByte();
-            AkPropBundle0. ReadData(chunk);
-            AkPropBundle1.ReadData(chunk);
+            AkPropBundle0.ReadData(chunk, bankVersion);
+            AkPropBundle1.ReadData(chunk, bankVersion);
 
             if (ActionType == AkActionType.Play)
-                PlayActionParams = PlayActionParams_V112.ReadData(chunk);
+            {
+                PlayActionParams = new PlayActionParams_V112();
+                PlayActionParams.ReadData(chunk);
+            }
             else if (ActionType == AkActionType.SetState)
-                StateActionParams = StateActionParams_V112.ReadData(chunk);
+            {
+                StateActionParams = new StateActionParams_V112();
+                StateActionParams.ReadData(chunk);
+            }
         }
 
-        public override byte[] WriteData()
+        public override byte[] WriteData(BankVersion bankVersion)
         {
             using var memStream = WriteHeader();
             memStream.Write(ByteParsers.UShort.EncodeValue((ushort)ActionType, out _));
             memStream.Write(ByteParsers.UInt32.EncodeValue(IdExt, out _));
             memStream.Write(ByteParsers.Byte.EncodeValue(IdExt4, out _));
-            memStream.Write(AkPropBundle0.ReadData());
-            memStream.Write(AkPropBundle1.ReadData());
+            memStream.Write(AkPropBundle0.WriteData(bankVersion));
+            memStream.Write(AkPropBundle1.WriteData(bankVersion));
 
             if (ActionType == AkActionType.Play)
                 memStream.Write(PlayActionParams!.WriteData());
@@ -46,7 +53,7 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
 
             // Reload the object to ensure sanity
             var sanityReload = new CAkAction_V112();
-            sanityReload.ReadHirc(new ByteChunk(byteArray));
+            sanityReload.ReadHirc(new ByteChunk(byteArray), bankVersion);
 
             return byteArray;
         }
@@ -78,13 +85,10 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
             public byte BitVector { get; set; }
             public uint FileId { get; set; }
 
-            public static PlayActionParams_V112 ReadData(ByteChunk chunk)
+            public void ReadData(ByteChunk chunk)
             {
-                return new PlayActionParams_V112()
-                {
-                    BitVector = chunk.ReadByte(),
-                    FileId = chunk.ReadUInt32()
-                };
+                BitVector = chunk.ReadByte();
+                FileId = chunk.ReadUInt32();
             }
 
             public byte[] WriteData()
@@ -108,13 +112,10 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
             public uint StateGroupId { get; set; }
             public uint TargetStateId { get; set; }
 
-            public static StateActionParams_V112 ReadData(ByteChunk chunk)
+            public void ReadData(ByteChunk chunk)
             {
-                return new StateActionParams_V112()
-                {
-                    StateGroupId = chunk.ReadUInt32(),
-                    TargetStateId = chunk.ReadUInt32()
-                };
+                StateGroupId = chunk.ReadUInt32();
+                TargetStateId = chunk.ReadUInt32();
             }
         }
     }

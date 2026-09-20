@@ -1,4 +1,6 @@
-﻿using Shared.GameFormats.Wwise.Enums;
+﻿using Shared.ByteParsing;
+using Shared.GameFormats.Wwise.Enums;
+using Shared.GameFormats.Wwise.Versions;
 
 namespace Shared.GameFormats.Wwise.Hirc
 {
@@ -19,22 +21,7 @@ namespace Shared.GameFormats.Wwise.Hirc
             return new UnknownHircItem();
         }
 
-        // Each major release of Wwise has a bank generator version
-        // CA sometimes use an in-house compiled version of Wwise which is based on a public release with custom modifications to some Wwise objects
-        // The bank generator version of the closest public release (2019.2.15.7667) to that used in Wh3 (2147483784) is 135
-        // Wwiser adds 1 to that for internal use to create a pseudo version called 136 but really it's 2147483784
-        public static HircFactory CreateFactory(uint bankGeneratorVersion)
-        {
-            return bankGeneratorVersion switch
-            {
-                112 => CreateFactory_v112(),
-                135 => CreateFactory_v136(),
-                2147483784 => CreateFactory_v136(),
-                _ => throw new Exception($"Unknown Bank Generator Version: {bankGeneratorVersion}"),
-            };
-        }
-
-        private static HircFactory CreateFactory_v112()
+        public static HircFactory CreateFactory_v112()
         {
             var instance = new HircFactory();
             instance.RegisterHirc(AkBkHircType.ActorMixer, () => new V112.CAkActorMixer_V112());
@@ -48,7 +35,7 @@ namespace Shared.GameFormats.Wwise.Hirc
             return instance;
         }
 
-        private static HircFactory CreateFactory_v136()
+        public static HircFactory CreateFactory_v136()
         {
             var instance = new HircFactory();
             instance.RegisterHirc(AkBkHircType.ActorMixer, () => new V136.CAkActorMixer_V136());
@@ -67,6 +54,44 @@ namespace Shared.GameFormats.Wwise.Hirc
             instance.RegisterHirc(AkBkHircType.FxShareSet, () => new V136.CAkFxShareSet_V136());
             instance.RegisterHirc(AkBkHircType.Audio_Bus, () => new V136.CAkBus_V136());
             return instance;
+        }
+
+        public HircItem ReadHirc(string filePath, ByteChunk chunk, BankVersion bankVersion, uint languageId, bool isCA, uint itemIndex, int? expectedLength = null)
+        {
+            if (expectedLength.HasValue && expectedLength.Value < HircHeader.Size)
+                throw new InvalidDataException($"HIRC item {itemIndex} is only {expectedLength.Value} bytes.");
+
+            var itemStartIndex = chunk.Index;
+            var hircType = bankVersion.DecodeHircType(chunk.PeakByte());
+            HircItem hircItem;
+
+            try
+            {
+                hircItem = CreateInstance(hircType);
+                hircItem.IndexInFile = itemIndex;
+                hircItem.BnkFilePath = filePath;
+                hircItem.LanguageId = languageId;
+                hircItem.IsCA = isCA;
+                hircItem.HircType = hircType;
+                hircItem.ReadHirc(chunk, bankVersion);
+            }
+            catch (Exception exception)
+            {
+                chunk.Index = itemStartIndex;
+                hircItem = new UnknownHircItem
+                {
+                    ErrorMsg = exception.Message,
+                    BnkFilePath = filePath,
+                    HircType = hircType
+                };
+                hircItem.ReadHirc(chunk, bankVersion);
+            }
+
+            var bytesRead = chunk.Index - itemStartIndex;
+            if (expectedLength.HasValue && bytesRead != expectedLength.Value)
+                throw new InvalidDataException($"HIRC item {itemIndex} expected {expectedLength.Value} bytes but read {bytesRead}.");
+
+            return hircItem;
         }
     }
 }

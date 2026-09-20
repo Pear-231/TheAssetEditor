@@ -1,5 +1,6 @@
 ﻿using Shared.ByteParsing;
 using Shared.GameFormats.Wwise.Hirc.V136.Shared;
+using Shared.GameFormats.Wwise.Versions;
 
 namespace Shared.GameFormats.Wwise.Hirc.V136
 {
@@ -8,22 +9,22 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
         public NodeBaseParams_V136 NodeBaseParams { get; set; } = new NodeBaseParams_V136();
         public Children_V136 Children { get; set; } = new Children_V136();
 
-        protected override void ReadData(ByteChunk chunk)
+        protected override void ReadData(ByteChunk chunk, BankVersion bankVersion)
         {
-            NodeBaseParams.ReadData(chunk);
+            NodeBaseParams.ReadData(chunk, bankVersion);
             Children.ReadData(chunk);
         }
 
-        public override byte[] WriteData()
+        public override byte[] WriteData(BankVersion bankVersion)
         {
             using var memStream = WriteHeader();
-            memStream.Write(NodeBaseParams.WriteData());
+            memStream.Write(NodeBaseParams.WriteData(bankVersion));
             memStream.Write(Children.WriteData());
             var byteArray = memStream.ToArray();
 
             // Reload the object to ensure sanity
             var sanityReload = new CAkActorMixer_V136();
-            sanityReload.ReadHirc(new ByteChunk(byteArray));
+            sanityReload.ReadHirc(new ByteChunk(byteArray), bankVersion);
 
             return byteArray;
         }

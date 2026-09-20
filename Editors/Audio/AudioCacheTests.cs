@@ -10,7 +10,9 @@ using Shared.Core.PackFiles.Models;
 using Shared.Core.PackFiles.Models.FileSources;
 using Shared.Core.PackFiles.Utility;
 using Shared.Core.Settings;
+using Shared.GameFormats.Wwise.Bkhd;
 using Shared.GameFormats.Wwise.Enums;
+using Shared.GameFormats.Wwise.Versions;
 
 namespace Test.Audio
 {
@@ -503,29 +505,37 @@ namespace Test.Audio
 
         private static byte[] CreateBnk(uint eventId, uint languageId, int embeddedMediaSize, bool includeHirc = true)
         {
+            const uint BankGeneratorVersion = (uint)GameBnkVersion.Warhammer3;
+            const uint TestSoundBankId = 55;
+            const uint NoAlternateValues = 0;
+            const uint TestProjectId = 999;
+            const uint HircItemCount = 1;
+            const byte EventActionCount = 0;
+            const uint EmbeddedMediaId = 987;
+            const uint EmbeddedMediaOffset = 0;
+            var bankVersion = BankVersionResolver.Resolve(BankGeneratorVersion);
             using var bnk = new MemoryStream();
 
-            using (var header = new MemoryStream())
-            using (var writer = new BinaryWriter(header, Encoding.UTF8, true))
+            var bankHeader = new AkBankHeader
             {
-                writer.Write((uint)2147483784);
-                writer.Write((uint)55);
-                writer.Write(languageId);
-                writer.Write((uint)0);
-                writer.Write((uint)999);
-                WriteChunk(bnk, "BKHD", header.ToArray());
-            }
+                BankGeneratorVersion = BankGeneratorVersion,
+                SoundBankId = TestSoundBankId,
+                LanguageId = languageId,
+                AltValues = NoAlternateValues,
+                ProjectId = TestProjectId
+            };
+            WriteChunk(bnk, BankChunkTypes.BKHD, bankHeader.WriteData());
 
             if (includeHirc)
             {
                 using var hirc = new MemoryStream();
                 using var writer = new BinaryWriter(hirc, Encoding.UTF8, true);
-                writer.Write((uint)1);
-                writer.Write((byte)AkBkHircType.Event);
-                writer.Write((uint)5);
+                writer.Write(HircItemCount);
+                writer.Write(bankVersion.EncodeHircType(AkBkHircType.Event));
+                writer.Write((uint)(sizeof(uint) + sizeof(byte)));
                 writer.Write(eventId);
-                writer.Write((byte)0);
-                WriteChunk(bnk, "HIRC", hirc.ToArray());
+                writer.Write(EventActionCount);
+                WriteChunk(bnk, BankChunkTypes.HIRC, hirc.ToArray());
             }
 
             if (embeddedMediaSize > 0)
@@ -533,12 +543,12 @@ namespace Test.Audio
                 using var didx = new MemoryStream();
                 using (var writer = new BinaryWriter(didx, Encoding.UTF8, true))
                 {
-                    writer.Write((uint)987);
-                    writer.Write((uint)0);
+                    writer.Write(EmbeddedMediaId);
+                    writer.Write(EmbeddedMediaOffset);
                     writer.Write((uint)embeddedMediaSize);
                 }
-                WriteChunk(bnk, "DIDX", didx.ToArray());
-                WriteChunk(bnk, "DATA", new byte[embeddedMediaSize]);
+                WriteChunk(bnk, BankChunkTypes.DIDX, didx.ToArray());
+                WriteChunk(bnk, BankChunkTypes.DATA, new byte[embeddedMediaSize]);
             }
 
             return bnk.ToArray();

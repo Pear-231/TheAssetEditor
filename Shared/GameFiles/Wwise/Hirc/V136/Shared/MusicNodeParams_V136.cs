@@ -1,4 +1,5 @@
 ﻿using Shared.ByteParsing;
+using Shared.GameFormats.Wwise.Versions;
 
 namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
 {
@@ -12,16 +13,20 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
         public uint NumStingers { get; set; }
         public List<CAkStinger_V136> StingersList { get; set; } = [];
 
-        public void ReadData(ByteChunk chunk)
+        public void ReadData(ByteChunk chunk, BankVersion bankVersion)
         {
             Flags = chunk.ReadByte();
-            NodeBaseParams.ReadData(chunk);
+            NodeBaseParams.ReadData(chunk, bankVersion);
             Children.ReadData(chunk);
             AkMeterInfo.ReadData(chunk);
             MeterInfoFlag = chunk.ReadByte();
             NumStingers = chunk.ReadUInt32();
             for (var i = 0; i < NumStingers; i++)
-                StingersList.Add(CAkStinger_V136.ReadData(chunk));
+            {
+                var stinger = new CAkStinger_V136();
+                stinger.ReadData(chunk);
+                StingersList.Add(stinger);
+            }
         }
 
         public class AkMeterInfo_V136
@@ -51,17 +56,14 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
             public int DontRepeatTime { get; set; }
             public uint NumSegmentLookAhead { get; set; }
 
-            public static CAkStinger_V136 ReadData(ByteChunk chunk)
+            public void ReadData(ByteChunk chunk)
             {
-                return new CAkStinger_V136
-                {
-                    TriggerId = chunk.ReadUInt32(),
-                    SegmentId = chunk.ReadUInt32(),
-                    SyncPlayAt = chunk.ReadUInt32(),
-                    CueFilterHash = chunk.ReadUInt32(),
-                    DontRepeatTime = chunk.ReadInt32(),
-                    NumSegmentLookAhead = chunk.ReadUInt32()
-                };
+                TriggerId = chunk.ReadUInt32();
+                SegmentId = chunk.ReadUInt32();
+                SyncPlayAt = chunk.ReadUInt32();
+                CueFilterHash = chunk.ReadUInt32();
+                DontRepeatTime = chunk.ReadInt32();
+                NumSegmentLookAhead = chunk.ReadUInt32();
             }
         }
     }

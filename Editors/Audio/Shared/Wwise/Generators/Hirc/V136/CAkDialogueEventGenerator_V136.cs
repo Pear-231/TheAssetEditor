@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Editors.Audio.Shared.AudioProject.Models;
+﻿using Editors.Audio.Shared.AudioProject.Models;
 using Shared.GameFormats.Wwise.Enums;
 using Shared.GameFormats.Wwise.Hirc;
 using Shared.GameFormats.Wwise.Hirc.V136;
@@ -29,9 +27,9 @@ namespace Editors.Audio.Shared.Wwise.Generators.Hirc.V136
 
             var decisionTree = CreateDecisionTree(audioProjectDialogueEvent);
             dialogueEventHirc.AkDecisionTree = decisionTree;
-            dialogueEventHirc.TreeDataSize = (uint)decisionTree.Nodes.Count * new AkDecisionTree_V136.Node_V136().GetSize();
+            dialogueEventHirc.TreeDataSize = (uint)decisionTree.FlattenedDecisionTree.Count * new AkDecisionTree_V136.Node_V136().GetSize();
 
-            dialogueEventHirc.Mode = (byte)AkMode.BestMatch;
+            dialogueEventHirc.Mode = AkMode.BestMatch;
             dialogueEventHirc.AkPropBundle0 = new AkPropBundle_V136() { PropsList = [] };
             dialogueEventHirc.AkPropBundle1 = new AkPropBundleMinMax_V136() { PropsList = [] };
             return dialogueEventHirc;
@@ -85,7 +83,7 @@ namespace Editors.Audio.Shared.Wwise.Generators.Hirc.V136
             return new AkDecisionTree_V136
             {
                 DecisionTree = rootNode,
-                Nodes = flattenedDecisionTree
+                FlattenedDecisionTree = flattenedDecisionTree
             };
         }
 

@@ -1,5 +1,6 @@
 ﻿using Shared.ByteParsing;
 using Shared.GameFormats.Wwise.Hirc.V136.Shared;
+using Shared.GameFormats.Wwise.Versions;
 
 namespace Shared.GameFormats.Wwise.Hirc.V136
 {
@@ -16,12 +17,12 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
         public InitialRtpc_V136 InitialRtpc { get; set; } = new InitialRtpc_V136();
         public StateChunk_V136 StateChunk { get; set; } = new StateChunk_V136();
 
-        protected override void ReadData(ByteChunk chunk)
+        protected override void ReadData(ByteChunk chunk, BankVersion bankVersion)
         {
             OverrideBusId = chunk.ReadUInt32();
             if (OverrideBusId == 0)
                 IdDeviceShareset = chunk.ReadUInt32();
-            BusInitialParams.ReadData(chunk);
+            BusInitialParams.ReadData(chunk, bankVersion);
             RecoveryTime = chunk.ReadSingle();
             MaxDuckVolume = chunk.ReadSingle();
             DuckList.ReadData(chunk);
@@ -32,7 +33,7 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
         }
 
         // We don't need to make CAkBus objects because we can route audio through the existing busses as hircs appear to be shared between Banks.
-        public override byte[] WriteData() => throw new NotSupportedException("Users probably don't need this complexity.");
+        public override byte[] WriteData(BankVersion bankVersion) => throw new NotSupportedException("Users probably don't need this complexity.");
         public override void UpdateSectionSize() => throw new NotSupportedException("Users probably don't need this complexity.");
 
         public class BusInitialParams_V136
@@ -44,9 +45,9 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
             public ushort MaxNumInstance { get; set; }
             public uint ChannelConfig { get; set; }
             public byte BitVector2 { get; set; }
-            public void ReadData(ByteChunk chunk)
+            public void ReadData(ByteChunk chunk, BankVersion bankVersion)
             {
-                AkPropBundle.ReadData(chunk);
+                AkPropBundle.ReadData(chunk, bankVersion);
                 PositioningParams.ReadData(chunk);
                 AuxParams.ReadData(chunk);
                 BitVector1 = chunk.ReadByte();
@@ -108,7 +109,11 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
                     BitsFxBypass = chunk.ReadByte();
 
                 for (uint i = 0; i < NumFx; i++)
-                    FxChunk.Add(FxChunk_V136.ReadData(chunk));
+                {
+                    var fxChunk = new FxChunk_V136();
+                    fxChunk.ReadData(chunk);
+                    FxChunk.Add(fxChunk);
+                }
 
                 FxId0 = chunk.ReadUInt32();
                 IsShareSet0 = chunk.ReadByte();

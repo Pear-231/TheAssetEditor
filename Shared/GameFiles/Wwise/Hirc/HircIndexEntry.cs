@@ -1,7 +1,10 @@
-﻿namespace Shared.GameFormats.Wwise.Hirc
+﻿using Shared.GameFormats.Wwise.Enums;
+
+namespace Shared.GameFormats.Wwise.Hirc
 {
     public class HircIndexEntry
     {
+        public required AkBkHircType HircType { get; set; }
         public required HircHeader Header { get; set; }
         public long Offset { get; set; }
         public int Length { get; set; }

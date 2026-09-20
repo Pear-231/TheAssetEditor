@@ -1,6 +1,7 @@
 ﻿using Shared.ByteParsing;
 using Shared.GameFormats.Wwise.Enums;
 using Shared.GameFormats.Wwise.Hirc.V136.Shared;
+using Shared.GameFormats.Wwise.Versions;
 using static Shared.GameFormats.Wwise.Hirc.ICAkDialogueEvent;
 
 namespace Shared.GameFormats.Wwise.Hirc.V136
@@ -11,12 +12,12 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
         public uint TreeDepth { get; set; }
         public List<IAkGameSync> Arguments { get; set; } = [];
         public uint TreeDataSize { get; set; }
-        public byte Mode { get; set; }
+        public AkMode Mode { get; set; }
         public IAkDecisionTree AkDecisionTree { get; set; } = new AkDecisionTree_V136();
         public AkPropBundle_V136 AkPropBundle0 { get; set; } = new AkPropBundle_V136();
         public AkPropBundleMinMax_V136 AkPropBundle1 { get; set; } = new AkPropBundleMinMax_V136();
 
-        protected override void ReadData(ByteChunk chunk)
+        protected override void ReadData(ByteChunk chunk, BankVersion bankVersion)
         {
             Probability = chunk.ReadByte();
 
@@ -30,16 +31,16 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
 
             // Then read all the group types
             for (var i = 0; i < TreeDepth; i++)
-                Arguments[i].GroupType = (AkGroupType)chunk.ReadByte();
+                Arguments[i].GroupType = BankVersion.DecodeGroupType(chunk.ReadByte());
 
             TreeDataSize = chunk.ReadUInt32();
-            Mode = chunk.ReadByte();
+            Mode = BankVersion.DecodeDecisionTreeMode(chunk.ReadByte());
             AkDecisionTree.ReadData(chunk, TreeDataSize, TreeDepth);
-            AkPropBundle0.ReadData(chunk);
-            AkPropBundle1.ReadData(chunk);
+            AkPropBundle0.ReadData(chunk, bankVersion);
+            AkPropBundle1.ReadData(chunk, bankVersion);
         }
 
-        public override byte[] WriteData()
+        public override byte[] WriteData(BankVersion bankVersion)
         {
             using var memStream = WriteHeader();
             memStream.Write(ByteParsers.Byte.EncodeValue(Probability, out _));
@@ -51,19 +52,19 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
 
             // Then write all the values
             for (var i = 0; i < TreeDepth; i++)
-                memStream.Write(ByteParsers.Byte.EncodeValue((byte)Arguments[i].GroupType, out _));
+                memStream.Write(ByteParsers.Byte.EncodeValue(BankVersion.EncodeGroupType(Arguments[i].GroupType), out _));
 
             memStream.Write(ByteParsers.UInt32.EncodeValue(TreeDataSize, out _));
-            memStream.Write(ByteParsers.Byte.EncodeValue(Mode, out _));
+            memStream.Write(ByteParsers.Byte.EncodeValue(BankVersion.EncodeDecisionTreeMode(Mode), out _));
             memStream.Write(AkDecisionTree.WriteData());
-            memStream.Write(AkPropBundle0.WriteData());
-            memStream.Write(AkPropBundle1.WriteData());
+            memStream.Write(AkPropBundle0.WriteData(bankVersion));
+            memStream.Write(AkPropBundle1.WriteData(bankVersion));
 
             var byteArray = memStream.ToArray();
 
             // Reload the object to ensure sanity
             var sanityReload = new CAkDialogueEvent_V136();
-            sanityReload.ReadHirc(new ByteChunk(byteArray));
+            sanityReload.ReadHirc(new ByteChunk(byteArray), bankVersion);
 
             return byteArray;
         }
@@ -79,7 +80,7 @@ namespace Shared.GameFormats.Wwise.Hirc.V136
                 arugumentsSize += argument.GetSize();
 
             var treeDataSizeSize = ByteHelper.GetPropertyTypeSize(TreeDataSize);
-            var modeSize = ByteHelper.GetPropertyTypeSize(Mode);
+            var modeSize = (uint)sizeof(byte);
             SectionSize = idSize + probabilitySize + treeDepthSize + arugumentsSize + treeDataSizeSize + modeSize + TreeDataSize + AkPropBundle0.GetSize() + AkPropBundle1.GetSize();
         }
 

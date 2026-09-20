@@ -57,7 +57,11 @@ namespace Shared.GameFormats.Wwise.Hirc.V136.Shared
                 Scaling = chunk.ReadByte();
                 Size = chunk.ReadUShort();
                 for (var i = 0; i < Size; i++)
-                    RtpcMgr.Add(AkRtpcGraphPoint_V136.ReadData(chunk));
+                {
+                    var rtpcGraphPoint = new AkRtpcGraphPoint_V136();
+                    rtpcGraphPoint.ReadData(chunk);
+                    RtpcMgr.Add(rtpcGraphPoint);
+                }
             }
         }
     }

@@ -1,4 +1,5 @@
 ﻿using Shared.ByteParsing;
+using Shared.GameFormats.Wwise.Versions;
 
 namespace Shared.GameFormats.Wwise.Hirc.V112
 {
@@ -7,14 +8,18 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
         public uint ActionListSize { get; set; }
         public List<Action_V112> Actions { get; set; } = [];
 
-        protected override void ReadData(ByteChunk chunk)
+        protected override void ReadData(ByteChunk chunk, BankVersion bankVersion)
         {
             ActionListSize = chunk.ReadUInt32();
             for (var i = 0; i < ActionListSize; i++)
-                Actions.Add(new Action_V112() { ActionId = chunk.ReadUInt32() });
+            {
+                var action = new Action_V112();
+                action.ReadData(chunk);
+                Actions.Add(action);
+            }
         }
 
-        public override byte[] WriteData()
+        public override byte[] WriteData(BankVersion bankVersion)
         {
             using var memStream = WriteHeader();
             memStream.Write(ByteParsers.UInt32.EncodeValue(ActionListSize, out _));
@@ -26,7 +31,7 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
             // Reload the object to ensure sanity
             var sanityReload = new CAkEvent_V112();
             var chunk = new ByteChunk(byteArray);
-            sanityReload.ReadHirc(chunk);
+            sanityReload.ReadHirc(chunk, bankVersion);
 
             return byteArray;
         }
@@ -49,12 +54,9 @@ namespace Shared.GameFormats.Wwise.Hirc.V112
         {
             public uint ActionId { get; set; }
 
-            public static Action_V112 ReadData(ByteChunk chunk)
+            public void ReadData(ByteChunk chunk)
             {
-                return new Action_V112()
-                {
-                    ActionId = chunk.ReadUInt32()
-                };
+                ActionId = chunk.ReadUInt32();
             }
 
             public byte[] WriteData()

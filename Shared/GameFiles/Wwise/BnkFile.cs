@@ -5,6 +5,7 @@ using Shared.GameFormats.Wwise.Didx;
 using Shared.GameFormats.Wwise.Enums;
 using Shared.GameFormats.Wwise.Hirc;
 using Shared.GameFormats.Wwise.Stid;
+using Shared.GameFormats.Wwise.Versions;
 
 namespace Shared.GameFormats.Wwise
 {
@@ -16,15 +17,6 @@ namespace Shared.GameFormats.Wwise
         public DataChunk? DataChunk { get; set; }
         public StidChunk? StidChunk { get; set; }
 
-        public class Index
-        {
-            public uint BankGeneratorVersion { get; set; }
-            public uint LanguageId { get; set; }
-            public long? DataOffset { get; set; }
-            public List<HircIndexEntry> HircEntries { get; set; } = [];
-            public List<MediaHeader> DidxEntries { get; set; } = [];
-        }
-
         public static BnkFile CreateFromBytes(byte[] bnkBytes, string filePath, bool isCA)
         {
             var bnkFile = new BnkFile();
@@ -34,6 +26,8 @@ namespace Shared.GameFormats.Wwise
 
         public void ReadData(ByteChunk chunk, string filePath, bool isCA)
         {
+            BankVersion? bankVersion = null;
+
             while (chunk.BytesLeft != 0)
             {
                 var chunkHeader = ChunkHeader.PeekFromBytes(chunk);
@@ -41,15 +35,33 @@ namespace Shared.GameFormats.Wwise
                 var expectedIndexAfterRead = indexBeforeRead + ChunkHeader.ChunkHeaderSize + chunkHeader.ChunkSize;
 
                 if (BankChunkTypes.BKHD == chunkHeader.Tag)
-                    BkhdChunk = BkhdChunk.ReadData(filePath, chunk);
+                {
+                    BkhdChunk.ReadData(filePath, chunk);
+                    bankVersion = BankVersionResolver.Resolve(BkhdChunk.AkBankHeader.BankGeneratorVersion);
+                }
                 else if (BankChunkTypes.HIRC == chunkHeader.Tag)
-                    HircChunk = HircChunk.ReadData(filePath, chunk, BkhdChunk.AkBankHeader.BankGeneratorVersion, BkhdChunk.AkBankHeader.LanguageId, isCA);
+                {
+                    if (bankVersion is null)
+                        throw new InvalidDataException($"Unable to determine version of {filePath}");
+
+                    HircChunk = new HircChunk();
+                    HircChunk.ReadData(filePath, chunk, bankVersion, BkhdChunk.AkBankHeader.LanguageId, isCA);
+                }
                 else if (BankChunkTypes.DIDX == chunkHeader.Tag)
-                    DidxChunk = DidxChunk.ReadData(filePath, chunk);
+                {
+                    DidxChunk = new DidxChunk();
+                    DidxChunk.ReadData(filePath, chunk);
+                }
                 else if (BankChunkTypes.DATA == chunkHeader.Tag)
-                    DataChunk = DataChunk.ReadData(filePath, chunk);
+                {
+                    DataChunk = new DataChunk();
+                    DataChunk.ReadData(filePath, chunk);
+                }
                 else if (BankChunkTypes.STID == chunkHeader.Tag)
-                    StidChunk = StidChunk.ReadData(filePath, chunk);
+                {
+                    StidChunk = new StidChunk();
+                    StidChunk.ReadData(filePath, chunk);
+                }
                 else
                     throw new ArgumentException($"Unknown data block '{chunkHeader.Tag}' while parsing bnk file '{filePath}'");
 
@@ -63,9 +75,10 @@ namespace Shared.GameFormats.Wwise
                 throw new Exception("Error parsing bnk, bytes left");
         }
 
-        public static Index BuildIndex(string filePath, long decodedSize, Func<long, int, byte[]> readData)
+        public static BnkIndex BuildIndex(string filePath, long decodedSize, Func<long, int, byte[]> readData)
         {
-            var result = new Index();
+            var result = new BnkIndex();
+            BankVersion? bankVersion = null;
             long chunkOffset = 0;
 
             while (chunkOffset < decodedSize)
@@ -73,7 +86,8 @@ namespace Shared.GameFormats.Wwise
                 if (decodedSize - chunkOffset < ChunkHeader.ChunkHeaderSize)
                     throw new InvalidDataException($"BNK chunk header extends beyond the end of '{filePath}'.");
 
-                var chunkHeader = ChunkHeader.ReadData(new ByteChunk(readData(chunkOffset, checked((int)ChunkHeader.ChunkHeaderSize))));
+                var chunkHeader = new ChunkHeader();
+                chunkHeader.ReadData(new ByteChunk(readData(chunkOffset, checked((int)ChunkHeader.ChunkHeaderSize))));
                 var payloadOffset = checked(chunkOffset + ChunkHeader.ChunkHeaderSize);
                 var nextChunkOffset = checked(payloadOffset + chunkHeader.ChunkSize);
                 if (nextChunkOffset > decodedSize)
@@ -82,8 +96,10 @@ namespace Shared.GameFormats.Wwise
                 if (chunkHeader.Tag == BankChunkTypes.BKHD)
                 {
                     var totalChunkSize = checked((int)(ChunkHeader.ChunkHeaderSize + chunkHeader.ChunkSize));
-                    var bkhdChunk = BkhdChunk.ReadData(filePath, new ByteChunk(readData(chunkOffset, totalChunkSize)));
+                    var bkhdChunk = new BkhdChunk();
+                    bkhdChunk.ReadData(filePath, new ByteChunk(readData(chunkOffset, totalChunkSize)));
                     result.BankGeneratorVersion = bkhdChunk.AkBankHeader.BankGeneratorVersion;
+                    bankVersion = BankVersionResolver.Resolve(result.BankGeneratorVersion);
                     result.LanguageId = bkhdChunk.AkBankHeader.LanguageId;
                 }
                 else if (chunkHeader.Tag == BankChunkTypes.HIRC)
@@ -91,7 +107,10 @@ namespace Shared.GameFormats.Wwise
                     if (chunkHeader.ChunkSize > int.MaxValue)
                         throw new InvalidDataException($"HIRC chunk is too large to index: {chunkHeader.ChunkSize} bytes.");
 
-                    var hircEntries = HircChunk.BuildIndex(payloadOffset, chunkHeader.ChunkSize, new ByteChunk(readData(payloadOffset, (int)chunkHeader.ChunkSize)));
+                    if (bankVersion is null)
+                        throw new InvalidDataException($"Wwise bank '{filePath}' contains versioned data before its BKHD chunk.");
+
+                    var hircEntries = HircChunk.BuildIndex(payloadOffset, chunkHeader.ChunkSize, new ByteChunk(readData(payloadOffset, (int)chunkHeader.ChunkSize)), bankVersion);
                     result.HircEntries.AddRange(hircEntries);
                 }
                 else if (chunkHeader.Tag == BankChunkTypes.DIDX)
