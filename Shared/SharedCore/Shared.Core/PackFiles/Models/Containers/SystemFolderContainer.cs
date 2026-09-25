@@ -437,8 +437,8 @@ namespace Shared.Core.PackFiles.Models.Containers
         {
             ValidateSaveLocation(path);
 
-            var effectiveGameInformation = PackFileSettings.GameVersion.HasValue
-                ? GameInformationDatabase.GetGameById(PackFileSettings.GameVersion.Value)
+            var effectiveGameInformation = PackFileSettings.GameVersion != GameTypeEnum.Unknown
+                ? GameInformationDatabase.GetGameById(PackFileSettings.GameVersion)
                 : gameInformation;
 
             if (_fileSystemAccess.FileExists(path) && DirectoryHelper.IsFileLocked(path))

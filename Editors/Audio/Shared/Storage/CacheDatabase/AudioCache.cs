@@ -14,7 +14,7 @@ namespace Editors.Audio.Shared.Storage.CacheDatabase
     {
         private static readonly ILogger s_logger = Logging.CreateStatic(typeof(AudioCache));
         private static readonly JsonSerializerOptions s_jsonOptions = new();
-        private const int CurrentSchemaVersion = 2;
+        private const int CurrentSchemaVersion = 3;
 
         private readonly DbContextOptions<AudioCacheDbContext> _dbOptions;
         private readonly Lock _dbLock = new();

@@ -77,7 +77,7 @@ namespace AssetEditor.UiCommands
             }
 
             var systemContainer = _systemFolderContainerFactory.Create(destinationFolder);
-            if (systemContainer.PackFileSettings.GameVersion == null)
+            if (systemContainer.PackFileSettings.GameVersion == GameTypeEnum.Unknown)
                 systemContainer.PackFileSettings.GameVersion = _applicationSettingsService.CurrentSettings.CurrentGame;
 
             systemContainer.PackFileSettings.SaveLocationPath = outputPackPath;
