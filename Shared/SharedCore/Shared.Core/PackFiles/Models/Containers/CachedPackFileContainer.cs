@@ -18,7 +18,7 @@ namespace Shared.Core.PackFiles.Models.Containers
     internal class CachedPackFileContainer : IPackFileContainerInternal, IDisposable
     {
         private static readonly ILogger _logger = Logging.CreateStatic(typeof(CachedPackFileContainer));
-        private const int CurrentSchemaVersion = 4;
+        private const int CurrentSchemaVersion = 5;
 
         private CacheDbContext _db;
         private readonly DbContextOptions<CacheDbContext> _dbOptions;
@@ -104,7 +104,7 @@ namespace Shared.Core.PackFiles.Models.Containers
                     cmd.Parameters.AddWithValue("$containerName", source.Name);
                     cmd.Parameters.AddWithValue("$systemFilePath", source.SystemFilePath);
                     cmd.Parameters.AddWithValue("$sourcePackFilePaths", string.Join("|", source.SourcePackFilePaths));
-                    cmd.Parameters.AddWithValue("$gameVersion", source.PackFileSettings.GameVersion is GameTypeEnum gameVersion ? (int)gameVersion : DBNull.Value);
+                    cmd.Parameters.AddWithValue("$gameVersion", (int)source.PackFileSettings.GameVersion);
                     cmd.ExecuteNonQuery();
                 }
 
@@ -231,7 +231,7 @@ namespace Shared.Core.PackFiles.Models.Containers
             {
                 SystemFilePath = cacheInfo.SystemFilePath,
             };
-            container.PackFileSettings.GameVersion = cacheInfo.GameVersion.HasValue ? (GameTypeEnum)cacheInfo.GameVersion.Value : null;
+            container.PackFileSettings.GameVersion = (GameTypeEnum)cacheInfo.GameVersion;
 
             if (!string.IsNullOrEmpty(cacheInfo.SourcePackFilePaths))
             {
@@ -473,13 +473,6 @@ namespace Shared.Core.PackFiles.Models.Containers
             }
         }
 
-        // A cache is only ever saved with the game it was built for (see Save above), and a load
-        // missing that value is rejected as stale by PackFileContainerLoader before reaching here --
-        // so this should never actually throw. It exists to fail loudly if that invariant is ever
-        // broken, rather than let decryption silently guess a keystream.
-        private GameTypeEnum RequireGameVersion() =>
-            PackFileSettings.GameVersion ?? throw new InvalidOperationException($"Cached container '{Name}' has no GameVersion recorded; it should have been treated as a stale cache and rebuilt.");
-
         public Dictionary<string, PackFile> GetAllFiles()
         {
             var time = Stopwatch.StartNew();
@@ -497,7 +490,7 @@ namespace Shared.Core.PackFiles.Models.Containers
             {
                 if (!parentCache.TryGetValue(entry.SourcePackFilePath, out var parent))
                 {
-                    parent = new PackedFileSourceParent { FilePath = entry.SourcePackFilePath, GameType = RequireGameVersion() };
+                    parent = new PackedFileSourceParent { FilePath = entry.SourcePackFilePath, GameType = PackFileSettings.GameVersion };
                     parentCache[entry.SourcePackFilePath] = parent;
                 }
 
@@ -513,8 +506,6 @@ namespace Shared.Core.PackFiles.Models.Containers
 
             return result;
         }
-
-
 
         public List<(string Path, PackFile File)> GetDirectoryContent(string directoryPath)
         {
@@ -544,7 +535,7 @@ namespace Shared.Core.PackFiles.Models.Containers
                 {
                     if (!packedFileSourceParentCache.TryGetValue(f.SourcePackFilePath, out var parent))
                     {
-                        parent = new PackedFileSourceParent { FilePath = f.SourcePackFilePath, GameType = RequireGameVersion() };
+                        parent = new PackedFileSourceParent { FilePath = f.SourcePackFilePath, GameType = PackFileSettings.GameVersion };
                         packedFileSourceParentCache[f.SourcePackFilePath] = parent;
                     }
 
@@ -587,7 +578,7 @@ namespace Shared.Core.PackFiles.Models.Containers
 
         private PackFile ToPackFile(CachedFileEntity entry)
         {
-            var parent = new PackedFileSourceParent { FilePath = entry.SourcePackFilePath, GameType = RequireGameVersion() };
+            var parent = new PackedFileSourceParent { FilePath = entry.SourcePackFilePath, GameType = PackFileSettings.GameVersion };
             var source = new PackedFileSource(
                 parent, entry.Offset, entry.Size,
                 entry.IsEncrypted, entry.IsCompressed,

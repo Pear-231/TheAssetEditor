@@ -509,7 +509,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree
             Assert.That(System.Text.Encoding.ASCII.GetString(animData), Is.EqualTo("anim data"));
         }
 
-        private static IEnumerable<GameTypeEnum> SupportedGames() => GameInformationDatabase.GetSupportedGames();
+        private static IEnumerable<GameTypeEnum> SupportedGames() => GameInformationDatabase.Games.Keys;
 
         // ──────────────────────────────────────────────────────────────────────
         // B1 — Duplicate filenames in different folders. Renaming / moving /

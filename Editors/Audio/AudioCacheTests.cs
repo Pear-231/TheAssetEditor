@@ -264,7 +264,9 @@ namespace Test.Audio
             Assert.That(forwardFingerprint, Is.EqualTo(reversedFingerprint));
         }
 
-        [TestCaseSource(typeof(GameInformationDatabase), nameof(GameInformationDatabase.GetSupportedGames))]
+        private static IEnumerable<GameTypeEnum> SupportedGames() => GameInformationDatabase.Games.Keys;
+
+        [TestCaseSource(nameof(SupportedGames))]
         public void ComputeFingerprint_MissingBackingFile(GameTypeEnum game)
         {
             var packParent = new PackedFileSourceParent { FilePath = Path.Combine(_tempDir, "missing.pack"), GameType = game };

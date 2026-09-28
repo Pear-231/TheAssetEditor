@@ -79,6 +79,24 @@ namespace Shared.CoreTest.PackFiles.Models
         }
 
         [Test]
+        public void Load_WhenGameVersionIsMissing_DefaultsToUnknown()
+        {
+            var fileSystem = new Mock<IFileSystemAccess>();
+            var json = """
+            {
+              "SaveLocationPath": "c:\\output\\legacy.pack"
+            }
+            """;
+            fileSystem.Setup(x => x.FileReadAllBytes(@"c:\project\aeproject.json"))
+                .Returns(Encoding.UTF8.GetBytes(json));
+
+            var loaded = PackFileSettings.Load(@"c:\project\aeproject.json", fileSystem.Object);
+
+            Assert.That(loaded, Is.Not.Null);
+            Assert.That(loaded!.GameVersion, Is.EqualTo(GameTypeEnum.Unknown));
+        }
+
+        [Test]
         public void Load_ReadsLegacyOutputPackFilePath()
         {
             var fileSystem = new Mock<IFileSystemAccess>();

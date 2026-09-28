@@ -75,7 +75,7 @@ namespace Shared.Core.PackFiles.Utility
             }
 
             var container = _systemFolderContainerFactory.Create(packFileSystemPath);
-            if (container.PackFileSettings.GameVersion == null)
+            if (container.PackFileSettings.GameVersion == GameTypeEnum.Unknown)
             {
                 container.PackFileSettings.GameVersion = _settingsService.CurrentSettings.CurrentGame;
                 container.SaveSettings();

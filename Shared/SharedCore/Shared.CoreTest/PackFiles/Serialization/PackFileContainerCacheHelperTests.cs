@@ -62,7 +62,8 @@ namespace Shared.CoreTest.PackFiles.Serialization
 
         private static void SaveCache(string fingerprint, PackFileContainer container, DbContextOptions<CacheDbContext> dbOptions)
         {
-            container.PackFileSettings.GameVersion ??= GameTypeEnum.Warhammer3;
+            if (container.PackFileSettings.GameVersion == GameTypeEnum.Unknown)
+                container.PackFileSettings.GameVersion = GameTypeEnum.Warhammer3;
             using var cached = new CachedPackFileContainer(container.Name, dbOptions);
             cached.Save(fingerprint, container);
         }

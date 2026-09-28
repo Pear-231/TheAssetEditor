@@ -287,8 +287,8 @@ namespace Shared.Core.PackFiles.Models.Containers
 
         public virtual void SaveToDisk(string path, bool createBackup, GameInformation gameInformation)
         {
-            var effectiveGameInformation = PackFileSettings.GameVersion.HasValue
-                ? GameInformationDatabase.GetGameById(PackFileSettings.GameVersion.Value)
+            var effectiveGameInformation = PackFileSettings.GameVersion != GameTypeEnum.Unknown
+                ? GameInformationDatabase.GetGameById(PackFileSettings.GameVersion)
                 : gameInformation;
 
             if (Header.Version != effectiveGameInformation.PackFileVersion)

@@ -113,7 +113,8 @@ namespace Shared.CoreTest.PackFiles.Utility
             // Corrupt the cache via the in-memory helper
             var packFiles = Directory.GetFiles(_tempGameDir, "*.pack").ToList();
             var fingerprint = _cacheHelper.ComputeFingerprint(packFiles);
-            var cacheFilePath = _cacheHelper.GetCacheFilePath("All Game Packs - Warhammer III", fingerprint);
+            var game = GameInformationDatabase.GetGameById(GameTypeEnum.Warhammer3);
+            var cacheFilePath = _cacheHelper.GetCacheFilePath($"All Game Packs - {game.DisplayName}", fingerprint);
             _cacheHelper.CorruptCache(cacheFilePath);
 
             _dialogs.Invocations.Clear();
@@ -188,6 +189,7 @@ namespace Shared.CoreTest.PackFiles.Utility
         public void LoadPackFromDifferentPfhVersion_ShowsGameMismatch()
         {
             var loader = CreateLoader();
+            var activeGame = GameInformationDatabase.GetGameById(GameTypeEnum.Warhammer3);
 
             loader.CreateFromPackFile(
                 PackFileContainerType.Normal,
@@ -195,7 +197,7 @@ namespace Shared.CoreTest.PackFiles.Utility
                 true);
 
             _dialogs.Verify(d => d.ShowDialogBox(
-                It.Is<string>(message => message.Contains("does not appear to be for the active game in the settings (Warhammer III)")),
+                It.Is<string>(message => message.Contains($"does not appear to be for the active game in the settings ({activeGame.DisplayName})")),
                 "Error"), Times.Once);
         }
 
@@ -204,6 +206,7 @@ namespace Shared.CoreTest.PackFiles.Utility
         {
             _settingsService.CurrentSettings.CurrentGame = GameTypeEnum.Warhammer;
             var loader = CreateLoader();
+            var activeGame = GameInformationDatabase.GetGameById(GameTypeEnum.Warhammer);
 
             loader.CreateFromPackFile(
                 PackFileContainerType.Normal,
@@ -211,7 +214,7 @@ namespace Shared.CoreTest.PackFiles.Utility
                 true);
 
             _dialogs.Verify(d => d.ShowDialogBox(
-                It.Is<string>(message => message.Contains("does not appear to be for the active game in the settings (Warhammer)")),
+                It.Is<string>(message => message.Contains($"does not appear to be for the active game in the settings ({activeGame.DisplayName})")),
                 "Error"), Times.Once);
         }
 
