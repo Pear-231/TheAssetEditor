@@ -54,7 +54,7 @@ namespace Shared.Core.Settings
 
     public enum EncryptionKeystream
     {
-        Unsupported = 0,
+        Unknown = 0,
         None,
         ThirtyTwoBitComplement,
         SixtyFourBitComplement,
@@ -184,12 +184,6 @@ namespace Shared.Core.Settings
             return Games[type];
         }
 
-        public static IEnumerable<GameTypeEnum> GetSupportedGames()
-        {
-            return Games.Values
-                .Where(game => game.EncryptionKeystream != EncryptionKeystream.Unsupported)
-                .Select(game => game.Type);
-        }
 
         public static string GetEnumAsString(GameTypeEnum game)
         {

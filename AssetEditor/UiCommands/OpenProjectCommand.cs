@@ -52,7 +52,7 @@ namespace AssetEditor.UiCommands
             }
 
             var container = _systemFolderContainerFactory.Create(dialog.SelectedPath);
-            if (container.PackFileSettings.GameVersion == null)
+            if (container.PackFileSettings.GameVersion == GameTypeEnum.Unknown)
             {
                 container.PackFileSettings.GameVersion = _applicationSettingsService.CurrentSettings.CurrentGame;
                 container.SaveSettings();

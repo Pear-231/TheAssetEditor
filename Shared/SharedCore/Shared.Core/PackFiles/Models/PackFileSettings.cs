@@ -18,7 +18,7 @@ namespace Shared.Core.PackFiles.Models
         };
 
         private string? _saveLocationPath;
-        private GameTypeEnum? _gameVersion;
+        private GameTypeEnum _gameVersion = GameTypeEnum.Unknown;
         private bool _enablePackFileCorruptionDetection;
         private ObservableCollection<string> _ignoredFilesWhenSerializing = new();
 
@@ -42,7 +42,7 @@ namespace Shared.Core.PackFiles.Models
             }
         }
 
-        public GameTypeEnum? GameVersion
+        public GameTypeEnum GameVersion
         {
             get => _gameVersion;
             set
