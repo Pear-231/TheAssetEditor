@@ -1,4 +1,4 @@
-{
+﻿{
   "SettingsWindow.Title": "设置",
   "SettingsWindow.Application": "应用程序",
   "SettingsWindow.UI": "界面",
@@ -148,7 +148,6 @@
   "KitbasherTool.BoneMapping.ConfirmWithValidationError": "确定要执行此操作吗？\n\n{0}\n\n继续？",
   "KitbasherTool.BoneMapping.ErrorTitle": "错误",
   "KitbasherTool.BoneMapping.ValidationIncompleteMapping": "并非所有骨骼都已映射。这将无法正常工作，后续会造成问题！\n仅在你真正了解后果时执行此操作",
-
 
   "MenuBar.File": "_文件",
   "MenuBar.File.NewPack": "新建项目",
@@ -967,4 +966,4 @@
   "PackFileCache.BuildingCache": "正在为 {0} 构建 Pack 文件缓存。这可能需要一些时间，请稍候...",
   "PackFileCache.BuildingCache.Title": "正在构建缓存",
   "PackFileCache.Description": "缓存通过将预处理的游戏文件数据存储在磁盘上来加快启动速度并减少内存使用。"
-}
+}
