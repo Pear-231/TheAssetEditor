@@ -1,10 +1,8 @@
-using Test.TestingUtility.TestUtility;
-using Moq;
-using Shared.Core.PackFiles;
-using Shared.Core.PackFiles.Models;
+﻿using Moq;
 using Shared.Core.Services;
 using Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands;
 using Shared.Ui.BaseDialogs.PackFileTree.Utility;
+using Test.TestingUtility.TestUtility;
 
 namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
 {
@@ -18,7 +16,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var viewModel = PackFileBrowser();
             var node = TreeNodeHelper.FindNode(viewModel, container, "animation\\meta\\testfile.anm");
 
-            var command = new DuplicateFileCommand(_packFileService, new Mock<IStandardDialogs>().Object, MockScopedLogger.Create());
+            var command = new DuplicateFileCommand(_packFileService, new Mock<IStandardDialogs>().Object, new LocalizationManager(), MockScopedLogger.Create());
 
             Assert.That(command.ShouldAdd(node), Is.True);
         }
@@ -30,7 +28,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var viewModel = PackFileBrowser();
             var node = TreeNodeHelper.FindNode(viewModel, container, "animation\\meta\\testfile.anm");
 
-            var command = new DuplicateFileCommand(_packFileService, new Mock<IStandardDialogs>().Object, MockScopedLogger.Create());
+            var command = new DuplicateFileCommand(_packFileService, new Mock<IStandardDialogs>().Object, new LocalizationManager(), MockScopedLogger.Create());
 
             Assert.That(command.IsEnabled(node), Is.True);
         }
@@ -47,7 +45,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var node = TreeNodeHelper.FindNode(viewModel, sourceContainer, "animation\\meta\\testfile.anm");
 
             // Act
-            var command = new DuplicateFileCommand(_packFileService, new Mock<IStandardDialogs>().Object, MockScopedLogger.Create());
+            var command = new DuplicateFileCommand(_packFileService, new Mock<IStandardDialogs>().Object, new LocalizationManager(), MockScopedLogger.Create());
             command.Configure(node);
 
             command.Execute();
@@ -72,7 +70,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var node = TreeNodeHelper.FindNode(viewModel, sourceContainer, "animation\\meta\\" + fileName);
 
             // Act
-            var command = new DuplicateFileCommand(_packFileService, new Mock<IStandardDialogs>().Object, MockScopedLogger.Create());
+            var command = new DuplicateFileCommand(_packFileService, new Mock<IStandardDialogs>().Object, new LocalizationManager(), MockScopedLogger.Create());
             command.Configure(node);
 
             command.Execute();

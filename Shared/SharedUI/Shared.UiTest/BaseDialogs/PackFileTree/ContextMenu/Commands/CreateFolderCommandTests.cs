@@ -16,7 +16,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var viewModel = PackFileBrowser();
             var root = viewModel.Files.First();
 
-            var command = new CreateFolderCommand(_packFileService, new Mock<IStandardDialogs>().Object, MockScopedLogger.Create());
+            var command = new CreateFolderCommand(_packFileService, new Mock<IStandardDialogs>().Object, new LocalizationManager(), MockScopedLogger.Create());
 
             Assert.That(command.ShouldAdd(root), Is.True);
         }
@@ -28,7 +28,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var viewModel = PackFileBrowser();
             var root = viewModel.Files.First();
 
-            var command = new CreateFolderCommand(_packFileService, new Mock<IStandardDialogs>().Object, MockScopedLogger.Create());
+            var command = new CreateFolderCommand(_packFileService, new Mock<IStandardDialogs>().Object, new LocalizationManager(), MockScopedLogger.Create());
 
             Assert.That(command.IsEnabled(root), Is.True);
         }
@@ -45,7 +45,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             dialogs.Setup(x => x.ShowFolderNameDialog(It.IsAny<IEnumerable<string>>(), It.IsAny<string>())).Returns("new_folder");
 
             // Act
-            var command = new CreateFolderCommand(_packFileService, dialogs.Object, MockScopedLogger.Create());
+            var command = new CreateFolderCommand(_packFileService, dialogs.Object, new LocalizationManager(), MockScopedLogger.Create());
             command.Configure(root);
 
             command.Execute();

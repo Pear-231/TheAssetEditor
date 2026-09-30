@@ -6,11 +6,12 @@ using Shared.Ui.BaseDialogs.PackFileTree.Utility;
 
 namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands
 {
-    public class DeleteNodeCommand(IPackFileService packFileService, IStandardDialogs standardDialogs, IScopedLogger scopedLogger) : IContextMenuCommand
+    public class DeleteNodeCommand(IPackFileService packFileService, IStandardDialogs standardDialogs, LocalizationManager localizationManager, IScopedLogger scopedLogger) : IContextMenuCommand
     {
         private readonly ILogger _logger = scopedLogger.ForContext<DeleteNodeCommand>();
 
-        public string GetDisplayName(TreeNode node) => "Delete";
+        public string GetDisplayName(TreeNode node) => localizationManager.Get("PackFileTree.ContextMenu.Delete");
+
         public bool ShouldAdd(TreeNode node)
         {
             var container = TreeNodeHelper.GetPackFileContainer(node);

@@ -16,7 +16,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var viewModel = PackFileBrowser();
             var root = viewModel.Files.First();
 
-            var command = new SaveAsPackFileContainerCommand(_packFileService, new ApplicationSettingsService(GameTypeEnum.Warhammer3), new Mock<IStandardDialogs>().Object, MockScopedLogger.Create());
+            var command = new SaveAsPackFileContainerCommand(_packFileService, new ApplicationSettingsService(GameTypeEnum.Warhammer3), new Mock<IStandardDialogs>().Object, new LocalizationManager(), MockScopedLogger.Create());
 
             Assert.That(command.ShouldAdd(root), Is.True);
         }
@@ -28,7 +28,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var viewModel = PackFileBrowser();
             var root = viewModel.Files.First();
 
-            var command = new SaveAsPackFileContainerCommand(_packFileService, new ApplicationSettingsService(GameTypeEnum.Warhammer3), new Mock<IStandardDialogs>().Object, MockScopedLogger.Create());
+            var command = new SaveAsPackFileContainerCommand(_packFileService, new ApplicationSettingsService(GameTypeEnum.Warhammer3), new Mock<IStandardDialogs>().Object, new LocalizationManager(), MockScopedLogger.Create());
 
             Assert.That(command.IsEnabled(root), Is.True);
         }
@@ -46,7 +46,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
                 .Returns(new SystemSaveFileDialogResult(false, null));
 
             // Act
-            var command = new SaveAsPackFileContainerCommand(_packFileService, new ApplicationSettingsService(GameTypeEnum.Warhammer3), dialogs.Object, MockScopedLogger.Create());
+            var command = new SaveAsPackFileContainerCommand(_packFileService, new ApplicationSettingsService(GameTypeEnum.Warhammer3), dialogs.Object, new LocalizationManager(), MockScopedLogger.Create());
             command.Configure(root);
 
             command.Execute();
@@ -71,7 +71,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             dialogs.Setup(x => x.ShowWaitCursor()).Returns(waitCursor.Object);
 
             // Act
-            var command = new SaveAsPackFileContainerCommand(_packFileService, new ApplicationSettingsService(GameTypeEnum.Warhammer3), dialogs.Object, MockScopedLogger.Create());
+            var command = new SaveAsPackFileContainerCommand(_packFileService, new ApplicationSettingsService(GameTypeEnum.Warhammer3), dialogs.Object, new LocalizationManager(), MockScopedLogger.Create());
             command.Configure(root);
 
             command.Execute();

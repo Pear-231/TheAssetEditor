@@ -59,7 +59,7 @@ namespace Editors.BmdEditor
     {
         public void Register(PackFileContextMenuRegistry registry)
         {
-            registry.RegisterPackFileContextMenuItem<ExportBmdAsTerryProjectCommand>(ContextMenuType.MainApplication, path: "Export", priority: 40, ContextMenuCluster.Export);
+            registry.RegisterPackFileContextMenuItem<ExportBmdAsTerryProjectCommand>(ContextMenuType.MainApplication, path: "Export", priority: 40, ContextMenuCluster.ContentTransfer);
         }
     }
 }

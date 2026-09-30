@@ -5,12 +5,14 @@ using Shared.Ui.BaseDialogs.PackFileTree.Utility;
 
 namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands
 {
-    public class ClosePackContainerFileCommand(IPackFileService packFileService, IStandardDialogs standardDialogs, IScopedLogger scopedLogger) : IContextMenuCommand
+    public class ClosePackContainerFileCommand(IPackFileService packFileService, IStandardDialogs standardDialogs, LocalizationManager localizationManager, IScopedLogger scopedLogger) : IContextMenuCommand
     {
         private readonly ILogger _logger = scopedLogger.ForContext<ClosePackContainerFileCommand>();
 
-        public string GetDisplayName(TreeNode node) => "Close";
+        public string GetDisplayName(TreeNode node) => localizationManager.Get("PackFileTree.ContextMenu.Close");
+
         public bool ShouldAdd(TreeNode node) => node.NodeType == NodeType.Root;
+
         public bool IsEnabled(TreeNode node) => true;
 
         private TreeNode _node = null!;

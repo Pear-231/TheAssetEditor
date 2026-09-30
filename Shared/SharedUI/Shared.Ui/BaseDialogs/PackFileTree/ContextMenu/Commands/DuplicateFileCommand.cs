@@ -8,11 +8,12 @@ using Shared.Ui.BaseDialogs.PackFileTree.Utility;
 
 namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands
 {
-    public class DuplicateFileCommand(IPackFileService packFileService, IStandardDialogs standardDialogs, IScopedLogger scopedLogger) : IContextMenuCommand
+    public class DuplicateFileCommand(IPackFileService packFileService, IStandardDialogs standardDialogs, LocalizationManager localizationManager, IScopedLogger scopedLogger) : IContextMenuCommand
     {
         private readonly ILogger _logger = scopedLogger.ForContext<DuplicateFileCommand>();
 
-        public string GetDisplayName(TreeNode node) => "Duplicate";
+        public string GetDisplayName(TreeNode node) => localizationManager.Get("PackFileTree.ContextMenu.Duplicate");
+
         public bool ShouldAdd(TreeNode node)
         {
             var container = TreeNodeHelper.GetPackFileContainer(node);

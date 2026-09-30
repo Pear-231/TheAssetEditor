@@ -16,11 +16,12 @@ namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu
     public enum ContextMenuCluster
     {
         PackFileOperation,
-        FolderOperation,
+        ContentTransfer,
         FileOperation,
-        Export,
-        Reports,
-        Misc
+        InspectAndOpen,
+        Serialisation,
+        ViewState,
+        Reports
     }
 
     public interface IPackFileContextMenuRegistration

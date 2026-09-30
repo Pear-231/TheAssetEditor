@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
+using Shared.Core.Services;
 using Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands;
 
 namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu
@@ -11,11 +12,13 @@ namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu
     {
         private readonly PackFileContextMenuRegistry _registry;
         private readonly IServiceProvider _serviceProvider;
+        private readonly LocalizationManager _localizationManager;
 
-        public PackFileContextMenuComposer(PackFileContextMenuRegistry registry, IServiceProvider serviceProvider)
+        public PackFileContextMenuComposer(PackFileContextMenuRegistry registry, IServiceProvider serviceProvider, LocalizationManager localizationManager)
         {
             _registry = registry;
             _serviceProvider = serviceProvider;
+            _localizationManager = localizationManager;
         }
 
         public ObservableCollection<ContextMenuItem> Build(ContextMenuType contextMenuType, TreeNode? node)
@@ -62,7 +65,7 @@ namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu
 
 
 
-        private static ContextMenuItem GetOrCreateMenuPath(string path, ContextMenuItem root, Dictionary<string, ContextMenuItem> pathToMenuLookup)
+        private ContextMenuItem GetOrCreateMenuPath(string path, ContextMenuItem root, Dictionary<string, ContextMenuItem> pathToMenuLookup)
         {
             if (string.IsNullOrWhiteSpace(path))
                 return root;
@@ -75,7 +78,7 @@ namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu
 
                 if (pathToMenuLookup.TryGetValue(runningPath, out var menu) == false)
                 {
-                    menu = new ContextMenuItem(pathSegment, null);
+                    menu = new ContextMenuItem(_localizationManager.Get($"PackFileTree.ContextMenu.Group.{pathSegment.Replace(" ", string.Empty)}"), null);
                     current.ContextMenu.Add(menu);
                     pathToMenuLookup[runningPath] = menu;
                 }

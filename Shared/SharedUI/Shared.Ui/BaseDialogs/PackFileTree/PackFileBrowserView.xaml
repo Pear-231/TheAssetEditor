@@ -173,7 +173,7 @@
                                 </Style>
                             </TextBlock.Style>
                         </TextBlock>
-                        <TextBlock Grid.Column="3" Text=" [Read Only]" Foreground="Gray">
+                        <TextBlock Grid.Column="3" Text="{loc:Loc Dialog.PackFileBrowser.ReadOnlyFlag}" Foreground="Gray">
                             <TextBlock.Style>
                                 <Style TargetType="{x:Type TextBlock}">
                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -185,7 +185,7 @@
                                 </Style>
                             </TextBlock.Style>
                         </TextBlock>
-                        <TextBlock Grid.Column="4" Text=" [Active]" Foreground="Gray">
+                        <TextBlock Grid.Column="4" Text="{loc:Loc Dialog.PackFileBrowser.ActiveFlag}" Foreground="Gray">
                             <TextBlock.Style>
                                 <Style TargetType="{x:Type TextBlock}">
                                     <Setter Property="Visibility" Value="Collapsed"/>

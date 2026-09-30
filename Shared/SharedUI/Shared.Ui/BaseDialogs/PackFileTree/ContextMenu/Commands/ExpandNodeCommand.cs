@@ -1,14 +1,17 @@
 ﻿using Serilog;
 using Shared.Core.ErrorHandling;
+using Shared.Core.Services;
 
 namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands
 {
-    public class ExpandNodeCommand(IScopedLogger scopedLogger) : IContextMenuCommand
+    public class ExpandNodeCommand(LocalizationManager localizationManager, IScopedLogger scopedLogger) : IContextMenuCommand
     {
         private readonly ILogger _logger = scopedLogger.ForContext<ExpandNodeCommand>();
 
-        public string GetDisplayName(TreeNode node) => "Expand all";
+        public string GetDisplayName(TreeNode node) => localizationManager.Get("PackFileTree.ContextMenu.ExpandAll");
+
         public bool ShouldAdd(TreeNode node) => node.NodeType != NodeType.File;
+
         public bool IsEnabled(TreeNode node) => true;
 
         private TreeNode _node = null!;

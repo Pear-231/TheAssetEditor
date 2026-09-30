@@ -7,12 +7,14 @@ using Shared.Ui.BaseDialogs.PackFileTree.Utility;
 
 namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands
 {
-    public class ExportToDirectoryCommand(IPackFileService packFileService, IStandardDialogs standardDialogs, IFileSystemAccess fileSystemAccess, IScopedLogger scopedLogger) : IContextMenuCommand
+    public class ExportToDirectoryCommand(IPackFileService packFileService, IStandardDialogs standardDialogs, IFileSystemAccess fileSystemAccess, LocalizationManager localizationManager, IScopedLogger scopedLogger) : IContextMenuCommand
     {
         private readonly ILogger _logger = scopedLogger.ForContext<ExportToDirectoryCommand>();
 
-        public string GetDisplayName(TreeNode node) => "Export to system folder";
+        public string GetDisplayName(TreeNode node) => localizationManager.Get("PackFileTree.ContextMenu.ExportToSystemFolder");
+
         public bool ShouldAdd(TreeNode node) => node.NodeType == NodeType.Directory || node.NodeType == NodeType.Root || (node.NodeType == NodeType.File && TreeNodeHelper.GetPackFile(node) != null);
+
         public bool IsEnabled(TreeNode node) => true;
 
         private TreeNode _node = null!;

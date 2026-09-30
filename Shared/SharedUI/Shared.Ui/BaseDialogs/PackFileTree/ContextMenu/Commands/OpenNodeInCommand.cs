@@ -11,7 +11,9 @@ namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands
         private readonly ILogger _logger = scopedLogger.ForContext<OpenNodeInCommand>();
 
         public abstract string GetDisplayName(TreeNode node);
+
         public bool ShouldAdd(TreeNode node) => node.NodeType == NodeType.File && TreeNodeHelper.GetPackFile(node) != null;
+
         public bool IsEnabled(TreeNode node) => true;
 
         protected TreeNode _node = null!;
@@ -68,15 +70,17 @@ namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands
         }
     }
 
-    public class OpenNodeInNotepadCommand(IStandardDialogs standardDialogs, IFileSystemAccess fileSystemAccess, IScopedLogger scopedLogger) : OpenNodeInCommand(standardDialogs, fileSystemAccess, scopedLogger)
+    public class OpenNodeInNotepadCommand(IStandardDialogs standardDialogs, IFileSystemAccess fileSystemAccess, LocalizationManager localizationManager, IScopedLogger scopedLogger) : OpenNodeInCommand(standardDialogs, fileSystemAccess, scopedLogger)
     {
-        public override string GetDisplayName(TreeNode node) => "Open in Notepad++";
+        public override string GetDisplayName(TreeNode node) => localizationManager.Get("PackFileTree.ContextMenu.NotepadPlusPlus");
+
         public override void Execute() => OpenSelectedNodeUsing(_node, ResolveApplicationPath(@"Notepad++\notepad++.exe"));
     }
 
-    public class OpenNodeInHxDCommand(IStandardDialogs standardDialogs, IFileSystemAccess fileSystemAccess, IScopedLogger scopedLogger) : OpenNodeInCommand(standardDialogs, fileSystemAccess, scopedLogger)
+    public class OpenNodeInHxDCommand(IStandardDialogs standardDialogs, IFileSystemAccess fileSystemAccess, LocalizationManager localizationManager, IScopedLogger scopedLogger) : OpenNodeInCommand(standardDialogs, fileSystemAccess, scopedLogger)
     {
-        public override string GetDisplayName(TreeNode node) => "Open in Hxd";
+        public override string GetDisplayName(TreeNode node) => localizationManager.Get("PackFileTree.ContextMenu.HxD");
+
         public override void Execute() => OpenSelectedNodeUsing(_node, ResolveApplicationPath(@"HxD\HxD.exe"));
     }
 }

@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using Shared.Core.ErrorHandling;
 using Shared.Core.PackFiles.Models;
 using Shared.Core.Services;
@@ -11,15 +11,10 @@ namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands
         LocalizationManager localizationManager,
         IScopedLogger scopedLogger) : IContextMenuCommand
     {
-        private const string DisplayNameKey = "PackFileTree.ContextMenu.ChangeOutputLocation";
         private readonly ILogger _logger = scopedLogger.ForContext<ChangeOutputLocationCommand>();
         private TreeNode _node = null!;
 
-        public string GetDisplayName(TreeNode node)
-        {
-            var localizedText = localizationManager.Get(DisplayNameKey);
-            return localizedText == DisplayNameKey ? "Change output location" : localizedText;
-        }
+        public string GetDisplayName(TreeNode node) => localizationManager.Get("PackFileTree.ContextMenu.SetPackOutputLocation");
 
         public bool ShouldAdd(TreeNode node)
         {

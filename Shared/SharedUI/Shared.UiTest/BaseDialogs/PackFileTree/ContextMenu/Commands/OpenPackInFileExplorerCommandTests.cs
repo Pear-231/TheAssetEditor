@@ -18,7 +18,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var viewModel = PackFileBrowser();
             var root = viewModel.Files.First();
 
-            var command = new OpenPackInFileExplorerCommand(_packFileService, new Mock<IStandardDialogs>().Object, new Mock<IFileSystemAccess>().Object, MockScopedLogger.Create());
+            var command = new OpenPackInFileExplorerCommand(_packFileService, new Mock<IStandardDialogs>().Object, new Mock<IFileSystemAccess>().Object, new LocalizationManager(), MockScopedLogger.Create());
 
             Assert.That(command.ShouldAdd(root), Is.True);
         }
@@ -30,7 +30,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var root = CreateRoot(container);
             var fileNode = CreateNodePath(root, "folder\\file.txt", NodeType.File);
 
-            var command = new OpenPackInFileExplorerCommand(_packFileService, new Mock<IStandardDialogs>().Object, new Mock<IFileSystemAccess>().Object, MockScopedLogger.Create());
+            var command = new OpenPackInFileExplorerCommand(_packFileService, new Mock<IStandardDialogs>().Object, new Mock<IFileSystemAccess>().Object, new LocalizationManager(), MockScopedLogger.Create());
 
             Assert.That(command.ShouldAdd(fileNode), Is.True);
         }
@@ -42,7 +42,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var root = CreateRoot(container);
             var fileNode = CreateNodePath(root, "folder\\file.txt", NodeType.File);
 
-            var command = new OpenPackInFileExplorerCommand(_packFileService, new Mock<IStandardDialogs>().Object, new Mock<IFileSystemAccess>().Object, MockScopedLogger.Create());
+            var command = new OpenPackInFileExplorerCommand(_packFileService, new Mock<IStandardDialogs>().Object, new Mock<IFileSystemAccess>().Object, new LocalizationManager(), MockScopedLogger.Create());
 
             Assert.That(command.ShouldAdd(fileNode), Is.False);
         }
@@ -54,7 +54,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var viewModel = PackFileBrowser();
             var root = viewModel.Files.First();
 
-            var command = new OpenPackInFileExplorerCommand(_packFileService, new Mock<IStandardDialogs>().Object, new Mock<IFileSystemAccess>().Object, MockScopedLogger.Create());
+            var command = new OpenPackInFileExplorerCommand(_packFileService, new Mock<IStandardDialogs>().Object, new Mock<IFileSystemAccess>().Object, new LocalizationManager(), MockScopedLogger.Create());
 
             Assert.That(command.IsEnabled(root), Is.True);
         }
@@ -72,7 +72,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             fileSystem.Setup(x => x.PathGetDirectoryName(It.IsAny<string>())).Returns("c:\\temp");
 
             // Act
-            var command = new OpenPackInFileExplorerCommand(_packFileService, new Mock<IStandardDialogs>().Object, fileSystem.Object, MockScopedLogger.Create());
+            var command = new OpenPackInFileExplorerCommand(_packFileService, new Mock<IStandardDialogs>().Object, fileSystem.Object, new LocalizationManager(), MockScopedLogger.Create());
             command.Configure(root);
 
             command.Execute();
@@ -92,7 +92,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var dialogs = new Mock<IStandardDialogs>();
 
             // Act
-            var command = new OpenPackInFileExplorerCommand(_packFileService, dialogs.Object, new Mock<IFileSystemAccess>().Object, MockScopedLogger.Create());
+            var command = new OpenPackInFileExplorerCommand(_packFileService, dialogs.Object, new Mock<IFileSystemAccess>().Object, new LocalizationManager(), MockScopedLogger.Create());
             command.Configure(root);
 
             command.Execute();

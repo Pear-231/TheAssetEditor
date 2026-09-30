@@ -164,8 +164,8 @@ namespace Editors.Audio
     {
         public void Register(PackFileContextMenuRegistry registry)
         {
-            registry.RegisterPackFileContextMenuItem<ExportCAVp8AsWebMCommand>(ContextMenuType.MainApplication, path: "Export", priority: 20, ContextMenuCluster.Export);
-            registry.RegisterPackFileContextMenuItem<ExportCAVp8AsIvfCommand>(ContextMenuType.MainApplication, path: "Export", priority: 30, ContextMenuCluster.Export);
+            registry.RegisterPackFileContextMenuItem<ExportCAVp8AsWebMCommand>(ContextMenuType.MainApplication, path: "Export", priority: 20, ContextMenuCluster.ContentTransfer);
+            registry.RegisterPackFileContextMenuItem<ExportCAVp8AsIvfCommand>(ContextMenuType.MainApplication, path: "Export", priority: 30, ContextMenuCluster.ContentTransfer);
         }
     }
 }

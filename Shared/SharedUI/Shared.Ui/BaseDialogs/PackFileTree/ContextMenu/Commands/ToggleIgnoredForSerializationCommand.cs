@@ -1,11 +1,12 @@
 using Shared.Core.ErrorHandling;
 using Shared.Core.PackFiles.Utility;
+using Shared.Core.Services;
 using Shared.Ui.BaseDialogs.PackFileTree.Utility;
 using System.Linq;
 
 namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands
 {
-    public class ToggleIgnoredForSerializationCommand(IScopedLogger scopedLogger) : IContextMenuCommand
+    public class ToggleIgnoredForSerializationCommand(LocalizationManager localizationManager, IScopedLogger scopedLogger) : IContextMenuCommand
     {
         private readonly ILogger _logger = scopedLogger.ForContext<ToggleIgnoredForSerializationCommand>();
         private TreeNode _node = null!;
@@ -13,9 +14,13 @@ namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands
         public string GetDisplayName(TreeNode node)
         {
             var isIgnored = IsIgnored(node);
-            return isIgnored ? "Remove from Ignored Files" : "Add to Ignored Files";
+            return isIgnored
+                ? localizationManager.Get("PackFileTree.ContextMenu.RemoveFromIgnoredFiles")
+                : localizationManager.Get("PackFileTree.ContextMenu.AddToIgnoredFiles");
         }
 
+        // TODO: Make "Add to Ignored Files" instead "Add to Ignored" and allow it to work on folders and files, 
+        // and if it's done for a folder don't display it as an option for the files in that folder.
         public bool ShouldAdd(TreeNode node)
         {
             var container = TreeNodeHelper.GetPackFileContainer(node);

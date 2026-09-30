@@ -1,13 +1,16 @@
 ﻿using Shared.Core.ErrorHandling;
+using Shared.Core.Services;
 
 namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands
 {
-    public class CollapseNodeCommand(IScopedLogger scopedLogger) : IContextMenuCommand
+    public class CollapseNodeCommand(LocalizationManager localizationManager, IScopedLogger scopedLogger) : IContextMenuCommand
     {
         private readonly ILogger _logger = scopedLogger.ForContext<CollapseNodeCommand>();
 
-        public string GetDisplayName(TreeNode node) => "Collapse all";
+        public string GetDisplayName(TreeNode node) => localizationManager.Get("PackFileTree.ContextMenu.CollapseAll");
+
         public bool ShouldAdd(TreeNode node) => node.NodeType != NodeType.File;
+
         public bool IsEnabled(TreeNode node) => true;
 
         private TreeNode _node = null!;

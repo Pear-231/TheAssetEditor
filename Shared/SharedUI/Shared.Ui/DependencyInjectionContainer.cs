@@ -66,37 +66,37 @@ namespace Shared.Ui
         private static void RegisterPackFileContextMenuItems(PackFileContextMenuRegistry registry)
         {
             // MainApplication context menu
-            registry.RegisterPackFileContextMenuItem<ClosePackContainerFileCommand>(ContextMenuType.MainApplication, path: "", priority: 0, ContextMenuCluster.PackFileOperation);
-            registry.RegisterPackFileContextMenuItem<SetAsActivePackCommand>(ContextMenuType.MainApplication, path: "", priority: 10, ContextMenuCluster.PackFileOperation);
-            registry.RegisterPackFileContextMenuItem<SavePackFileContainerCommand>(ContextMenuType.MainApplication, path: "", priority: 20, ContextMenuCluster.PackFileOperation);
-            registry.RegisterPackFileContextMenuItem<SaveAsPackFileContainerCommand>(ContextMenuType.MainApplication, path: "", priority: 30, ContextMenuCluster.PackFileOperation);
-            registry.RegisterPackFileContextMenuItem<ChangeOutputLocationCommand>(ContextMenuType.MainApplication, path: "", priority: 40, ContextMenuCluster.PackFileOperation);
-            registry.RegisterPackFileContextMenuItem<CopyToActivePackCommand>(ContextMenuType.MainApplication, path: "", priority: 50, ContextMenuCluster.PackFileOperation);
 
-            registry.RegisterPackFileContextMenuItem<ImportFileCommand>(ContextMenuType.MainApplication, path: "Import", priority: 0, ContextMenuCluster.FolderOperation);
-            registry.RegisterPackFileContextMenuItem<ImportDirectoryCommand>(ContextMenuType.MainApplication, path: "Import", priority: 10, ContextMenuCluster.FolderOperation);
-            registry.RegisterPackFileContextMenuItem<CreateFolderCommand>(ContextMenuType.MainApplication, path: "Create", priority: 30, ContextMenuCluster.FolderOperation);
-            registry.RegisterPackFileContextMenuItem<RenameNodeCommand>(ContextMenuType.MainApplication, path: "", priority: 40, ContextMenuCluster.FolderOperation);
-            registry.RegisterPackFileContextMenuItem<DeleteNodeCommand>(ContextMenuType.MainApplication, path: "", priority: 50, ContextMenuCluster.FolderOperation);
+            registry.RegisterPackFileContextMenuItem<SavePackFileContainerCommand>(ContextMenuType.MainApplication, path: "", priority: 0, ContextMenuCluster.PackFileOperation);
+            registry.RegisterPackFileContextMenuItem<SaveAsPackFileContainerCommand>(ContextMenuType.MainApplication, path: "", priority: 10, ContextMenuCluster.PackFileOperation);
+            registry.RegisterPackFileContextMenuItem<SetAsActivePackCommand>(ContextMenuType.MainApplication, path: "", priority: 20, ContextMenuCluster.PackFileOperation);
+            registry.RegisterPackFileContextMenuItem<ChangeOutputLocationCommand>(ContextMenuType.MainApplication, path: "", priority: 30, ContextMenuCluster.PackFileOperation);
+            registry.RegisterPackFileContextMenuItem<ClosePackContainerFileCommand>(ContextMenuType.MainApplication, path: "", priority: 40, ContextMenuCluster.PackFileOperation);
 
-            registry.RegisterPackFileContextMenuItem<DuplicateFileCommand>(ContextMenuType.MainApplication, path: "", priority: 0, ContextMenuCluster.FileOperation);
-            registry.RegisterPackFileContextMenuItem<RenameNodeCommand>(ContextMenuType.MainApplication, path: "", priority: 10, ContextMenuCluster.FileOperation);
-            registry.RegisterPackFileContextMenuItem<DeleteNodeCommand>(ContextMenuType.MainApplication, path: "", priority: 20, ContextMenuCluster.FileOperation);
-            registry.RegisterPackFileContextMenuItem<CopyNodePathCommand>(ContextMenuType.MainApplication, path: "", priority: 30, ContextMenuCluster.FileOperation);
-            registry.RegisterPackFileContextMenuItem<ToggleIgnoredForSerializationCommand>(ContextMenuType.MainApplication, path: "", priority: 40, ContextMenuCluster.FileOperation);
+            registry.RegisterPackFileContextMenuItem<CreateFolderCommand>(ContextMenuType.MainApplication, path: "", priority: 0, ContextMenuCluster.ContentTransfer);
+            registry.RegisterPackFileContextMenuItem<ImportFileCommand>(ContextMenuType.MainApplication, path: "Import", priority: 10, ContextMenuCluster.ContentTransfer);
+            registry.RegisterPackFileContextMenuItem<ImportDirectoryCommand>(ContextMenuType.MainApplication, path: "Import", priority: 20, ContextMenuCluster.ContentTransfer);
+            registry.RegisterPackFileContextMenuItem<ExportToDirectoryCommand>(ContextMenuType.MainApplication, path: "Export", priority: 0, ContextMenuCluster.ContentTransfer);
 
-            registry.RegisterPackFileContextMenuItem<ExportToDirectoryCommand>(ContextMenuType.MainApplication, path: "Export", priority: 0, ContextMenuCluster.Export);
+            registry.RegisterPackFileContextMenuItem<RenameNodeCommand>(ContextMenuType.MainApplication, path: "", priority: 0, ContextMenuCluster.FileOperation);
+            registry.RegisterPackFileContextMenuItem<DeleteNodeCommand>(ContextMenuType.MainApplication, path: "", priority: 10, ContextMenuCluster.FileOperation);
+            registry.RegisterPackFileContextMenuItem<DuplicateFileCommand>(ContextMenuType.MainApplication, path: "", priority: 20, ContextMenuCluster.FileOperation);
+            registry.RegisterPackFileContextMenuItem<CopyToActivePackCommand>(ContextMenuType.MainApplication, path: "", priority: 30, ContextMenuCluster.FileOperation);
 
-            registry.RegisterPackFileContextMenuItem<ExpandNodeCommand>(ContextMenuType.MainApplication, path: "", priority: 0, ContextMenuCluster.Misc);
-            registry.RegisterPackFileContextMenuItem<CollapseNodeCommand>(ContextMenuType.MainApplication, path: "", priority: 10, ContextMenuCluster.Misc);
-            registry.RegisterPackFileContextMenuItem<OpenPackInFileExplorerCommand>(ContextMenuType.MainApplication, path: "", priority: 20, ContextMenuCluster.Misc);
-            registry.RegisterPackFileContextMenuItem<OpenNodeInHxDCommand>(ContextMenuType.MainApplication, path: "Open", priority: 30, ContextMenuCluster.Misc);
-            registry.RegisterPackFileContextMenuItem<OpenNodeInNotepadCommand>(ContextMenuType.MainApplication, path: "Open", priority: 40, ContextMenuCluster.Misc);
+            registry.RegisterPackFileContextMenuItem<CopyNodePathCommand>(ContextMenuType.MainApplication, path: "", priority: 0, ContextMenuCluster.InspectAndOpen);
+            registry.RegisterPackFileContextMenuItem<OpenPackInFileExplorerCommand>(ContextMenuType.MainApplication, path: "", priority: 10, ContextMenuCluster.InspectAndOpen);
+            registry.RegisterPackFileContextMenuItem<OpenNodeInHxDCommand>(ContextMenuType.MainApplication, path: "Open with", priority: 20, ContextMenuCluster.InspectAndOpen);
+            registry.RegisterPackFileContextMenuItem<OpenNodeInNotepadCommand>(ContextMenuType.MainApplication, path: "Open with", priority: 30, ContextMenuCluster.InspectAndOpen);
 
-            // Simple context menu
-            registry.RegisterPackFileContextMenuItem<ExpandNodeCommand>(ContextMenuType.Simple, path: "", priority: 0, ContextMenuCluster.FolderOperation);
-            registry.RegisterPackFileContextMenuItem<CollapseNodeCommand>(ContextMenuType.Simple, path: "", priority: 10, ContextMenuCluster.FolderOperation);
-            registry.RegisterPackFileContextMenuItem<CreateFolderCommand>(ContextMenuType.Simple, path: "", priority: 20, ContextMenuCluster.FolderOperation);
+            registry.RegisterPackFileContextMenuItem<ToggleIgnoredForSerializationCommand>(ContextMenuType.MainApplication, path: "", priority: 0, ContextMenuCluster.Serialisation);
+
+            registry.RegisterPackFileContextMenuItem<ExpandNodeCommand>(ContextMenuType.MainApplication, path: "", priority: 0, ContextMenuCluster.ViewState);
+            registry.RegisterPackFileContextMenuItem<CollapseNodeCommand>(ContextMenuType.MainApplication, path: "", priority: 10, ContextMenuCluster.ViewState);
+
+            // Simple context menu (kept as a single contiguous group, matching its prior behavior)
+            registry.RegisterPackFileContextMenuItem<ExpandNodeCommand>(ContextMenuType.Simple, path: "", priority: 0, ContextMenuCluster.ViewState);
+            registry.RegisterPackFileContextMenuItem<CollapseNodeCommand>(ContextMenuType.Simple, path: "", priority: 10, ContextMenuCluster.ViewState);
+            registry.RegisterPackFileContextMenuItem<CreateFolderCommand>(ContextMenuType.Simple, path: "", priority: 20, ContextMenuCluster.ViewState);
         }
 
         public override void RegisterTools(IEditorDatabase factory)

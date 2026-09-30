@@ -18,7 +18,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var root = viewModel.Files.First();
             var fileNode = TreeNodeHelper.FindNode(viewModel, container, "rootfolder\\file.txt");
 
-            var command = new ClosePackContainerFileCommand(_packFileService, new Mock<IStandardDialogs>().Object, MockScopedLogger.Create());
+            var command = new ClosePackContainerFileCommand(_packFileService, new Mock<IStandardDialogs>().Object, new LocalizationManager(), MockScopedLogger.Create());
 
             Assert.That(command.ShouldAdd(root), Is.True);
             Assert.That(command.ShouldAdd(fileNode), Is.False);
@@ -31,7 +31,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var viewModel = PackFileBrowser();
             var root = viewModel.Files.First();
 
-            var command = new ClosePackContainerFileCommand(_packFileService, new Mock<IStandardDialogs>().Object, MockScopedLogger.Create());
+            var command = new ClosePackContainerFileCommand(_packFileService, new Mock<IStandardDialogs>().Object, new LocalizationManager(), MockScopedLogger.Create());
 
             Assert.That(command.IsEnabled(root), Is.True);
         }
@@ -48,7 +48,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             dialogs.Setup(x => x.ShowYesNoBox(It.IsAny<string>(), It.IsAny<string>())).Returns(ShowMessageBoxResult.OK);
 
             // Act
-            var command = new ClosePackContainerFileCommand(_packFileService, dialogs.Object, MockScopedLogger.Create());
+            var command = new ClosePackContainerFileCommand(_packFileService, dialogs.Object, new LocalizationManager(), MockScopedLogger.Create());
             command.Configure(root);
 
             command.Execute();

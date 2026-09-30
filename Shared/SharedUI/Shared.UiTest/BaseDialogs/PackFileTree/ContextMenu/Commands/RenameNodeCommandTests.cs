@@ -21,7 +21,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var viewModel = PackFileBrowser();
             var node = TreeNodeHelper.FindNode(viewModel, container, "rootfolder\\file.txt");
 
-            var command = new RenameNodeCommand(_packFileService, new Mock<IStandardDialogs>().Object, MockScopedLogger.Create());
+            var command = new RenameNodeCommand(_packFileService, new Mock<IStandardDialogs>().Object, new LocalizationManager(), MockScopedLogger.Create());
 
             Assert.That(command.ShouldAdd(node), Is.True);
         }
@@ -33,7 +33,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var viewModel = PackFileBrowser();
             var node = TreeNodeHelper.FindNode(viewModel, container, "rootfolder\\file.txt");
 
-            var command = new RenameNodeCommand(_packFileService, new Mock<IStandardDialogs>().Object, MockScopedLogger.Create());
+            var command = new RenameNodeCommand(_packFileService, new Mock<IStandardDialogs>().Object, new LocalizationManager(), MockScopedLogger.Create());
 
             Assert.That(command.IsEnabled(node), Is.True);
         }
@@ -54,7 +54,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             dialogs.Setup(x => x.ShowTextInputDialog("Rename file", node.Name)).Returns(new TextInputDialogResult(true, "renamed.txt"));
 
             // Act
-            var command = new RenameNodeCommand(_packFileService, dialogs.Object, MockScopedLogger.Create());
+            var command = new RenameNodeCommand(_packFileService, dialogs.Object, new LocalizationManager(), MockScopedLogger.Create());
             command.Configure(node);
 
             command.Execute();
@@ -80,7 +80,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             dialogs.Setup(x => x.ShowTextInputDialog("Create folder", dirNode.Name)).Returns(new TextInputDialogResult(true, "renamed_folder"));
 
             // Act
-            var command = new RenameNodeCommand(_packFileService, dialogs.Object, MockScopedLogger.Create());
+            var command = new RenameNodeCommand(_packFileService, dialogs.Object, new LocalizationManager(), MockScopedLogger.Create());
             command.Configure(dirNode);
 
             command.Execute();

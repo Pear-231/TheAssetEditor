@@ -82,8 +82,8 @@ namespace Editors.ImportExport
     {
         public void Register(PackFileContextMenuRegistry registry)
         {
-            registry.RegisterPackFileContextMenuItem<AdvancedExportCommand>(ContextMenuType.MainApplication, path: "Export", priority: 10, ContextMenuCluster.Export);
-            registry.RegisterPackFileContextMenuItem<AdvancedImportCommand>(ContextMenuType.MainApplication, path: "Import", priority: 20, ContextMenuCluster.FolderOperation);
+            registry.RegisterPackFileContextMenuItem<AdvancedExportCommand>(ContextMenuType.MainApplication, path: "Export", priority: 10, ContextMenuCluster.ContentTransfer);
+            registry.RegisterPackFileContextMenuItem<AdvancedImportCommand>(ContextMenuType.MainApplication, path: "Import", priority: 30, ContextMenuCluster.ContentTransfer);
         }
     }
 }

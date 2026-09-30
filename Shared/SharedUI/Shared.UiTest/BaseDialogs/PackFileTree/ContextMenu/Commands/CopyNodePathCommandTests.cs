@@ -1,5 +1,6 @@
 using Test.TestingUtility.TestUtility;
 using System.Threading;
+using Shared.Core.Services;
 using Shared.Ui.BaseDialogs.PackFileTree;
 using Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands;
 using Shared.Ui.BaseDialogs.PackFileTree.Utility;
@@ -16,7 +17,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var viewModel = PackFileBrowser();
             var file = TreeNodeHelper.FindNode(viewModel, container, "folder\\file.txt");
 
-            var command = new CopyNodePathCommand(MockScopedLogger.Create());
+            var command = new CopyNodePathCommand(new LocalizationManager(), MockScopedLogger.Create());
 
             Assert.That(command.ShouldAdd(file), Is.True);
         }
@@ -28,7 +29,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var viewModel = PackFileBrowser();
             var file = TreeNodeHelper.FindNode(viewModel, container, "folder\\file.txt");
 
-            var command = new CopyNodePathCommand(MockScopedLogger.Create());
+            var command = new CopyNodePathCommand(new LocalizationManager(), MockScopedLogger.Create());
 
             Assert.That(command.IsEnabled(file), Is.True);
         }
@@ -41,7 +42,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var viewModel = PackFileBrowser();
             var file = TreeNodeHelper.FindNode(viewModel, container, "folder\\file.txt");
 
-            var command = new CopyNodePathCommand(MockScopedLogger.Create());
+            var command = new CopyNodePathCommand(new LocalizationManager(), MockScopedLogger.Create());
             command.Configure(file);
 
             command.Execute();

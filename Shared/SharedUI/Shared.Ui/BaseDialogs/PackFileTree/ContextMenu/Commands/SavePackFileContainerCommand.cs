@@ -13,10 +13,12 @@ namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands
     public class SavePackFileContainerCommand(
         IPackFileService packFileService,
         IStandardDialogs standardDialogs,
-        ApplicationSettingsService applicationSettingsService, IScopedLogger scopedLogger) : IContextMenuCommand
+        ApplicationSettingsService applicationSettingsService,
+        LocalizationManager localizationManager, IScopedLogger scopedLogger) : IContextMenuCommand
     {
         private readonly ILogger _logger = scopedLogger.ForContext<SavePackFileContainerCommand>();
-        public string GetDisplayName(TreeNode node) => "Save";
+        public string GetDisplayName(TreeNode node) => localizationManager.Get("PackFileTree.ContextMenu.Save");
+
         public bool ShouldAdd(TreeNode node)
         {
             var container = TreeNodeHelper.GetPackFileContainer(node);

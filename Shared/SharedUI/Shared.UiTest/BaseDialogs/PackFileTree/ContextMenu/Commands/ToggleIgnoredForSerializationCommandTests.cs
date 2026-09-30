@@ -1,5 +1,6 @@
 using Moq;
 using Shared.Core.PackFiles.Models;
+using Shared.Core.Services;
 using Shared.Ui.BaseDialogs.PackFileTree;
 using Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands;
 using Test.TestingUtility.TestUtility;
@@ -17,7 +18,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var root = CreateRoot(container.Object);
             var fileNode = CreateNodePath(root, "folder\\file.txt", NodeType.File);
 
-            var command = new ToggleIgnoredForSerializationCommand(MockScopedLogger.Create());
+            var command = new ToggleIgnoredForSerializationCommand(new LocalizationManager(), MockScopedLogger.Create());
 
             Assert.That(command.ShouldAdd(fileNode), Is.True);
         }
@@ -30,7 +31,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var root = CreateRoot(container.Object);
             var dirNode = CreateNodePath(root, "folder", NodeType.Directory);
 
-            var command = new ToggleIgnoredForSerializationCommand(MockScopedLogger.Create());
+            var command = new ToggleIgnoredForSerializationCommand(new LocalizationManager(), MockScopedLogger.Create());
 
             Assert.That(command.ShouldAdd(dirNode), Is.False);
         }
@@ -43,7 +44,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var root = CreateRoot(container.Object);
             var fileNode = CreateNodePath(root, "folder\\file.txt", NodeType.File);
 
-            var command = new ToggleIgnoredForSerializationCommand(MockScopedLogger.Create());
+            var command = new ToggleIgnoredForSerializationCommand(new LocalizationManager(), MockScopedLogger.Create());
 
             Assert.That(command.ShouldAdd(fileNode), Is.False);
         }
@@ -56,9 +57,9 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var root = CreateRoot(container.Object);
             var fileNode = CreateNodePath(root, "folder\\file.txt", NodeType.File);
 
-            var command = new ToggleIgnoredForSerializationCommand(MockScopedLogger.Create());
+            var command = new ToggleIgnoredForSerializationCommand(new LocalizationManager(), MockScopedLogger.Create());
 
-            Assert.That(command.GetDisplayName(fileNode), Is.EqualTo("Add to Ignored Files"));
+            Assert.That(command.GetDisplayName(fileNode), Is.EqualTo("PackFileTree.ContextMenu.AddToIgnoredFiles"));
         }
 
         [Test]
@@ -70,9 +71,9 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var root = CreateRoot(container.Object);
             var fileNode = CreateNodePath(root, "folder\\file.txt", NodeType.File);
 
-            var command = new ToggleIgnoredForSerializationCommand(MockScopedLogger.Create());
+            var command = new ToggleIgnoredForSerializationCommand(new LocalizationManager(), MockScopedLogger.Create());
 
-            Assert.That(command.GetDisplayName(fileNode), Is.EqualTo("Remove from Ignored Files"));
+            Assert.That(command.GetDisplayName(fileNode), Is.EqualTo("PackFileTree.ContextMenu.RemoveFromIgnoredFiles"));
         }
 
         [Test]
@@ -84,9 +85,9 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var root = CreateRoot(container.Object);
             var fileNode = CreateNodePath(root, "folder\\file.txt", NodeType.File);
 
-            var command = new ToggleIgnoredForSerializationCommand(MockScopedLogger.Create());
+            var command = new ToggleIgnoredForSerializationCommand(new LocalizationManager(), MockScopedLogger.Create());
 
-            Assert.That(command.GetDisplayName(fileNode), Is.EqualTo("Remove from Ignored Files"));
+            Assert.That(command.GetDisplayName(fileNode), Is.EqualTo("PackFileTree.ContextMenu.RemoveFromIgnoredFiles"));
         }
 
         [Test]
@@ -97,7 +98,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var root = CreateRoot(container.Object);
             var fileNode = CreateNodePath(root, "folder\\file.txt", NodeType.File);
 
-            var command = new ToggleIgnoredForSerializationCommand(MockScopedLogger.Create());
+            var command = new ToggleIgnoredForSerializationCommand(new LocalizationManager(), MockScopedLogger.Create());
             command.Configure(fileNode);
 
             command.Execute();
@@ -119,7 +120,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var changedProperties = new List<string?>();
             fileNode.PropertyChanged += (_, e) => changedProperties.Add(e.PropertyName);
 
-            var command = new ToggleIgnoredForSerializationCommand(MockScopedLogger.Create());
+            var command = new ToggleIgnoredForSerializationCommand(new LocalizationManager(), MockScopedLogger.Create());
             command.Configure(fileNode);
 
             command.Execute();

@@ -16,7 +16,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var viewModel = PackFileBrowser();
             var node = TreeNodeHelper.FindNode(viewModel, container, "rootfolder\\file.txt");
 
-            var command = new OpenNodeInNotepadCommand(new Mock<IStandardDialogs>().Object, new Mock<IFileSystemAccess>().Object, MockScopedLogger.Create());
+            var command = new OpenNodeInNotepadCommand(new Mock<IStandardDialogs>().Object, new Mock<IFileSystemAccess>().Object, new LocalizationManager(), MockScopedLogger.Create());
 
             Assert.That(command.ShouldAdd(node), Is.True);
         }
@@ -28,7 +28,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var viewModel = PackFileBrowser();
             var node = TreeNodeHelper.FindNode(viewModel, container, "rootfolder\\file.txt");
 
-            var command = new OpenNodeInNotepadCommand(new Mock<IStandardDialogs>().Object, new Mock<IFileSystemAccess>().Object, MockScopedLogger.Create());
+            var command = new OpenNodeInNotepadCommand(new Mock<IStandardDialogs>().Object, new Mock<IFileSystemAccess>().Object, new LocalizationManager(), MockScopedLogger.Create());
 
             Assert.That(command.IsEnabled(node), Is.True);
         }
@@ -44,7 +44,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var fileSystem = new Mock<IFileSystemAccess>();
             fileSystem.Setup(x => x.FileExists(It.IsAny<string>())).Returns(false);
 
-            var command = new OpenNodeInNotepadCommand(dialogs.Object, fileSystem.Object, MockScopedLogger.Create());
+            var command = new OpenNodeInNotepadCommand(dialogs.Object, fileSystem.Object, new LocalizationManager(), MockScopedLogger.Create());
             command.Configure(node);
 
             command.Execute();
@@ -64,7 +64,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var fileSystem = new Mock<IFileSystemAccess>();
             fileSystem.Setup(x => x.FileExists(It.IsAny<string>())).Returns(true);
 
-            var command = new OpenNodeInNotepadCommand(dialogs.Object, fileSystem.Object, MockScopedLogger.Create());
+            var command = new OpenNodeInNotepadCommand(dialogs.Object, fileSystem.Object, new LocalizationManager(), MockScopedLogger.Create());
             command.Configure(node);
 
             command.Execute();
