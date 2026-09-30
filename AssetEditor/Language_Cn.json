@@ -14,6 +14,8 @@
   "SettingsWindow.VertexSelectionColour": "顶点选择颜色",
   "SettingsWindow.SaveButton": "保存",
   "PackFileTree.ContextMenu.ChangeOutputLocation": "更改输出位置",
+  "PackFileTree.ContextMenu.SetAsActivePack": "设为当前项目",
+  "PackFileTree.ContextMenu.CopyToActivePack": "复制到当前项目",
 
   "UpdaterWindow.Title": "更新器",
   "UpdaterWindow.UpdateInfo": "AssetEditor 有新版本可用！\n\n当前版本为 {0}。更新到版本 {1} 以获取以下最新更改。",

@@ -32,7 +32,7 @@ namespace Editors.KitbasherEditor.UiCommands
                 if (file != null)
                 {
                     var sourcePackContainer = _packFileService.GetPackFileContainer(file);
-                    _packFileService.CopyFileFromOtherPackFile(sourcePackContainer, tex.Path, _packFileService.GetEditablePack());
+                    _packFileService.CopyFileFromOtherPackFile(sourcePackContainer, tex.Path, _packFileService.GetActivePack());
                 }
             }
         }

@@ -30,16 +30,16 @@ namespace GameWorld.Core.Services.SceneSaving.Material
         {
             try
             {
-                if (_packFileService.GetEditablePack() == null)
+                if (_packFileService.GetActivePack() == null)
                 {
-                    MessageBox.Show("No editable pack selected", "error");
+                    MessageBox.Show("No active pack selected", "error");
                     return new WsMaterialResult(false, null, null); 
                 }
                
                 var wsModelData = CreateWsModel(wsMaterialGenerator, modelFilePath, meshInformation);
 
                 var wsModelPath = Path.ChangeExtension(modelFilePath, ".wsmodel");
-                var existingWsModelFile = _packFileService.FindFile(wsModelPath, _packFileService.GetEditablePack());
+                var existingWsModelFile = _packFileService.FindFile(wsModelPath, _packFileService.GetActivePack());
                 _packFileSaveService.Save(wsModelPath, Encoding.UTF8.GetBytes(wsModelData), false);
               
                 return new WsMaterialResult(false, wsModelPath, wsModelData);

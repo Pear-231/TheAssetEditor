@@ -21,10 +21,10 @@ namespace Editors.Shared.Core.Services
 
         public void Process(GameTypeEnum existingPackVersion = GameTypeEnum.Warhammer2, GameTypeEnum outputFormat = GameTypeEnum.Warhammer3)
         {
-            var packFileContainer = _pfs.GetEditablePack();
+            var packFileContainer = _pfs.GetActivePack();
             if (packFileContainer == null)
             {
-                MessageBox.Show("No editable pack selected");
+                MessageBox.Show("No active pack selected");
                 return;
             }
             var errorList = new ErrorList();

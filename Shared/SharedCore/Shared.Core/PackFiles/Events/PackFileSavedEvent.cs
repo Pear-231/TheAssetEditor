@@ -9,7 +9,7 @@ namespace Shared.Core.PackFiles.Events
     public abstract record PackFileContainerManipulationEvent();
     public record PackFileContainerAddedEvent(IPackFileContainer Container) : PackFileContainerManipulationEvent;
     public record PackFileContainerRemovedEvent(IPackFileContainer Container) : PackFileContainerManipulationEvent;
-    public record PackFileContainerSetAsMainEditableEvent(IPackFileContainer? Container);
+    public record PackFileContainerSetAsActiveEvent(IPackFileContainer? Container);
     public record PackFileContainerFilesUpdatedEvent(IPackFileContainer Container, List<PackFile> ChangedFiles) : PackFileContainerManipulationEvent;
     public record PackFileContainerFilesAddedEvent(IPackFileContainer Container, List<PackFile> AddedFiles) : PackFileContainerManipulationEvent;
     public record PackFileContainerFilesRemovedEvent(IPackFileContainer Container, List<PackFile> RemovedFiles) : PackFileContainerManipulationEvent;

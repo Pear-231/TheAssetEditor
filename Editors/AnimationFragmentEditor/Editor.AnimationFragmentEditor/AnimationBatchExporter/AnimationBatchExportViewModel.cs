@@ -38,7 +38,7 @@ namespace CommonControls.Editors.AnimationBatchExporter
             var containers = _pfs.GetAllPackfileContainers();
             foreach (var item in containers)
             {
-                if (item == _pfs.GetEditablePack())
+                if (item == _pfs.GetActivePack())
                     continue;
                 PackfileList.Add(new PackFileListItem(item));
             }
@@ -46,10 +46,10 @@ namespace CommonControls.Editors.AnimationBatchExporter
 
         public void Process()
         {
-            var outputPack = _pfs.GetEditablePack();
+            var outputPack = _pfs.GetActivePack();
             if (outputPack == null)
             {
-                MessageBox.Show("No output packfile selectd. Please set Editable pack before running the converter", "Error");
+                MessageBox.Show("No output packfile selectd. Please set active pack before running the converter", "Error");
                 return;
             }
 
@@ -76,12 +76,12 @@ namespace CommonControls.Editors.AnimationBatchExporter
 
                     var filesToAdd = convertedAnimFiles.Select(x => new NewPackFileEntry(x.directory, x.file)).ToList();
 
-                    _pfs.AddFilesToPack(_pfs.GetEditablePack(), filesToAdd);
+                    _pfs.AddFilesToPack(_pfs.GetActivePack(), filesToAdd);
 
                     _logger.Here().Information($"Saving inv matix files");
                     var invMatrixFileList = PackFileServiceUtility.FindAllWithExtention(_pfs, ".bone_inv_trans_mats", packfile.Container);
                     foreach (var invMatrixFile in invMatrixFileList)
-                        _pfs.CopyFileFromOtherPackFile(packfile.Container, _pfs.GetFullPath(invMatrixFile), _pfs.GetEditablePack());
+                        _pfs.CopyFileFromOtherPackFile(packfile.Container, _pfs.GetFullPath(invMatrixFile), _pfs.GetActivePack());
                 }
             }
 

@@ -71,9 +71,9 @@ namespace Shared.Core.PackFiles.Utility
                 packFileList.Add( new NewPackFileEntry(fileRef.PackFilePath, packfile));
             }
 
-            var editablePack = pfs.GetEditablePack();
-            Guard.IsNotNull(editablePack, "EditablePack returns null");
-            pfs.AddFilesToPack(editablePack, packFileList);
+            var activePack = pfs.GetActivePack();
+            Guard.IsNotNull(activePack, "Active pack returns null");
+            pfs.AddFilesToPack(activePack, packFileList);
             return packFileList.Select(x=>x.PackFile).ToList();
         }
 

@@ -55,11 +55,11 @@ namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands
 
         private void ReadAndSave(string newName, PackFile item)
         {
-            var editablePack = packFileService.GetEditablePack();
-            if (editablePack == null)
+            var activePack = packFileService.GetActivePack();
+            if (activePack == null)
             {
-                _logger.Here().Warning($"Duplicate requested for '{item.Name}' but no editable pack is selected");
-                standardDialogs.ShowDialogBox("No editable pack selected.");
+                _logger.Here().Warning($"Duplicate requested for '{item.Name}' but no active pack is selected");
+                standardDialogs.ShowDialogBox("No active pack selected.");
                 return;
             }
 
@@ -70,8 +70,8 @@ namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands
             var duplicatePath = string.IsNullOrWhiteSpace(path) ? newName : $"{path}\\{newName}";
 
             var fileEntry = new NewPackFileEntry(path, packFile);
-            packFileService.AddFilesToPack(editablePack, [fileEntry]);
-            _logger.Here().Information($"Duplicated file '{parentPath}' as '{duplicatePath}' in editable pack '{CommandLoggingHelper.DescribePack(editablePack)}'");
+            packFileService.AddFilesToPack(activePack, [fileEntry]);
+            _logger.Here().Information($"Duplicated file '{parentPath}' as '{duplicatePath}' in active pack '{CommandLoggingHelper.DescribePack(activePack)}'");
         }
     }
 }

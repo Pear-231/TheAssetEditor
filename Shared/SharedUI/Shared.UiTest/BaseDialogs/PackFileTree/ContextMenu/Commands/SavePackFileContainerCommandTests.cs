@@ -59,7 +59,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
         }
 
         [Test]
-        public void Execute_Parameterless_NoEditablePack_ShowsError()
+        public void Execute_Parameterless_NoActivePack_ShowsError()
         {
             // Arrange
             AddPackFiles(false, "modfile", "c:\\mymod.pack", ["rootfolder\\file.txt"]);
@@ -76,11 +76,11 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
         }
 
         [Test]
-        public void Execute_Parameterless_WithEditablePack_SavesSuccessfully()
+        public void Execute_Parameterless_WithActivePack_SavesSuccessfully()
         {
             // Arrange
             var container = AddPackFiles(false, "modfile", "c:\\mymod.pack", ["rootfolder\\file.txt"]);
-            _packFileService.SetEditablePack(container);
+            _packFileService.SetActivePack(container);
 
             var dialogs = new Mock<IStandardDialogs>();
             var appSettings = new ApplicationSettingsService(GameTypeEnum.Warhammer3);

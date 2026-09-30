@@ -8,11 +8,11 @@ namespace Shared.Core.PackFiles.Utility
 
         public static bool IsFilenameUnique(IPackFileService pfs, string path)
         {
-            var editablePack = pfs.GetEditablePack();
-            if (editablePack == null)
+            var activePack = pfs.GetActivePack();
+            if (activePack == null)
                 throw new Exception("Can not check if filename is unique if no out packfile is selected");
 
-            var file = pfs.FindFile(path, pfs.GetEditablePack());
+            var file = pfs.FindFile(path, pfs.GetActivePack());
             return file == null;
         }
 

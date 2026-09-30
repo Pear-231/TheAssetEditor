@@ -16,7 +16,7 @@ namespace Shared.Ui.BaseDialogs.PackFileTree
         public IPackFileContainer Owner { get; }
         public UnsavedChangesTracker UnsavedChanges { get; } = new();
 
-        [ObservableProperty] public partial bool IsMainEditabelPack { get; set; }
+        [ObservableProperty] public partial bool IsActivePack { get; set; }
 
         public RootTreeNode(string name, IPackFileContainer owner) : 
             base(name, NodeType.Root, null)

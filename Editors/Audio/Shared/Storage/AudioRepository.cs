@@ -86,10 +86,10 @@ namespace Editors.Audio.Shared.Storage
             _cacheHelper = cacheHelper;
             _bnkLoader = bnkLoader;
             _eventHub = eventHub;
-            _eventHub.Register<PackFileContainerSetAsMainEditableEvent>(this, OnPackFileContainerSetAsMainEditable);
+            _eventHub.Register<PackFileContainerSetAsActiveEvent>(this, OnPackFileContainerSetAsActive);
         }
 
-        private void OnPackFileContainerSetAsMainEditable(PackFileContainerSetAsMainEditableEvent e)
+        private void OnPackFileContainerSetAsActive(PackFileContainerSetAsActiveEvent e)
         {
             if (e.Container == null || e.Container.IsCaPackFile || _loadedLayers.Count == 0)
                 return;
@@ -174,7 +174,7 @@ namespace Editors.Audio.Shared.Storage
                 return sources;
 
             var projectFilesFingerprint = _cacheHelper.ComputeFingerprint(projectFileContainers, "project files");
-            var editableContainer = _packFileService.GetEditablePack();
+            var editableContainer = _packFileService.GetActivePack();
             var cacheOwner = editableContainer ?? projectFileContainers[^1];
             var projectFilesLabel = cacheOwner.Name;
 

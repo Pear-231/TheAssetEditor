@@ -44,7 +44,7 @@ namespace Shared.Ui
             services.AddScoped<CopyNodePathCommand>();
             services.AddScoped<ChangeOutputLocationCommand>();
             services.AddScoped<ClosePackContainerFileCommand>();
-            services.AddScoped<CopyToEditablePackCommand>();
+            services.AddScoped<CopyToActivePackCommand>();
             services.AddScoped<CreateFolderCommand>();
             services.AddScoped<CollapseNodeCommand>();
             services.AddScoped<DuplicateFileCommand>();
@@ -59,7 +59,7 @@ namespace Shared.Ui
             services.AddScoped<OpenPackInFileExplorerCommand>();
             services.AddScoped<SaveAsPackFileContainerCommand>();
             services.AddScoped<SavePackFileContainerCommand>();
-            services.AddScoped<SetAsEditablePackCommand>();
+            services.AddScoped<SetAsActivePackCommand>();
             services.AddScoped<ToggleIgnoredForSerializationCommand>();
         }
 
@@ -67,11 +67,11 @@ namespace Shared.Ui
         {
             // MainApplication context menu
             registry.RegisterPackFileContextMenuItem<ClosePackContainerFileCommand>(ContextMenuType.MainApplication, path: "", priority: 0, ContextMenuCluster.PackFileOperation);
-            registry.RegisterPackFileContextMenuItem<SetAsEditablePackCommand>(ContextMenuType.MainApplication, path: "", priority: 10, ContextMenuCluster.PackFileOperation);
+            registry.RegisterPackFileContextMenuItem<SetAsActivePackCommand>(ContextMenuType.MainApplication, path: "", priority: 10, ContextMenuCluster.PackFileOperation);
             registry.RegisterPackFileContextMenuItem<SavePackFileContainerCommand>(ContextMenuType.MainApplication, path: "", priority: 20, ContextMenuCluster.PackFileOperation);
             registry.RegisterPackFileContextMenuItem<SaveAsPackFileContainerCommand>(ContextMenuType.MainApplication, path: "", priority: 30, ContextMenuCluster.PackFileOperation);
             registry.RegisterPackFileContextMenuItem<ChangeOutputLocationCommand>(ContextMenuType.MainApplication, path: "", priority: 40, ContextMenuCluster.PackFileOperation);
-            registry.RegisterPackFileContextMenuItem<CopyToEditablePackCommand>(ContextMenuType.MainApplication, path: "", priority: 50, ContextMenuCluster.PackFileOperation);
+            registry.RegisterPackFileContextMenuItem<CopyToActivePackCommand>(ContextMenuType.MainApplication, path: "", priority: 50, ContextMenuCluster.PackFileOperation);
 
             registry.RegisterPackFileContextMenuItem<ImportFileCommand>(ContextMenuType.MainApplication, path: "Import", priority: 0, ContextMenuCluster.FolderOperation);
             registry.RegisterPackFileContextMenuItem<ImportDirectoryCommand>(ContextMenuType.MainApplication, path: "Import", priority: 10, ContextMenuCluster.FolderOperation);

@@ -1,28 +1,43 @@
-using Test.TestingUtility.TestUtility;
-using Moq;
+﻿using Moq;
 using Shared.Core.Services;
 using Shared.Ui.BaseDialogs.PackFileTree;
 using Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands;
 using Shared.Ui.BaseDialogs.PackFileTree.Utility;
+using Test.TestingUtility.TestUtility;
 
 namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
 {
     [TestFixture]
-    internal class CopyToEditablePackCommandTests : ContextMenuCommandTestBase
+    internal class CopyToActivePackCommandTests : ContextMenuCommandTestBase
     {
         [Test]
-        public void ShouldAdd_ReturnsTrueWhenEditablePackExists()
+        public void ShouldAdd_ReturnsTrueWhenActivePackExists()
         {
             var source = AddPackFiles(false, "source", "c:\\source.pack", ["folder\\file.txt"]);
             var target = AddPackFiles(false, "target", "c:\\target.pack", []);
-            _packFileService.SetEditablePack(target);
+            _packFileService.SetActivePack(target);
 
             var viewModel = PackFileBrowser();
             var node = TreeNodeHelper.FindNode(viewModel, source, "folder\\file.txt");
 
-            var command = new CopyToEditablePackCommand(_packFileService, new Mock<IStandardDialogs>().Object, MockScopedLogger.Create());
+            var command = new CopyToActivePackCommand(_packFileService, new Mock<IStandardDialogs>().Object, new LocalizationManager(), MockScopedLogger.Create());
 
             Assert.That(command.ShouldAdd(node), Is.True);
+        }
+
+        [Test]
+        public void ShouldAdd_ReturnsFalseForRootNode()
+        {
+            var source = AddPackFiles(false, "source", "c:\\source.pack", ["folder\\file.txt"]);
+            var target = AddPackFiles(false, "target", "c:\\target.pack", []);
+            _packFileService.SetActivePack(target);
+
+            var viewModel = PackFileBrowser();
+            var root = viewModel.Files.First(x => (x as RootTreeNode)!.Owner == source);
+
+            var command = new CopyToActivePackCommand(_packFileService, new Mock<IStandardDialogs>().Object, new LocalizationManager(), MockScopedLogger.Create());
+
+            Assert.That(command.ShouldAdd(root), Is.False);
         }
 
         [Test]
@@ -32,18 +47,18 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             var viewModel = PackFileBrowser();
             var node = TreeNodeHelper.FindNode(viewModel, source, "folder\\file.txt");
 
-            var command = new CopyToEditablePackCommand(_packFileService, new Mock<IStandardDialogs>().Object, MockScopedLogger.Create());
+            var command = new CopyToActivePackCommand(_packFileService, new Mock<IStandardDialogs>().Object, new LocalizationManager(), MockScopedLogger.Create());
 
             Assert.That(command.IsEnabled(node), Is.True);
         }
 
         [Test]
-        public void Execute_CopiesChildFilesToEditablePack()
+        public void Execute_CopiesChildFilesToActivePack()
         {
             // Arrange
             var source = AddPackFiles(false, "source", "c:\\source.pack", ["folder\\file.txt"]);
             var target = AddPackFiles(false, "target", "c:\\target.pack", []);
-            _packFileService.SetEditablePack(target);
+            _packFileService.SetActivePack(target);
 
             var viewModel = PackFileBrowser();
             var root = viewModel.Files.First(x => (x as RootTreeNode)!.Owner == source);
@@ -54,7 +69,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             dialogs.Setup(x => x.ShowWaitCursor()).Returns(waitCursor.Object);
 
             // Act
-            var command = new CopyToEditablePackCommand(_packFileService, dialogs.Object, MockScopedLogger.Create());
+            var command = new CopyToActivePackCommand(_packFileService, dialogs.Object, new LocalizationManager(), MockScopedLogger.Create());
             command.Configure(folder);
 
             command.Execute();

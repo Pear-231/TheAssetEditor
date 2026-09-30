@@ -36,12 +36,12 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
         }
 
         [Test]
-        public void Execute_DuplicatesFileIntoEditablePack()
+        public void Execute_DuplicatesFileIntoActivePack()
         {
             // Arrange
             var sourceContainer = AddPackFiles(false, "SourcePack", "c:\\source.pack", ["animation\\meta\\testfile.anm"]);
             var outputContainer = AddPackFiles(false, "OutputPack", "c:\\output.pack", []);
-            _packFileService.SetEditablePack(outputContainer);
+            _packFileService.SetActivePack(outputContainer);
 
             var viewModel = PackFileBrowser();
             var node = TreeNodeHelper.FindNode(viewModel, sourceContainer, "animation\\meta\\testfile.anm");
@@ -66,7 +66,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             // Arrange
             var sourceContainer = AddPackFiles(false, "SourcePack", "c:\\source.pack", ["animation\\meta\\" + fileName]);
             var outputContainer = AddPackFiles(false, "OutputPack", "c:\\output.pack", []);
-            _packFileService.SetEditablePack(outputContainer);
+            _packFileService.SetActivePack(outputContainer);
 
             var viewModel = PackFileBrowser();
             var node = TreeNodeHelper.FindNode(viewModel, sourceContainer, "animation\\meta\\" + fileName);

@@ -58,7 +58,7 @@ namespace AssetEditor.UiCommands
                 container.SaveSettings();
             }
             _packFileService.AddContainer(container);
-            _packFileService.SetEditablePack(container);
+            _packFileService.SetActivePack(container);
         }
     }
 }

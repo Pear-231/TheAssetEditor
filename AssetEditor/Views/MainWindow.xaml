@@ -257,7 +257,6 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                     </Grid>
                 </ItemsPanelTemplate>
@@ -269,10 +268,6 @@
 
             <StatusBarItem Grid.Column="1">
                 <TextBlock Text="{Binding CurrentGame}" Margin="5, 0, 5, 5"/>
-            </StatusBarItem>
-
-            <StatusBarItem Grid.Column="2">
-                <TextBlock Text="{Binding EditablePackFile}" Margin="5, 0, 5, 5"/>
             </StatusBarItem>
         </StatusBar>
     </Grid>

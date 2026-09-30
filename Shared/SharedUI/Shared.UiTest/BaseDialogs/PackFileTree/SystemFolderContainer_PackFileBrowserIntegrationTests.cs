@@ -740,7 +740,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree
 
             _container = new SystemFolderContainer(_tempDir, fileSystemAccess, _mockWatcher.Object);
             _packFileService.AddContainer(_container);
-            _packFileService.SetEditablePack(_container);
+            _packFileService.SetActivePack(_container);
 
             _rootNode = _viewModel.Files.First(x => x.Owner == _container);
         }
@@ -765,7 +765,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree
                 var fileSystemAccess = new FileSystemAccess();
                 _container = new SystemFolderContainer(_tempDir, fileSystemAccess, _mockWatcher.Object);
                 _packFileService.AddContainer(_container);
-                _packFileService.SetEditablePack(_container);
+                _packFileService.SetActivePack(_container);
                 _rootNode = _viewModel.Files.First(x => x.Owner == _container);
             }
         }

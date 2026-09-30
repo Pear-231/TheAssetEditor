@@ -37,7 +37,7 @@ namespace Shared.CoreTest.PackFiles
 
             var containers = pfs.GetAllPackfileContainers();
             Assert.That(containers.First(), Is.EqualTo(container));
-            Assert.That(pfs.GetEditablePack(), Is.Null);
+            Assert.That(pfs.GetActivePack(), Is.Null);
             eventHub.Verify(m => m.PublishGlobalEvent(new PackFileContainerAddedEvent(container)), Times.Once);
         }
 
@@ -53,7 +53,7 @@ namespace Shared.CoreTest.PackFiles
 
             var containers = pfs.GetAllPackfileContainers();
             Assert.That(containers.Count, Is.EqualTo(0));
-            Assert.That(pfs.GetEditablePack(), Is.Null);
+            Assert.That(pfs.GetActivePack(), Is.Null);
             eventHub.Verify(m => m.PublishGlobalEvent(new PackFileContainerAddedEvent(container)), Times.Never);
             dialogProvider.Verify(m => m.ShowDialogBox(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         }
@@ -71,10 +71,10 @@ namespace Shared.CoreTest.PackFiles
 
             var containers = pfs.GetAllPackfileContainers();
             Assert.That(containers.Count, Is.EqualTo(2));
-            Assert.That(pfs.GetEditablePack(), Is.EqualTo(customContainer));
+            Assert.That(pfs.GetActivePack(), Is.EqualTo(customContainer));
             eventHub.Verify(m => m.PublishGlobalEvent(new PackFileContainerAddedEvent(caContainer)), Times.Once);
             eventHub.Verify(m => m.PublishGlobalEvent(new PackFileContainerAddedEvent(customContainer)), Times.Once);
-            eventHub.Verify(m => m.PublishGlobalEvent(new PackFileContainerSetAsMainEditableEvent(customContainer)), Times.Once);
+            eventHub.Verify(m => m.PublishGlobalEvent(new PackFileContainerSetAsActiveEvent(customContainer)), Times.Once);
         }
 
         [Test]
@@ -93,7 +93,7 @@ namespace Shared.CoreTest.PackFiles
 
             var containers = pfs.GetAllPackfileContainers();
             Assert.That(containers.Count, Is.EqualTo(2));
-            Assert.That(pfs.GetEditablePack(), Is.EqualTo(customContainer));
+            Assert.That(pfs.GetActivePack(), Is.EqualTo(customContainer));
             dialogProvider.Verify(m => m.ShowDialogBox(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         }
 
@@ -140,7 +140,7 @@ namespace Shared.CoreTest.PackFiles
 
             var containers = pfs.GetAllPackfileContainers();
             Assert.That(containers.Count(), Is.EqualTo(2));
-            Assert.That(pfs.GetEditablePack(), Is.EqualTo(emptyPackFileContainer));
+            Assert.That(pfs.GetActivePack(), Is.EqualTo(emptyPackFileContainer));
             eventHub.Verify(m => m.PublishGlobalEvent(new PackFileContainerAddedEvent(container)), Times.Once);
             eventHub.Verify(m => m.PublishGlobalEvent(new PackFileContainerAddedEvent(emptyPackFileContainer)), Times.Once);
         }
@@ -154,14 +154,14 @@ namespace Shared.CoreTest.PackFiles
         }
 
         [Test]
-        public void SaveFile_NoEditablePack_ThrowsDescriptiveException()
+        public void SaveFile_NoActivePack_ThrowsDescriptiveException()
         {
             var pfs = new PackFileService(null);
             pfs.AddContainer(PackFileContainer.CreateCaPackFile("Ca", "SystemPath"));
             var file = new PackFile("file.txt", new MemorySource([1, 2, 3]));
 
             var ex = Assert.Throws<Exception>(() => pfs.SaveFile(file, [4, 5, 6]));
-            Assert.That(ex.Message, Does.Contain("No editable pack file is set"));
+            Assert.That(ex.Message, Does.Contain("No active pack file is set"));
         }
 
         [Test]
@@ -197,25 +197,25 @@ namespace Shared.CoreTest.PackFiles
         }
 
         [Test]
-        public void SetEditablePack_CaPack_Throws()
+        public void SetActivePack_CaPack_Throws()
         {
             var pfs = CreateServiceWithCaPack();
             var caPack = pfs.GetAllPackfileContainers().First();
 
-            Assert.Throws<Exception>(() => pfs.SetEditablePack(caPack));
+            Assert.Throws<Exception>(() => pfs.SetActivePack(caPack));
         }
 
         [Test]
-        public void SetEditablePack_Null_ClearsSelection()
+        public void SetActivePack_Null_ClearsSelection()
         {
             var eventHub = new Mock<IGlobalEventHub>();
             var pfs = CreateServiceWithCaPack(eventHub);
             var custom = PackFileContainer.CreatePackFile("Custom", "SystemPath");
             pfs.AddContainer(custom, true);
 
-            Assert.That(pfs.GetEditablePack(), Is.EqualTo(custom));
-            pfs.SetEditablePack(null);
-            Assert.That(pfs.GetEditablePack(), Is.Null);
+            Assert.That(pfs.GetActivePack(), Is.EqualTo(custom));
+            pfs.SetActivePack(null);
+            Assert.That(pfs.GetActivePack(), Is.Null);
         }
 
         [Test]
@@ -229,12 +229,12 @@ namespace Shared.CoreTest.PackFiles
             pfs.UnloadPackContainer(custom);
 
             Assert.That(pfs.GetAllPackfileContainers().Count, Is.EqualTo(1));
-            Assert.That(pfs.GetEditablePack(), Is.Null);
+            Assert.That(pfs.GetActivePack(), Is.Null);
             eventHub.Verify(m => m.PublishGlobalEvent(It.IsAny<PackFileContainerRemovedEvent>()), Times.Once);
         }
 
         [Test]
-        public void UnloadPackContainer_NonEditablePack_DoesNotClearEditable()
+        public void UnloadPackContainer_NonActivePack_DoesNotClearActive()
         {
             var pfs = CreateServiceWithCaPack();
             var pack1 = PackFileContainer.CreatePackFile("Pack1", "path1");
@@ -244,7 +244,7 @@ namespace Shared.CoreTest.PackFiles
 
             pfs.UnloadPackContainer(pack2);
 
-            Assert.That(pfs.GetEditablePack(), Is.EqualTo(pack1));
+            Assert.That(pfs.GetActivePack(), Is.EqualTo(pack1));
             Assert.That(pfs.GetAllPackfileContainers().Count, Is.EqualTo(2));
         }
 

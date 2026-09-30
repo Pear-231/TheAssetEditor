@@ -62,7 +62,7 @@ namespace Editors.Audio.AudioEditor.Presentation.AudioFilesExplorer
 
             _eventHub.Register<AudioProjectExplorerNodeSelectedEvent>(this, OnAudioProjectExplorerNodeSelected);
             _eventHub.Register<AudioFilesChangedEvent>(this, OnAudioFilesChanged);
-            _globalEventHub.Register<PackFileContainerSetAsMainEditableEvent>(this, x => OnPackFileContainerSetAsMainEditable(x.Container));
+            _globalEventHub.Register<PackFileContainerSetAsActiveEvent>(this, x => OnPackFileContainerSetAsActive(x.Container));
             _globalEventHub.Register<PackFileContainerFilesAddedEvent>(this, x => RefreshAudioFilesTree(x.Container));
             _globalEventHub.Register<PackFileContainerFilesRemovedEvent>(this, x => RefreshAudioFilesTree(x.Container));
             _globalEventHub.Register<PackFileContainerFilesUpdatedEvent>(this, x => RefreshAudioFilesTree(x.Container));
@@ -70,13 +70,13 @@ namespace Editors.Audio.AudioEditor.Presentation.AudioFilesExplorer
 
             AudioFilesExplorerLabel = $"Audio Files Explorer";
 
-            var editablePack = _packFileService.GetEditablePack();
-            if (editablePack == null)
+            var activePack = _packFileService.GetActivePack();
+            if (activePack == null)
                 return;
 
-            AudioFilesExplorerLabel = $"Audio Files Explorer - {WpfHelpers.DuplicateUnderscores(editablePack.Name)}";
+            AudioFilesExplorerLabel = $"Audio Files Explorer - {WpfHelpers.DuplicateUnderscores(activePack.Name)}";
 
-            AudioFilesTree = _audioFilesTreeBuilder.BuildTree(_packFileService, editablePack);
+            AudioFilesTree = _audioFilesTreeBuilder.BuildTree(_packFileService, activePack);
             SetupIsExpandedHandlers(AudioFilesTree);
 
             CacheRootWaveformVisualisations();
@@ -137,7 +137,7 @@ namespace Editors.Audio.AudioEditor.Presentation.AudioFilesExplorer
 
         private void OnAudioFilesChanged(AudioFilesChangedEvent e) => SetButtonEnablement();
 
-        private void OnPackFileContainerSetAsMainEditable(IPackFileContainer packFileContainer)
+        private void OnPackFileContainerSetAsActive(IPackFileContainer packFileContainer)
         {
             if (packFileContainer == null)
                 return;

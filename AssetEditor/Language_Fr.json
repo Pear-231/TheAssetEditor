@@ -14,6 +14,8 @@
     "SettingsWindow.VertexSelectionColour":  "Couleur de sélection des sommets",
     "SettingsWindow.SaveButton":  "Enregistrer",
     "PackFileTree.ContextMenu.ChangeOutputLocation":  "Modifier l’emplacement de sortie",
+    "PackFileTree.ContextMenu.SetAsActivePack":  "Définir comme projet actif",
+    "PackFileTree.ContextMenu.CopyToActivePack":  "Copier vers le projet actif",
     "UpdaterWindow.Title":  "Mise à jour",
     "UpdaterWindow.UpdateInfo":  "Une nouvelle version d’AssetEditor est disponible!\n\nVotre version actuelle est la {0}. Mettez à jour vers la version {1} pour découvrir les dernières modifications détaillées ci-dessous.",
     "UpdaterWindow.ReleaseNotes":  "Notes de version",

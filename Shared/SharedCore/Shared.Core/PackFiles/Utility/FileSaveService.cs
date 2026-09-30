@@ -26,25 +26,25 @@ namespace Shared.Core.PackFiles.Utility
 
         public PackFile? SaveAs(string extention, byte[] content)
         {
-            var editablePack = _packFileService.GetEditablePack();
-            if (editablePack == null)
+            var activePack = _packFileService.GetActivePack();
+            if (activePack == null)
             {
-                _logger.Here().Error($"Unable to save file as '*{extention}'. No editable pack selected");
-                throw new Exception($"Unable to save file. No Editable PackFile selected");
+                _logger.Here().Error($"Unable to save file as '*{extention}'. No active pack selected");
+                throw new Exception($"Unable to save file. No active PackFile selected");
             }
 
-            _logger.Here().Information($"SaveAs requested for extension '{extention}' in '{DescribePack(editablePack)}' ({content.Length} bytes)");
+            _logger.Here().Information($"SaveAs requested for extension '{extention}' in '{DescribePack(activePack)}' ({content.Length} bytes)");
 
             var saveDialogResult = _packFileUiProvider.DisplaySaveDialog(_packFileService, [extention]);
             if (saveDialogResult.Result == false)
             {
-                _logger.Here().Information($"SaveAs cancelled for extension '{extention}' in '{DescribePack(editablePack)}'");
+                _logger.Here().Information($"SaveAs cancelled for extension '{extention}' in '{DescribePack(activePack)}'");
                 return null;
             }
 
             if (string.IsNullOrWhiteSpace(saveDialogResult.SelectedFilePath))
             {
-                _logger.Here().Warning($"SaveAs returned no selected path for extension '{extention}' in '{DescribePack(editablePack)}'");
+                _logger.Here().Warning($"SaveAs returned no selected path for extension '{extention}' in '{DescribePack(activePack)}'");
                 return null;
             }
 
@@ -66,19 +66,19 @@ namespace Shared.Core.PackFiles.Utility
                 fileName = adjustedFileName;
             }
 
-            var isExistingFile = _packFileService.FindFile(selectedFilePath, editablePack);
+            var isExistingFile = _packFileService.FindFile(selectedFilePath, activePack);
             if (isExistingFile == null)
             {
-                _logger.Here().Information($"Creating new pack file '{selectedFilePath}' in '{DescribePack(editablePack)}' ({content.Length} bytes)");
+                _logger.Here().Information($"Creating new pack file '{selectedFilePath}' in '{DescribePack(activePack)}' ({content.Length} bytes)");
                 var newPackFile = new PackFile(fileName, new MemorySource(content));
                 var directoryPath = GetDirectoryPathOrRoot(selectedFilePath);
                 var item = new NewPackFileEntry(directoryPath, newPackFile);
-                _packFileService.AddFilesToPack(editablePack, [item]);
+                _packFileService.AddFilesToPack(activePack, [item]);
 
                 return newPackFile;
             }
 
-            _logger.Here().Information($"Overwriting existing pack file '{selectedFilePath}' in '{DescribePack(editablePack)}' ({content.Length} bytes)");
+            _logger.Here().Information($"Overwriting existing pack file '{selectedFilePath}' in '{DescribePack(activePack)}' ({content.Length} bytes)");
             _packFileService.SaveFile(isExistingFile, content);
             return isExistingFile;
         }
@@ -86,18 +86,18 @@ namespace Shared.Core.PackFiles.Utility
         
         public PackFile? Save(string fullPathWithExtention, byte[] content, bool prompOnConflict)
         {
-            var editablePack = _packFileService.GetEditablePack();
-            if (editablePack == null)
+            var activePack = _packFileService.GetActivePack();
+            if (activePack == null)
             {
-                _logger.Here().Error($"Unable to save '{fullPathWithExtention}'. No editable pack selected");
-                throw new Exception($"Unable to save file {fullPathWithExtention}. No Editable PackFile selected");
+                _logger.Here().Error($"Unable to save '{fullPathWithExtention}'. No active pack selected");
+                throw new Exception($"Unable to save file {fullPathWithExtention}. No active PackFile selected");
             }
 
             fullPathWithExtention = NormalizeRelativePackPath(fullPathWithExtention);
 
-            _logger.Here().Information($"Save requested for '{fullPathWithExtention}' in '{DescribePack(editablePack)}' (PromptOnConflict:{prompOnConflict}, Bytes:{content.Length})");
+            _logger.Here().Information($"Save requested for '{fullPathWithExtention}' in '{DescribePack(activePack)}' (PromptOnConflict:{prompOnConflict}, Bytes:{content.Length})");
 
-            var isExistingFile = _packFileService.FindFile(fullPathWithExtention, editablePack);
+            var isExistingFile = _packFileService.FindFile(fullPathWithExtention, activePack);
             if (isExistingFile != null && prompOnConflict)
             {
                 var extention = Path.GetExtension(fullPathWithExtention);
@@ -117,22 +117,22 @@ namespace Shared.Core.PackFiles.Utility
 
                 fullPathWithExtention = NormalizeRelativePackPath(saveDialogResult.SelectedFilePath);
                 _logger.Here().Information($"Conflict save redirected to '{fullPathWithExtention}'");
-                isExistingFile = _packFileService.FindFile(fullPathWithExtention, editablePack);
+                isExistingFile = _packFileService.FindFile(fullPathWithExtention, activePack);
             }
 
             if (isExistingFile == null)
             {
-                _logger.Here().Information($"Creating new pack file '{fullPathWithExtention}' in '{DescribePack(editablePack)}' ({content.Length} bytes)");
+                _logger.Here().Information($"Creating new pack file '{fullPathWithExtention}' in '{DescribePack(activePack)}' ({content.Length} bytes)");
                 var fileName = Path.GetFileName(fullPathWithExtention);
                 var newPackFile = new PackFile(fileName, new MemorySource(content));
                 var directoryPath = GetDirectoryPathOrRoot(fullPathWithExtention);
                 var item = new NewPackFileEntry(directoryPath, newPackFile);
-                _packFileService.AddFilesToPack(editablePack, [item]);
+                _packFileService.AddFilesToPack(activePack, [item]);
                 return newPackFile;
             }
             else
             {
-                _logger.Here().Information($"Updating existing pack file '{fullPathWithExtention}' in '{DescribePack(editablePack)}' ({content.Length} bytes)");
+                _logger.Here().Information($"Updating existing pack file '{fullPathWithExtention}' in '{DescribePack(activePack)}' ({content.Length} bytes)");
                 _packFileService.SaveFile(isExistingFile, content);
             }
 

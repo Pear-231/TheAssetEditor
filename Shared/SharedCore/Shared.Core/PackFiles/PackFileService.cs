@@ -16,7 +16,7 @@ namespace Shared.Core.PackFiles
         private readonly IGlobalEventHub? _globalEventHub;
 
         private readonly List<IPackFileContainerInternal> _packFileContainers = [];
-        private IPackFileContainerInternal? _packFileContainerSelectedForEdit;
+        private IPackFileContainerInternal? _activePackFileContainer;
 
         // We use this instead of the standard dialog helper, to avaid a circular dependency
         public ISimpleMessageBox MessageBoxProvider { get; set; } = new SimpleMessageBox();
@@ -109,12 +109,12 @@ namespace Shared.Core.PackFiles
 
             if (container.IsCaPackFile == false && setToMainPackIfFirst)
             {
-                _logger.Here().Information($"Setting '{DescribeContainer(container)}' as editable pack after load");
-                SetEditablePack(container);
+                _logger.Here().Information($"Setting '{DescribeContainer(container)}' as active pack after load");
+                SetActivePack(container);
             }
         }
 
-        public IPackFileContainer CreateNewPackFileContainer(string name, PackFileVersion packFileVersion, PackFileCAType type, bool setEditablePack = false)
+        public IPackFileContainer CreateNewPackFileContainer(string name, PackFileVersion packFileVersion, PackFileCAType type, bool setActivePack = false)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new Exception("Name can not be empty");
@@ -123,7 +123,7 @@ namespace Shared.Core.PackFiles
             var newPackFile = PackFileContainer.CreatePackFile(name, null, packFileVersion);
 
             _logger.Here().Information($"Creating new pack file container '{name}' with version '{versionString}' and type '{type}'");
-            AddContainerInternal(newPackFile, setEditablePack);
+            AddContainerInternal(newPackFile, setActivePack);
 
             return newPackFile;
         }
@@ -168,16 +168,16 @@ namespace Shared.Core.PackFiles
             }
         }
 
-        public void SetEditablePack(IPackFileContainer? pf)
+        public void SetActivePack(IPackFileContainer? pf)
         {
             if (pf != null && pf.IsReadOnly)
-                throw new Exception("Trying to set readonly packfile container to be editable - this is not legal!");
-            _packFileContainerSelectedForEdit = pf != null ? CastContainer(pf) : null;
-            _logger.Here().Information($"Editable pack set to '{DescribeContainer(_packFileContainerSelectedForEdit)}'");
-            _globalEventHub?.PublishGlobalEvent(new PackFileContainerSetAsMainEditableEvent(pf));
+                throw new Exception("Trying to set readonly packfile container to be active - this is not legal!");
+            _activePackFileContainer = pf != null ? CastContainer(pf) : null;
+            _logger.Here().Information($"Active pack set to '{DescribeContainer(_activePackFileContainer)}'");
+            _globalEventHub?.PublishGlobalEvent(new PackFileContainerSetAsActiveEvent(pf));
         }
 
-        public IPackFileContainer? GetEditablePack() => _packFileContainerSelectedForEdit;
+        public IPackFileContainer? GetActivePack() => _activePackFileContainer;
 
         public void UnloadPackContainer(IPackFileContainer pf)
         {
@@ -199,8 +199,8 @@ namespace Shared.Core.PackFiles
             }
 
             _packFileContainers.Remove(container);
-            if (_packFileContainerSelectedForEdit == container)
-                SetEditablePack(null);
+            if (_activePackFileContainer == container)
+                SetActivePack(null);
 
             _logger.Here().Information($"Unloaded pack file container '{DescribeContainer(container)}'. Remaining containers: {_packFileContainers.Count}");
             _globalEventHub?.PublishGlobalEvent(new PackFileContainerRemovedEvent(container));
@@ -301,9 +301,9 @@ namespace Shared.Core.PackFiles
 
         public void SaveFile(PackFile file, byte[] data)
         {
-            var pf = _packFileContainerSelectedForEdit;
+            var pf = _activePackFileContainer;
             if (pf == null)
-                throw new Exception("No editable pack file is set");
+                throw new Exception("No active pack file is set");
             if (pf.IsReadOnly)
                 throw new Exception("Can not save readonly pack file");
 

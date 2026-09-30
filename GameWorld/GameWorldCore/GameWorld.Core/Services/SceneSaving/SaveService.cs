@@ -35,9 +35,9 @@ namespace GameWorld.Core.Services.SceneSaving
 
         public SaveResult Save(MainEditableNode mainNode, GeometrySaveSettings settings)
         {
-            if (_packFileService.GetEditablePack() == null)
+            if (_packFileService.GetActivePack() == null)
             {
-                MessageBox.Show("No editable pack selected", "error");
+                MessageBox.Show("No active pack selected", "error");
                 return new SaveResult(false, null, null, null, null);
             }
 

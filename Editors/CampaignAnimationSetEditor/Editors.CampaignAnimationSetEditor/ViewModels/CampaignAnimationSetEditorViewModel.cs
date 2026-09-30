@@ -116,9 +116,9 @@ namespace Editors.CampaignAnimationSetEditor.ViewModels
             if (Bin == null)
                 return false;
 
-            if (_packFileService.GetEditablePack() == null)
+            if (_packFileService.GetActivePack() == null)
             {
-                _dialogs.ShowDialogBox("No editable pack file is selected - pick one in the Pack File Explorer first.", "No editable pack");
+                _dialogs.ShowDialogBox("No active pack file is selected - pick one in the Pack File Explorer first.", "No active pack");
                 return false;
             }
 
@@ -134,7 +134,7 @@ namespace Editors.CampaignAnimationSetEditor.ViewModels
 
             var path = $@"{CampaignBinFolder}\{fileName}";
 
-            if (_packFileService.FindFile(path, _packFileService.GetEditablePack()) != null)
+            if (_packFileService.FindFile(path, _packFileService.GetActivePack()) != null)
             {
                 if (_dialogs.ShowYesNoBox($"'{fileName}' already exists under {CampaignBinFolder}\\. Overwrite it?", "Overwrite file?") != ShowMessageBoxResult.OK)
                     return false;

@@ -462,7 +462,7 @@ namespace Test.Audio
 
             var packFileService = new Mock<IPackFileService>();
             packFileService.Setup(x => x.GetAllPackfileContainers()).Returns([gameContainer.Object, projectContainer.Object]);
-            packFileService.Setup(x => x.GetEditablePack()).Returns(projectContainer.Object);
+            packFileService.Setup(x => x.GetActivePack()).Returns(projectContainer.Object);
 
             var settings = new ApplicationSettingsService(GameTypeEnum.Warhammer3);
             var bnkLoader = new BnkLoader(packFileService.Object);

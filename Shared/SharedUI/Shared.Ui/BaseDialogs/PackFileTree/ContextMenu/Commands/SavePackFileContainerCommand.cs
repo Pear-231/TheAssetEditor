@@ -67,13 +67,13 @@ namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands
             }
         }
 
-        public void ExecuteForEditablePack()
+        public void ExecuteForActivePack()
         {
-            var pack = packFileService.GetEditablePack();
+            var pack = packFileService.GetActivePack();
             if (pack == null)
             {
-                _logger.Here().Warning("Save requested from command without an editable pack selected");
-                standardDialogs.ShowDialogBox("No editable pack selected, cant save", "Error");
+                _logger.Here().Warning("Save requested from command without an active pack selected");
+                standardDialogs.ShowDialogBox("No active pack selected, cant save", "Error");
                 return;
             }
 
@@ -90,9 +90,9 @@ namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands
                 try
                 {
                     var gameInformation = GameInformationDatabase.GetGameById(applicationSettingsService.CurrentSettings.CurrentGame);
-                    _logger.Here().Information($"Saving editable pack '{packDescription}' to '{systemPath}'");
+                    _logger.Here().Information($"Saving active pack '{packDescription}' to '{systemPath}'");
                     packFileService.SavePackContainer(pack, systemPath, false, gameInformation);
-                    _logger.Here().Information($"Saved editable pack '{packDescription}' to '{systemPath}'");
+                    _logger.Here().Information($"Saved active pack '{packDescription}' to '{systemPath}'");
                 }
                 catch (Exception e)
                 {

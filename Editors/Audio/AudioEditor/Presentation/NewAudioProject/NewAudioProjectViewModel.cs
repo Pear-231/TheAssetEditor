@@ -86,7 +86,7 @@ namespace Editors.Audio.AudioEditor.Presentation.NewAudioProject
 
         [RelayCommand] public void CreateAudioProject()
         {
-            if (_packFileService.GetEditablePack() == null)
+            if (_packFileService.GetActivePack() == null)
             {
                 CloseWindowAction();
                 return;

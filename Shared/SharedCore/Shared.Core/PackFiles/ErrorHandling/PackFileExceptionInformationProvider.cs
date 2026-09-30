@@ -17,8 +17,8 @@ namespace Shared.Core.PackFiles.ErrorHandling
             var packfiles = _pfs.GetAllPackfileContainers();
             foreach (var db in packfiles)
             {
-                var isMainEditable = _pfs.GetEditablePack() == db;
-                var info = new ExceptionPackFileContainerInfo(isMainEditable, db.IsCaPackFile, db.Name, db.SystemFilePath);
+                var isActive = _pfs.GetActivePack() == db;
+                var info = new ExceptionPackFileContainerInfo(isActive, db.IsCaPackFile, db.Name, db.SystemFilePath);
                 exceptionInformation.ActivePackFiles.Add(info);
             }
 

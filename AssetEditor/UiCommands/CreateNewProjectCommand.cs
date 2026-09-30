@@ -58,7 +58,7 @@ namespace AssetEditor.UiCommands
                 folderPack.PackFileSettings.GameVersion = _applicationSettingsService.CurrentSettings.CurrentGame;
             folderPack.SaveSettings();
             _packFileService.AddContainer(folderPack);
-            _packFileService.SetEditablePack(folderPack);
+            _packFileService.SetActivePack(folderPack);
         }
     }
 }

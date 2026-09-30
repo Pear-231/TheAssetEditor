@@ -84,8 +84,7 @@ namespace AssetEditor.UiCommands
             systemContainer.PackFileSettings.EnablePackFileCorruptionDetection = window.EnablePackFileCorruptionDetection;
             systemContainer.SaveSettings();
             _packFileService.AddContainer(systemContainer);
-            _packFileService.SetEditablePack(systemContainer);
-
+            _packFileService.SetActivePack(systemContainer);
         }
     }
 }

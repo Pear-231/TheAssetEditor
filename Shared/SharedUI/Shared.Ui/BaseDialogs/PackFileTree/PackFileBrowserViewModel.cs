@@ -58,7 +58,7 @@ namespace Shared.Ui.BaseDialogs.PackFileTree
 
             ShowFoldersOnly = showFoldersOnly;
 
-            _eventHub?.Register<PackFileContainerSetAsMainEditableEvent>(this, OnMainEditablePackChanged);
+            _eventHub?.Register<PackFileContainerSetAsActiveEvent>(this, OnActivePackChanged);
             _eventHub?.Register<PackFileContainerRemovedEvent>(this, OnPackFileContainerRemoved);
             _eventHub?.Register<PackFileContainerAddedEvent>(this, OnPackFileContainerAddedEvent);
             _eventHub?.Register<PackFileContainerFilesUpdatedEvent>(this, OnPackFileContainerFilesUpdatedEvent);
@@ -184,10 +184,10 @@ namespace Shared.Ui.BaseDialogs.PackFileTree
             _doubleClickCommand.Execute();
         }
 
-        private void OnMainEditablePackChanged(PackFileContainerSetAsMainEditableEvent e)
+        private void OnActivePackChanged(PackFileContainerSetAsActiveEvent e)
         {
             foreach (var item in Files)
-                item.IsMainEditabelPack = item.Owner == e.Container;
+                item.IsActivePack = item.Owner == e.Container;
         }
 
         private void OnPackFileContainerFilesAddedEvent(IPackFileContainer container, List<PackFile> files)
@@ -307,7 +307,7 @@ namespace Shared.Ui.BaseDialogs.PackFileTree
 
             var root = new RootTreeNode(container.Name, container);
             PackFileTreeBuilder.BuildTreeFromFiles(root, container, skipWemFiles);
-            root.IsMainEditabelPack = _packFileService.GetEditablePack() == container;
+            root.IsActivePack = _packFileService.GetActivePack() == container;
 
             Files.Add(root);
             Filter.Reapply();

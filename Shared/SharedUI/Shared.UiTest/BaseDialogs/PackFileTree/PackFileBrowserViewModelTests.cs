@@ -11,7 +11,7 @@
 //   - PackFileContainerFilesUpdatedEvent ? updates Name/UnsavedChanged on renamed files
 //   - PackFileContainerFolderRemovedEvent ? removes folder nodes and subtrees
 //   - PackFileContainerFolderRenamedEvent ? renames the target folder and marks its branch dirty
-//   - PackFileContainerSetAsMainEditableEvent ? toggles IsMainEditabelPack on roots
+//   - PackFileContainerSetAsActiveEvent ? toggles IsActivePack on roots
 //   - PackFileContainerSavedEvent ? clears UnsavedChanged across the loaded tree
 //
 // SearchFilter only changes visibility and expansion state. It no longer relies on node
@@ -436,7 +436,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree
         }
 
         [Test]
-        public void MainEditablePackChanged_UpdatesRootNode()
+        public void ActivePackChanged_UpdatesRootNode()
         {
             var container1 = _packageFileService.CreateNewPackFileContainer("pack1.pack", PackFileVersion.PFH5, PackFileCAType.MOD, true);
             _packageFileService.AddContainer(container1);
@@ -446,13 +446,13 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree
             var root1 = _viewModel.Files.First(x => x.Name == "pack1.pack");
             var root2 = _viewModel.Files.First(x => x.Name == "pack2.pack");
 
-            Assert.That(root1.IsMainEditabelPack, Is.True);
-            Assert.That(root2.IsMainEditabelPack, Is.False);
+            Assert.That(root1.IsActivePack, Is.True);
+            Assert.That(root2.IsActivePack, Is.False);
 
-            _packageFileService.SetEditablePack(container2);
+            _packageFileService.SetActivePack(container2);
 
-            Assert.That(root1.IsMainEditabelPack, Is.False);
-            Assert.That(root2.IsMainEditabelPack, Is.True);
+            Assert.That(root1.IsActivePack, Is.False);
+            Assert.That(root2.IsActivePack, Is.True);
         }
 
         [Test]
@@ -541,7 +541,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree
         }
 
         [Test]
-        public void AddSecondRootFileAfterExpandingInitiallyEmptyEditablePack_UpdatesMaterializedTree()
+        public void AddSecondRootFileAfterExpandingInitiallyEmptyActivePack_UpdatesMaterializedTree()
         {
             var container = _packageFileService.CreateNewPackFileContainer("test.pack", PackFileVersion.PFH5, PackFileCAType.MOD, true);
             _packageFileService.AddContainer(container);
@@ -550,7 +550,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree
             _packageFileService.AddFilesToPack(container, [new NewPackFileEntry("", firstFile)]);
 
             var root = _viewModel.Files.First(x => x.Name == "test.pack");
-            Assert.That(root.IsMainEditabelPack, Is.True, "The new pack should be the editable pack for this scenario");
+            Assert.That(root.IsActivePack, Is.True, "The new pack should be the active pack for this scenario");
 
             root.IsNodeExpanded = true;
 

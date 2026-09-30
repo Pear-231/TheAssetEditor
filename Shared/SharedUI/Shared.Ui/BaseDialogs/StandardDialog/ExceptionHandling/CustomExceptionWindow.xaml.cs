@@ -55,7 +55,7 @@ namespace Shared.Ui.Common.Exceptions
             var extraInfo = new StringBuilder();
             extraInfo.AppendLine("Packed Files:");
             foreach (var item in extendedExceptionInformation.ActivePackFiles)
-                extraInfo.AppendLine($"\t'{item.Name}' @ '{item.SystemPath}' IsCa:{item.IsCa} IsMain:{item.IsMainEditable}");
+                extraInfo.AppendLine($"\t'{item.Name}' @ '{item.SystemPath}' IsCa:{item.IsCa} IsActive:{item.IsActive}");
 
             extraInfo.AppendLine($"Runtime: {extendedExceptionInformation.RunTimeInSeconds}");
             extraInfo.AppendLine($"OSVersion: {extendedExceptionInformation.OSVersion}");

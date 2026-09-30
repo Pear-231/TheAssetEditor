@@ -9,14 +9,14 @@ namespace Editors.Audio.AudioEditor.Presentation.AudioFilesExplorer
 {
     public interface IAudioFilesTreeBuilderService
     {
-        ObservableCollection<AudioFilesTreeNode> BuildTree(IPackFileService packFileService, IPackFileContainer editablePack);
+        ObservableCollection<AudioFilesTreeNode> BuildTree(IPackFileService packFileService, IPackFileContainer activePack);
     }
 
     public class AudioFilesTreeBuilderService() : IAudioFilesTreeBuilderService
     {
-        public ObservableCollection<AudioFilesTreeNode> BuildTree(IPackFileService packFileService, IPackFileContainer editablePack)
+        public ObservableCollection<AudioFilesTreeNode> BuildTree(IPackFileService packFileService, IPackFileContainer activePack)
         {
-            var wavFilePaths = packFileService.FindAllWithExtention(".wav", editablePack)
+            var wavFilePaths = packFileService.FindAllWithExtention(".wav", activePack)
                 .Select(x => x.FileName.Split('\\'))
                 .ToList();
 

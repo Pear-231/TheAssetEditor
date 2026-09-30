@@ -110,14 +110,14 @@ namespace Shared.CoreTest.PackFiles
         }
 
         [Test]
-        public void SetEditablePack_SystemFolder_Works()
+        public void SetActivePack_SystemFolder_Works()
         {
             var container = CreateContainer();
             _pfs.AddContainer(container);
 
-            _pfs.SetEditablePack(container);
+            _pfs.SetActivePack(container);
 
-            Assert.That(_pfs.GetEditablePack(), Is.EqualTo(container));
+            Assert.That(_pfs.GetActivePack(), Is.EqualTo(container));
         }
 
         [Test]

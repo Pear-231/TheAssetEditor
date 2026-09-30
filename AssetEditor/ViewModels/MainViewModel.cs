@@ -6,7 +6,6 @@ using CommunityToolkit.Mvvm.Input;
 using Shared.Core.Commands;
 using Shared.Core.Events;
 using Shared.Core.PackFiles;
-using Shared.Core.PackFiles.Events;
 using Shared.Core.PackFiles.Models;
 using Shared.Core.Services;
 using Shared.Core.Settings;
@@ -29,7 +28,6 @@ namespace AssetEditor.ViewModels
         [ObservableProperty] public partial bool IsClosingWithoutPrompt { get; set; }
         [ObservableProperty] public partial string ApplicationTitle { get; set; }
         [ObservableProperty] public partial string CurrentGame { get; set; }
-        [ObservableProperty] public partial string EditablePackFile { get; set; }
         [ObservableProperty] public partial bool IsPackFileExplorerVisible { get; set; } = true;
         [ObservableProperty] public partial GridLength FileTreeColumnWidth { get; set; } = new GridLength(0.28, GridUnitType.Star);
 
@@ -41,15 +39,12 @@ namespace AssetEditor.ViewModels
                 IPackFileService packfileService, 
                 IEditorDatabase toolFactory, 
                 IUiCommandFactory uiCommandFactory, 
-                IEventHub eventHub,
                 ApplicationSettingsService applicationSettingsService)
         {
             MenuBar = menuViewModel;
 
             EditorManager = editorManager;
             _uiCommandFactory = uiCommandFactory;
-
-            eventHub.Register<PackFileContainerSetAsMainEditableEvent>(this, SetStatusBarEditablePackFile);
 
             FileTree = packFileBrowserBuilder.Create(ContextMenuType.MainApplication, showCaFiles: true, showFoldersOnly: false);
             FileTree.FileOpen += OpenFile;
@@ -86,10 +81,5 @@ namespace AssetEditor.ViewModels
 
         public bool AllowDrop(IEditorInterface node, IEditorInterface targetNode = default, bool insertAfterTargetNode = default) => true;
         public bool Drop(IEditorInterface node, IEditorInterface targetNode = default, bool insertAfterTargetNode = default) => EditorManager.Drop(node, targetNode, insertAfterTargetNode);
-
-        private void SetStatusBarEditablePackFile(PackFileContainerSetAsMainEditableEvent e)
-        {
-            EditablePackFile = e.Container != null ? $"Editable Pack: {e.Container.Name}" : "Editable Pack: None Set";
-        }
     }
 }

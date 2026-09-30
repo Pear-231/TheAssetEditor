@@ -101,7 +101,7 @@ namespace Test.SkeletonEditor
         {
             skeletonEditor.SaveSkeletonAction();
 
-            var moddingPack = runner.PackFileService.GetEditablePack();
+            var moddingPack = runner.PackFileService.GetActivePack();
             var invFile = runner.PackFileService.FindFile(@"animations\skeletons\humanoid01.bone_inv_trans_mats", moddingPack);
             var skeletonFile = runner.PackFileService.FindFile(@"animations\skeletons\humanoid01.anim", moddingPack);
 
