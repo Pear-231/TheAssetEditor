@@ -32,19 +32,21 @@ namespace AssetEditor.ViewModels
         private readonly IUiCommandFactory _uiCommandFactory;
         private readonly TouchedFilesRecorder _touchedFilesRecorder;
         private readonly IPackFileContainerLoader _packFileContainerLoader;
+        private readonly LocalizationManager _localizationManager;
 
         public ObservableCollection<RecentPackFileItem> RecentPackFiles { get; set; } = [];
         public ObservableCollection<EditorShortcutViewModel> Editors { get; set; } = [];
         public ObservableCollection<GameInformation> Games { get; }
 
-        public MenuBarViewModel(IPackFileService packfileService, 
-            ApplicationSettingsService settingsService, 
-            IEditorDatabase editorDatabase, 
+        public MenuBarViewModel(IPackFileService packfileService,
+            ApplicationSettingsService settingsService,
+            IEditorDatabase editorDatabase,
             IUiCommandFactory uiCommandFactory,
-            TouchedFilesRecorder touchedFilesRecorder, 
+            TouchedFilesRecorder touchedFilesRecorder,
             IFileSaveService packFileSaveService,
             IPackFileContainerLoader packFileContainerLoader,
-            IStandardDialogs standardDialogs)
+            IStandardDialogs standardDialogs,
+            LocalizationManager localizationManager)
         {
             _packfileService = packfileService;
             _settingsService = settingsService;
@@ -52,6 +54,7 @@ namespace AssetEditor.ViewModels
             _uiCommandFactory = uiCommandFactory;
             _touchedFilesRecorder = touchedFilesRecorder;
             _packFileContainerLoader = packFileContainerLoader;
+            _localizationManager = localizationManager;
             var settings = settingsService.CurrentSettings;
             Games = new ObservableCollection<GameInformation>(GameInformationDatabase.Games.Values.OrderBy(game => game.DisplayName));
             settings.RecentPackFiles.CollectionChanged += OnRecentPackFilePathsChanged;
@@ -75,9 +78,10 @@ namespace AssetEditor.ViewModels
         [RelayCommand] private void ImportReferencePack() => _uiCommandFactory.Create<ImportReferencePackCommand>().Execute();
         [RelayCommand] private void CreateNewProject() => _uiCommandFactory.Create<CreateNewProjectCommand>().Execute();
         
+        // TODO: Make create animpack show only for the active game
         [RelayCommand] private void CreateAnimPackWarhammer3() => _uiCommandFactory.Create<CreateExampleAnimationDbCommand>().CreateAnimationDbWarhammer3();
         [RelayCommand] private void CreateAnimPack3k() => _uiCommandFactory.Create<CreateExampleAnimationDbCommand>().CreateAnimationDb3k();
-        [RelayCommand] private void SaveActivePack() => _uiCommandFactory.Create<SavePackFileContainerCommand>().ExecuteForEditablePack();
+        [RelayCommand] private void SaveActivePack() => _uiCommandFactory.Create<SavePackFileContainerCommand>().ExecuteForActivePack();
         [RelayCommand] private void OpenWh2AnimpackUpdater() => new AnimPackUpdaterService(_packfileService).Process();
         [RelayCommand] private void GenerateRmv2Report() => _uiCommandFactory.Create<Rmv2ReportCommand>().Execute();
         [RelayCommand] private void GenerateBmdReport() => _uiCommandFactory.Create<BmdReportCommand>().Execute();
@@ -145,6 +149,7 @@ namespace AssetEditor.ViewModels
                 info.Path,
                 info.ContainerType,
                 info.IsReadOnly,
+                _localizationManager,
                 () =>
                 {
                     var container = info.ContainerType == PackFileContainerType.SystemFolder
