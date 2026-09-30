@@ -208,12 +208,14 @@
   "WindowChrome.Help": "Help",
   "WindowChrome.Close": "Close",
 
+  "MainWindow.StatusBar.ActiveGame": "Active game",
+
   "MainWindow.TabContextMenu.Close": "Close",
-  "MainWindow.TabContextMenu.CloseMultiple": "Close Multiple",
-  "MainWindow.TabContextMenu.CloseOtherTabs": "Close Other Tabs",
-  "MainWindow.TabContextMenu.CloseAllTabs": "Close All Tabs",
-  "MainWindow.TabContextMenu.CloseTabsToLeft": "Close Tabs To Left",
-  "MainWindow.TabContextMenu.CloseTabsToRight": "Close Tabs To Right",
+  "MainWindow.TabContextMenu.CloseMultiple": "Close multiple",
+  "MainWindow.TabContextMenu.CloseOtherTabs": "Close other tabs",
+  "MainWindow.TabContextMenu.CloseAllTabs": "Close all tabs",
+  "MainWindow.TabContextMenu.CloseTabsToLeft": "Close tabs to left",
+  "MainWindow.TabContextMenu.CloseTabsToRight": "Close tabs to right",
 
   "Dialog.TextInput.Title": "TextInputWindow",
   "Dialog.TextInput.OkButton": "Ok",

@@ -197,6 +197,8 @@
     "WindowChrome.Maximise":  "Maximise",
     "WindowChrome.Help":  "Help",
     "WindowChrome.Close":  "Close",
+
+    "MainWindow.StatusBar.ActiveGame":  "Jeu actif",
     "MainWindow.TabContextMenu.Close":  "Close",
     "MainWindow.TabContextMenu.CloseMultiple":  "Close Multiple",
     "MainWindow.TabContextMenu.CloseOtherTabs":  "Close Other Tabs",

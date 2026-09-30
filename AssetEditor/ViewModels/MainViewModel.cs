@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using System.Windows;
-using AssetEditor.Services;
+﻿using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Shared.Core.Commands;
@@ -19,6 +17,7 @@ namespace AssetEditor.ViewModels
     public partial class MainViewModel : ObservableObject, IDropTarget<IEditorInterface, bool>
     {
         private readonly IUiCommandFactory _uiCommandFactory;
+        private readonly LocalizationManager _localizationManager;
 
         public PackFileBrowserViewModel FileTree { get; private set; }
         public MenuBarViewModel MenuBar { get; set; }
@@ -35,16 +34,18 @@ namespace AssetEditor.ViewModels
         public MainViewModel(
                 IEditorManager editorManager,
                 PackFileTreeViewFactory packFileBrowserBuilder,
-                MenuBarViewModel menuViewModel, 
-                IPackFileService packfileService, 
-                IEditorDatabase toolFactory, 
-                IUiCommandFactory uiCommandFactory, 
-                ApplicationSettingsService applicationSettingsService)
+                MenuBarViewModel menuViewModel,
+                IPackFileService packfileService,
+                IEditorDatabase toolFactory,
+                IUiCommandFactory uiCommandFactory,
+                ApplicationSettingsService applicationSettingsService,
+                LocalizationManager localizationManager)
         {
             MenuBar = menuViewModel;
 
             EditorManager = editorManager;
             _uiCommandFactory = uiCommandFactory;
+            _localizationManager = localizationManager;
 
             FileTree = packFileBrowserBuilder.Create(ContextMenuType.MainApplication, showCaFiles: true, showFoldersOnly: false);
             FileTree.FileOpen += OpenFile;
@@ -52,7 +53,8 @@ namespace AssetEditor.ViewModels
             ToolsFactory = toolFactory;
 
             ApplicationTitle = $"AssetEditor v{VersionChecker.GetCurrentVersion()}";
-            CurrentGame = $"Current Game: {GameInformationDatabase.GetGameById(applicationSettingsService.CurrentSettings.CurrentGame).DisplayName}";
+            CurrentGame = $"{_localizationManager.Get("MainWindow.StatusBar.ActiveGame")}:" +
+                $" {GameInformationDatabase.GetGameById(applicationSettingsService.CurrentSettings.CurrentGame).DisplayName}";
         }
 
         void OpenFile(PackFile file) => _uiCommandFactory.Create<OpenEditorCommand>().Execute(file);

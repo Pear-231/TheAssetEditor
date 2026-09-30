@@ -208,6 +208,8 @@
   "WindowChrome.Help": "帮助",
   "WindowChrome.Close": "关闭",
 
+  "MainWindow.StatusBar.ActiveGame": "当前游戏",
+
   "MainWindow.TabContextMenu.Close": "关闭",
   "MainWindow.TabContextMenu.CloseMultiple": "关闭多个",
   "MainWindow.TabContextMenu.CloseOtherTabs": "关闭其他标签页",
