@@ -208,6 +208,8 @@
   "WindowChrome.Help": "Help",
   "WindowChrome.Close": "Close",
 
+  "MainWindow.StatusBar.ActiveGame": "Active Game",
+
   "MainWindow.TabContextMenu.Close": "Close",
   "MainWindow.TabContextMenu.CloseMultiple": "Close Multiple",
   "MainWindow.TabContextMenu.CloseOtherTabs": "Close Other Tabs",
