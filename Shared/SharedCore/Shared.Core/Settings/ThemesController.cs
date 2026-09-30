@@ -53,15 +53,5 @@ namespace Shared.Core.Settings
         {
             return GetResource(name) is SolidColorBrush brush ? brush : new SolidColorBrush(Colors.White);
         }
-
-        public static string GetEnumAsString(ThemeType theme)
-        {
-            return theme switch
-            {
-                ThemeType.DarkTheme => "Dark",
-                ThemeType.LightTheme => "Light",
-                _ => "Dark"
-            };
-        }
     }
 }

@@ -157,7 +157,7 @@ namespace GameWorld.Core.Components.Rendering
             }
 
             var commonShaderParameters = CommonShaderParameterBuilder.Build(_camera, _sceneLightParameters, screenWidth, screenHeight);
-            var backgroundColour = ApplicationSettingsHelper.GetEnumAsColour(_applicationSettingsService.CurrentSettings.RenderEngineBackgroundColour);
+            var backgroundColour = GetEnumAsColour(_applicationSettingsService.CurrentSettings.RenderEngineBackgroundColour);
 
             _normalRenderTarget = RenderTargetHelper.GetRenderTarget(device, _normalRenderTarget, imageUpScale, _graphicsResourceCreator, screenWidth, screenHeight);
             _emissiveRenderTarget = RenderTargetHelper.GetRenderTarget(device, _emissiveRenderTarget, imageUpScale, _graphicsResourceCreator, screenWidth, screenHeight);
@@ -295,6 +295,17 @@ namespace GameWorld.Core.Components.Rendering
                 item.Draw(device, commonShaderParameters, renderingTechnique);
 
 
+        }
+
+        public static Color GetEnumAsColour(BackgroundColour colour)
+        {
+            return colour switch
+            {
+                BackgroundColour.DarkGrey => new Color(50, 50, 50, 1),
+                BackgroundColour.LegacyBlue => new Color(94, 150, 239, 1),
+                BackgroundColour.Green => new Color(0, 177, 64, 1),
+                _ => throw new NotImplementedException(),
+            };
         }
 
         public void Dispose()

@@ -69,7 +69,8 @@ namespace AssetEditor.ViewModels
                     {
                         GameName = $"{game.DisplayName}",
                         GameType = game.Type,
-                        Path = _settingsService.CurrentSettings.GameDirectories.FirstOrDefault(x => x.Game == game.Type)?.Path
+                        Path = _settingsService.CurrentSettings.GameDirectories.FirstOrDefault(x => x.Game == game.Type)?.Path,
+                        PathHint = $"{_localizationManager.Get("SettingsWindow.GameDataPathHint")} \"C:\\game\\installation\\location\\{game.DisplayName}\\data\""
                     });
             }
         }
@@ -110,6 +111,8 @@ namespace AssetEditor.ViewModels
         string _path;
         public string Path { get => _path; set => SetAndNotify(ref _path, value); }
 
+        public string PathHint { get; set; }
+
         public ICommand BrowseCommand { get; set; }
 
         public GamePathItem()
@@ -128,7 +131,15 @@ namespace AssetEditor.ViewModels
                 var manifest = files.Count(x => x.Contains("manifest.txt"));
 
                 if (packFiles == 0 && manifest == 0)
+                {
                     System.Windows.MessageBox.Show($"The selected directory contains {packFiles} packfiles and {manifest} manifest files. It is probably not a game directory");
+                    return;
+                }
+
+                var installFolderName = System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(Path));
+                var expectedFolderName = GameName.Replace(":", "");
+                if (!string.Equals(installFolderName, expectedFolderName, StringComparison.OrdinalIgnoreCase))
+                    System.Windows.MessageBox.Show($"The selected directory does not appear to be for {GameName}. It is probably for a different game.");
             }
         }
     }

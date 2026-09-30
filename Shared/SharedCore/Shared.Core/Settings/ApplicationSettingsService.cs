@@ -9,7 +9,14 @@ namespace Shared.Core.Settings
     public enum CameraControlMode
     {
         BlenderStyle,
-        AssetEditorStyle,
+        AssetEditorStyle
+    }
+
+    public enum BackgroundColour
+    {
+        DarkGrey,
+        LegacyBlue,
+        Green
     }
 
     public record RecentPackFileInfo(string Path, PackFileContainerType ContainerType, bool IsReadOnly);

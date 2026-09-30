@@ -1,11 +1,7 @@
-﻿using System;
-using System.Windows;
+﻿using System.Windows;
 
 namespace AssetEditor.Views.Settings
 {
-    /// <summary>
-    /// Interaction logic for SettingsWindow.xaml
-    /// </summary>
     public partial class SettingsWindow : Window
     {
         public SettingsWindow()
@@ -20,7 +16,7 @@ namespace AssetEditor.Views.Settings
 
         private void Window_OnContentRendered(object sender, EventArgs e)
         {
-            InvalidateVisual();
+            InvalidateMeasure();
         }
     }
 }
