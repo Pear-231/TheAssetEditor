@@ -168,6 +168,8 @@ namespace Shared.Core.PackFiles
             }
         }
 
+        // TODO: Fix a bug where loading a pack file from the recent files tries to set it as active even though it's readonly
+        // and gives the error: System.Exception: 'Trying to set readonly packfile container to be active - this is not legal!'
         public void SetActivePack(IPackFileContainer? pf)
         {
             if (pf != null && pf.IsReadOnly)

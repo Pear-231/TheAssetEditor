@@ -7,22 +7,35 @@
     <script src="DocumentationShared.js" defer></script>
 </head>
 <body>
-    <h1>PackFile handling</h1>
-    <p>Total War games uses a file format called Pack. This is a filesystem "packed" into a single file. The game uses multiple packfiles, while mods typically is just one packfile. AssetEditor has multiple ways to work with Packfiles and allows the user to open multiple at the same time.</p>
-    <p>While working in AE, the pack format is not used directly, instead a normal folder is created on disk. This is your "project". When saving a project, a packfile is generated. </p>
+    <h1>Working with projects</h1>
     <p>
-        General workflow:
-        <br>
-        <b>Create project => Add, remove or modify files => Save project, which generates the packsfile</b>
+        Total War games use a file format called Pack to store data. A Pack file is essentially a filesystem 'packed' into a single file. 
+        Total War games use multiple Pack files, while a mod is typically just one Pack file. 
+        AssetEditor does not use the Pack file format directly, instead it uses a 'project'.
     </p>
+    
+    <h2>What is a project?</h2>
+    <p>
+        A project is simply a folder on your computer which stores the files and folders used in a mod.
+        This means that when working on a mod, rather than adding, removing or modifying files and folders directly within a Pack file, 
+        we use your computer's filesystem through AssetEditor. This has the benefit of allowing the use of version control systems
+        such as Git, and prevents the corruption of files which can sometimes happen when working within Pack files.
+        After you've finished working on your mod you simply save your project and AssetEditor then 'packs' a copy of the project's
+        files and folders into a Pack file which becomes your mod, and the project's original files and folders all stay within 
+        your project's folder on your computer's filesystem.
+    </p>
+    <div class="note">
+        <strong>General workflow:</strong>
+        <br>
+        Create project => Add, remove or modify files => Save project (which generates the packfile).
+    </div>
 
-    <h2>How to work with projects in AssetEditor</h2>
     <img src="Images\AssetEditor_PackfileContextMenu.png">
-    <h3>Creating a new project</h3>
+    <h2>Creating a new project</h2>
     <p>
         There are two ways to create a new project:<br />
-        1. Use the "New project/Pack" <b>(Option 1 in image)</b> which prompts the user to select a folder on disk. This is where your project will be created.<br />
-        2. Use the "Create project from PackFile" <b>(Option 2 in image)</b>, which will take an existing packfile and convert it to a folder on your computer. <br />
+        1. Use the "New project" <b>(Option 1 in image)</b> which prompts the user to select a folder on disk. This is where your project will be created.<br />
+        2. Use the "New project from pack" <b>(Option 2 in image)</b>, which will take an existing packfile and convert it to a folder on your computer. <br />
     </p>
     <img src="Images\AssetEditor_PackFile_NewProject.png">
     <p>
@@ -35,30 +48,30 @@
         1. Open an exising project by selecting "Open project". <b>(Option 3 in image)</b>
     </p>
 
-    <h3>Accesssing files from other packfiles</h3>
+    <h3>Accessing files from other packfiles</h3>
     <p>
-        Game files can be loaded using the "Open game files"<b>(Option 4 in image)</b>. Loading a packfile this way will not make it editable, but the files can be copied to the main packfile. This is useful for modding, as you can copy files from the game into your mod.
+        Game files can be loaded using the "Open game packs"<b>(Option 4 in image)</b>. Loading a packfile this way will not make it active, but the files can be copied to the active packfile. This is useful for modding, as you can copy files from the game into your mod.
         AssetEditor requires a game packfile to be loaded before a project can be created. This is because the game files are required for a lot of the functionality in AssetEditor, and without them, the user would not be able to create a mod.
 
         Game files are typically located in the "data" folder of the game installation. The user can select the "data" folder, and AssetEditor will automatically load all packfiles in that folder for the prefered game.
     </p>
     <p>
-        Other packfiles/mods can be added as references using the "Open packfile" <b>(Option 5 in image)</b>. This will open a packfile and make it available for copying files from. The packfile will not be editable.
+        Other packfiles/mods can be added as references using the "Open packfile" <b>(Option 5 in image)</b>. This will open a packfile and make it available for copying files from. The packfile will not be active.
     </p>
 
-    <h3>The Editable pack</h3>
+    <h3>The active pack</h3>
     <p>
-        AssetEditor always have one main project/pack, which is the pack that is being edited. This pack is editable, and all changes are made to this pack. When a new packfile is opened, it becomes the main pack.
-        You can change the main pack by right clicking on a packfile in the packfile explorer and selecting "Set as main pack". The main pack is marked bold text in the packfile explore and the name displayed at the bottom.
+        AssetEditor always has one active project/pack. All changes are made to this pack. When a new packfile is opened, it becomes the active pack.
+        You can change the active pack by right clicking on a packfile in the packfile explorer and selecting "Set as active project". The active pack is marked in bold text in the PackFile Explorer and has the [Active] flag.
     </p>
-    <img src="Images\AssetEditor_PackfileHandling.png">
+    <img src="Images\AssetEditor_ActivePack.png">
 
     <h3>Editing a project</h3>
     <p>
-        Files inside a packfile can be draged and dropped into new locations. New folder can be created by right clicking on a folder and selecting "Create new folder".
+        Files inside a packfile can be draged and dropped into new locations. New folder can be created by right clicking on a folder and selecting "New folder".
         Its possible to import files from disk by right clicking on a folder and selecting "Import file". This will import the file into the packfile in the same location as the folder. If a file with the same name already exists, it will be overwritten.
         Right clicking on a file or folder in the packfile explorer will open a context menu with options to delete or rename.
-        If a folder in a different packfile is selected, the user can right click and pick "Copy to main pack". This will copy the file or folder to the same location in the main pack. If a file with the same name already exists, it will be overwritten.
+        If a folder in a different packfile is selected, the user can right click and pick "Copy to active project". This will copy the file or folder to the same location in the active pack. If a file with the same name already exists, it will be overwritten.
 
         <br />
 
@@ -70,7 +83,7 @@
         Files can be marked as ignorable, which means they will not be included in the packfile when it is generated. This is useful for files that are only needed during development, but not in the final mod. Ignored files are marked with a red "X" in the packfile explorer. Right clicking on a file or folder and selecting "Ignore" will mark it as ignorable. Right clicking on an ignorable file or folder and selecting "Unignore" will remove the ignorable mark.
     </p>
 
-    <h3>Saving a Project/Generating packfile</h3>
+    <h3>Saving a project / generating a packfile</h3>
     <p>
         When a packfile is edited, the name of the packfile is marked with an asterisk and the name changes to red.
         When a project is saved, a new packfile is generated on disk. The packfile will be saved in the same location as the project folder, with the same name as the project folder. If a packfile with the same name already exists, it will be overwritten.</br>
@@ -78,13 +91,13 @@
     </p>
     <img src="Images\AssetEditor_packfilewithchanges.png">
 
-    <h3>Best practises</h3>
+    <h3>Best practices</h3>
     <p>It is recommended to use a version control system like GIT to keep track of changes in your project. This allows you to easily revert changes, collaborate with others, and maintain a history of your project.Its easy to configure and makes the modding process much safer and enjoyable. </p>
 
 
     <h3>Troubleshooting</h3>
     <ul>
-        <li><b>Cannot edit</b> - Verify selected root is writable and set as editable.</li>
+        <li><b>Cannot edit</b> - Verify selected root is writable and set as active.</li>
         <li><b>Save fails</b> - Check file lock (game/tool/antivirus) on target file.</li>
         <li><b>Wrong output version</b> - Check project game version setting.</li>
         <li><b>Missing file after save</b> - Check ignored files list and normalized path.</li>

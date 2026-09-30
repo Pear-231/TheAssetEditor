@@ -1,0 +1,122 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="DocumentationShared.css">
+    <script src="DocumentationShared.js" defer></script>
+</head>
+<body>
+    <h1>Settings</h1>
+    <p>
+        AssetEditor is configured through the settings window which controls things like the game you're modding,
+        rendering options, and the app's UI.
+    </p>
+
+    <p>
+        When AssetEditor starts for the first time, the settings window is shown automatically. You can access the
+        settings window from the menu bar via File > Settings.
+    </p>
+
+    <p>
+        For AssetEditor to work as intended, it is important to configure each setting correctly by referring 
+        to the information for each setting on the settings window or the relevant section of this page which 
+        details settings in the order they appear in the settings window.
+    </p>
+
+    <div class="warning">
+        To ensure the changes to settings take effect, save the settings then restart AssetEditor.
+    </div>
+
+    <figure>
+        <img class="doc-image" src="Images\AssetEditor_Settings.png" alt="Asset Editor settings window">
+        <figcaption>The settings window.</figcaption>
+    </figure>
+
+    <h2>Application</h2>
+    <table>
+        <tr><th>Setting</th><th>Description</th></tr>
+        <tr>
+            <td>Active game</td>
+            <td>Sets the game used to handle which game files are loaded automatically, how tools are configured and how projects / packs are loaded.
+
+                <div class="warning">
+                    <b>Ensure you set the active game to the game you intend to mod.</b>
+                    Loading projects / packs for a game different to the set active game may cause errors in handling encrypted / compressed content.
+                    Loading tools for a game different to the set active game may cause tools to create content in the wrong format.
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>Load active game files on startup</td>
+            <td>
+                Sets whether the active game's files are automatically loaded from the configured path on startup.
+            </td>
+        </tr>
+    </table>
+
+    <h2>UI</h2>
+    <table>
+        <tr><th>Setting</th><th>Description</th></tr>
+        <tr>
+            <td>Language</td>
+            <td>
+                Sets the language of the AssetEditor UI.
+            </td>
+        </tr>
+        <tr>
+            <td>Theme</td>
+            <td>Sets the colour theme of the AssetEditor UI.</td>
+        </tr>
+        <tr>
+            <td>Start maximised</td>
+            <td>Sets whether AssetEditor launches as a maximised window or with its last used / default window size.</td>
+        </tr>
+        <tr>
+            <td>Show game WEM files</td>
+            <td>
+                Sets whether a game's WEM files are shown in the PackFile explorer. This does not affect WEM files in non-game packs.
+            </td>
+        </tr>
+    </table>
+
+    <h2>Game files</h2>
+    <table>
+        <tr><th>Setting</th><th>Description</th></tr>
+        <tr>
+            <td>Game</td>
+            <td>
+                The location of the game's files e.g. "C:\game\installation\location\Total War: WARHAMMER III\data"
+            </td>
+        </tr>
+    </table>
+
+    <h2>Rendering</h2>
+    <table>
+        <tr><th>Setting</th><th>Description</th></tr>
+        <tr>
+            <td>3D camera mode</td>
+            <td>
+                Sets the camera control scheme used by the visual editors.
+                See the <a href="CameraControls.html">Camera controls</a> page for further information.
+            </td>
+        </tr>
+        <tr>
+            <td>Render engine background colour</td>
+            <td>Sets the background colour of the 3D viewport used by the visual editors.</td>
+        </tr>
+        <tr>
+            <td>Grid size</td>
+            <td>Sets the size of the reference grid shown in the 3D viewport of the visual editors.</td>
+        </tr>
+        <tr>
+            <td>Vertex selection colour</td>
+            <td>Sets the colour used to highlight selected vertices when editing meshes.</td>
+        </tr>
+        <tr>
+            <td>Only load LOD0 for reference meshes</td>
+            <td>Sets whether reference meshes are imported in the Kitbash tool with only LOD0 (the highest detail level) or every LOD level. Importing with LOD0 only can save memory.</td>
+        </tr>
+    </table>
+</body>
+</html>
