@@ -59,13 +59,19 @@ namespace AssetEditor
             settingsService.AllowSettingsUpdate = true;
             settingsService.Load();
 
-            // Auto-detect system language for first-time users
             if (settingsService.CurrentSettings.IsFirstTimeStartingApplication)
             {
+                // Auto-detect system language for first-time users
                 var detectedLang = DetectSystemLanguage();
                 if (File.Exists(Path.Combine(AppContext.BaseDirectory, $"Language_{detectedLang}.json")))
+                {
                     settingsService.CurrentSettings.SelectedLangauge = detectedLang;
-                settingsService.Save();
+                    settingsService.Save();
+                }
+
+                // Auto-detect Steam game files directories for first-time users
+                if (SteamGameFilesResolver.Resolve(settingsService.CurrentSettings))
+                    settingsService.Save();
             }
 
             var localizationManager = _serviceProvider.GetRequiredService<LocalizationManager>();
