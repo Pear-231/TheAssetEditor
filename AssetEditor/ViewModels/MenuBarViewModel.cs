@@ -162,7 +162,9 @@ namespace AssetEditor.ViewModels
                         return;
                     }
 
-                    _packfileService.AddContainer(container, true);
+                    // Only projects should be active, packs are read-only references
+                    var isReadOnly = info.ContainerType == PackFileContainerType.SystemFolder;
+                    _packfileService.AddContainer(container, isReadOnly);
                         
                 }
             ));

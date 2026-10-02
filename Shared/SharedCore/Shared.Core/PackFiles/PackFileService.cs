@@ -57,7 +57,7 @@ namespace Shared.Core.PackFiles
             return false;
         }
 
-        public IPackFileContainer? AddContainer(IPackFileContainer container, bool setToMainPackIfFirst = false)
+        public IPackFileContainer? AddContainer(IPackFileContainer container, bool setToActive = false)
         {
             var pf = CastContainer(container);
             if (EnforceGameFilesMustBeLoaded)
@@ -90,7 +90,7 @@ namespace Shared.Core.PackFiles
                 }
             }
 
-            AddContainerInternal(pf, setToMainPackIfFirst);
+            AddContainerInternal(pf, setToActive);
             return pf;
         }
 
