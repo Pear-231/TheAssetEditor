@@ -1,4 +1,5 @@
 ﻿using Moq;
+using Shared.Core.Services;
 using Shared.Core.PackFiles;
 using Shared.Core.PackFiles.Models;
 using Shared.Ui.BaseDialogs.PackFileTree;
@@ -27,7 +28,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             return service;
         }
 
-        protected static TreeNode CreateRoot(IPackFileContainer container) => new RootTreeNode(container.Name, container);
+        protected static TreeNode CreateRoot(IPackFileContainer container) => new RootTreeNode(container.Name, container, new LocalizationManager());
 
         protected static TreeNode CreateNodePath(TreeNode root, string path, NodeType leafType = NodeType.File)
         {

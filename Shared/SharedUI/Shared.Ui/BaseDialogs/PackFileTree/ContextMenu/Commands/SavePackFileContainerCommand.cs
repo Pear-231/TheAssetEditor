@@ -106,7 +106,7 @@ namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands
 
         private string? ResolveSavePath(IPackFileContainer container, string packDescription)
         {
-            var systemPath = container.ContainerType == PackFileContainerType.SystemFolder
+            var systemPath = container.ContainerType == PackFileContainerType.Project
                 ? container.PackFileSettings.SaveLocationPath
                 : container.SystemFilePath;
 
@@ -121,7 +121,7 @@ namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands
             }
 
             systemPath = Path.ChangeExtension(saveDialogResult.FilePath, ".pack");
-            if (container.ContainerType == PackFileContainerType.SystemFolder)
+            if (container.ContainerType == PackFileContainerType.Project)
             {
                 container.PackFileSettings.SaveLocationPath = systemPath;
                 container.SaveSettings();

@@ -175,7 +175,7 @@ namespace Shared.Core.PackFiles.Utility
                 packfileResolver = new CustomPackDuplicateFileResolver();
             }
 
-            var container = CreateFromCollection(PackFileContainerType.Database, gameDataFolder, fullPackFilePaths, $"All Game Packs - {gameName}", true, packfileResolver, gameEnum);
+            var container = CreateFromCollection(PackFileContainerType.GamePacks, gameDataFolder, fullPackFilePaths, gameName, true, packfileResolver, gameEnum);
             container.IsCaPackFile = true;
             container.PackFileSettings.GameVersion = gameEnum;
             container.SaveSettings();
@@ -184,12 +184,12 @@ namespace Shared.Core.PackFiles.Utility
 
         public IPackFileContainer CreateFromCollection(PackFileContainerType type, string packFileSystemPath, List<string> fullPackFilePaths, string createdPackFileName, bool loadAsReadOnly, IDuplicateFileResolver duplicateFileResolver, GameTypeEnum game)
         {
-            if (type == PackFileContainerType.Database && loadAsReadOnly == false)
+            if (type == PackFileContainerType.GamePacks && loadAsReadOnly == false)
                 throw new InvalidOperationException($"Cannot load as writable if loading from cache. Caching is only supported for read-only containers. PackFile {createdPackFileName}");
 
             var fingerprint = string.Empty;
             var cacheFilePath = string.Empty;
-            if (type == PackFileContainerType.Database)
+            if (type == PackFileContainerType.GamePacks)
             {
                 fingerprint = _packFileContainerCacheHelper.ComputeFingerprint(fullPackFilePaths);
                 var cachePrefix = createdPackFileName;
@@ -215,7 +215,7 @@ namespace Shared.Core.PackFiles.Utility
                 container.SystemFilePath = packFileSystemPath;
                 container.PackFileSettings.GameVersion = game;
 
-                if (type == PackFileContainerType.Database)
+                if (type == PackFileContainerType.GamePacks)
                 {
                     return _packFileContainerCacheHelper.SaveAndLoadCache(fingerprint, container, cacheFilePath);
                 }

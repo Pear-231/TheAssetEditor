@@ -37,11 +37,11 @@ namespace Shared.Ui.BaseDialogs.PackFileTree.ValueConverters
 
             switch(container!.ContainerType)
             {
-                case PackFileContainerType.Normal:
+                case PackFileContainerType.Pack:
                     return IconLibrary.NormalModPackIcon;
-                case PackFileContainerType.Database:
+                case PackFileContainerType.GamePacks:
                     return IconLibrary.DatabaseModPackIcon;
-                case PackFileContainerType.SystemFolder:
+                case PackFileContainerType.Project:
                     return IconLibrary.SystemFolderModPackIcon;
                 default:
                     return IconLibrary.MissingIcon;
@@ -51,7 +51,7 @@ namespace Shared.Ui.BaseDialogs.PackFileTree.ValueConverters
         private static bool IsIgnoredInSystemFolderContainer(TreeNode node)
         {
             var container = TreeNodeHelper.GetPackFileContainer(node);
-            if (container == null || container.ContainerType != PackFileContainerType.SystemFolder)
+            if (container == null || container.ContainerType != PackFileContainerType.Project)
                 return false;
 
             var normalizedPath = PathNormalization.NormalizeFileName(node.GetFullPath());

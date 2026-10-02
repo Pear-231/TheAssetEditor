@@ -50,7 +50,7 @@ namespace Test.TestingUtility.Shared
         public IPackFileContainer? LoadPackFile(string path, bool createOutputPackFile = true)
         {
             var loader = ServiceProvider.GetRequiredService<IPackFileContainerLoader>();
-            var container = loader.CreateFromPackFile(PackFileContainerType.Normal, path, false);
+            var container = loader.CreateFromPackFile(PackFileContainerType.Pack, path, false);
             PackFileService.AddContainer(container);
 
             if (createOutputPackFile)

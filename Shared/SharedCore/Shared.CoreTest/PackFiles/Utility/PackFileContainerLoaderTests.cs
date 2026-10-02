@@ -58,7 +58,7 @@ namespace Shared.CoreTest.PackFiles.Utility
             _settingsService.CurrentSettings.GameDirectories.Clear();
             var loader = CreateLoader();
 
-            var result = loader.CreateFromGameEnum(PackFileContainerType.Database, GameTypeEnum.Warhammer3);
+            var result = loader.CreateFromGameEnum(PackFileContainerType.GamePacks, GameTypeEnum.Warhammer3);
 
             Assert.That(result, Is.Null);
         }
@@ -68,7 +68,7 @@ namespace Shared.CoreTest.PackFiles.Utility
         {
             var loader = CreateLoader();
 
-            var result = loader.CreateFromGameEnum(PackFileContainerType.Database, GameTypeEnum.Warhammer3);
+            var result = loader.CreateFromGameEnum(PackFileContainerType.GamePacks, GameTypeEnum.Warhammer3);
 
             Assert.That(result, Is.Not.Null);
             Assert.That(result!.PackFileSettings.GameVersion, Is.EqualTo(GameTypeEnum.Warhammer3));
@@ -87,13 +87,13 @@ namespace Shared.CoreTest.PackFiles.Utility
             var loader = CreateLoader();
 
             // First call builds the cache
-            var firstResult = loader.CreateFromGameEnum(PackFileContainerType.Database, GameTypeEnum.Warhammer3);
+            var firstResult = loader.CreateFromGameEnum(PackFileContainerType.GamePacks, GameTypeEnum.Warhammer3);
             Assert.That(firstResult, Is.Not.Null);
 
             _dialogs.Invocations.Clear();
 
             // Second call should use cache - no dialogs
-            var secondResult = loader.CreateFromGameEnum(PackFileContainerType.Database, GameTypeEnum.Warhammer3);
+            var secondResult = loader.CreateFromGameEnum(PackFileContainerType.GamePacks, GameTypeEnum.Warhammer3);
             Assert.That(secondResult, Is.Not.Null);
 
             _dialogs.Verify(d => d.ShowDialogBox(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
@@ -107,20 +107,20 @@ namespace Shared.CoreTest.PackFiles.Utility
             var loader = CreateLoader();
 
             // First call builds the cache
-            var firstResult = loader.CreateFromGameEnum(PackFileContainerType.Database, GameTypeEnum.Warhammer3);
+            var firstResult = loader.CreateFromGameEnum(PackFileContainerType.GamePacks, GameTypeEnum.Warhammer3);
             Assert.That(firstResult, Is.Not.Null);
 
             // Corrupt the cache via the in-memory helper
             var packFiles = Directory.GetFiles(_tempGameDir, "*.pack").ToList();
             var fingerprint = _cacheHelper.ComputeFingerprint(packFiles);
             var game = GameInformationDatabase.GetGameById(GameTypeEnum.Warhammer3);
-            var cacheFilePath = _cacheHelper.GetCacheFilePath($"All Game Packs - {game.DisplayName}", fingerprint);
+            var cacheFilePath = _cacheHelper.GetCacheFilePath(game.DisplayName, fingerprint);
             _cacheHelper.CorruptCache(cacheFilePath);
 
             _dialogs.Invocations.Clear();
 
             // Load again — should detect corruption
-            var secondResult = loader.CreateFromGameEnum(PackFileContainerType.Database, GameTypeEnum.Warhammer3);
+            var secondResult = loader.CreateFromGameEnum(PackFileContainerType.GamePacks, GameTypeEnum.Warhammer3);
             Assert.That(secondResult, Is.Not.Null);
 
             // Single combined dialog: reason + building message
@@ -134,7 +134,7 @@ namespace Shared.CoreTest.PackFiles.Utility
             var loader = CreateLoader();
 
             // First call builds the cache
-            var firstResult = loader.CreateFromGameEnum(PackFileContainerType.Database, GameTypeEnum.Warhammer3);
+            var firstResult = loader.CreateFromGameEnum(PackFileContainerType.GamePacks, GameTypeEnum.Warhammer3);
             Assert.That(firstResult, Is.Not.Null);
 
             // Add a new pack file to the game dir to change the fingerprint
@@ -144,7 +144,7 @@ namespace Shared.CoreTest.PackFiles.Utility
             _dialogs.Invocations.Clear();
 
             // Load again — fingerprint changed, new fingerprint has no cache file
-            var secondResult = loader.CreateFromGameEnum(PackFileContainerType.Database, GameTypeEnum.Warhammer3);
+            var secondResult = loader.CreateFromGameEnum(PackFileContainerType.GamePacks, GameTypeEnum.Warhammer3);
             Assert.That(secondResult, Is.Not.Null);
 
             // Single combined dialog: reason + building message
@@ -178,7 +178,7 @@ namespace Shared.CoreTest.PackFiles.Utility
                 .Callback(() => waitCursorDisposed = true);
 
             var loader = CreateLoader();
-            loader.CreateFromGameEnum(PackFileContainerType.Database, GameTypeEnum.Warhammer3);
+            loader.CreateFromGameEnum(PackFileContainerType.GamePacks, GameTypeEnum.Warhammer3);
 
             Assert.That(dialogShownBeforeWaitCursor, Is.True, "Dialog should be shown before wait cursor starts");
             Assert.That(waitCursorCreated, Is.True, "Wait cursor should have been created");
@@ -192,7 +192,7 @@ namespace Shared.CoreTest.PackFiles.Utility
             var activeGame = GameInformationDatabase.GetGameById(GameTypeEnum.Warhammer3);
 
             loader.CreateFromPackFile(
-                PackFileContainerType.Normal,
+                PackFileContainerType.Pack,
                 PathHelper.GetDataFile("EncryptionTests/pfh4_32_bit_keystream.pack"),
                 true);
 
@@ -209,7 +209,7 @@ namespace Shared.CoreTest.PackFiles.Utility
             var activeGame = GameInformationDatabase.GetGameById(GameTypeEnum.Warhammer);
 
             loader.CreateFromPackFile(
-                PackFileContainerType.Normal,
+                PackFileContainerType.Pack,
                 PathHelper.GetDataFile("EncryptionTests/pfh4_32_bit_keystream.pack"),
                 true);
 
@@ -225,7 +225,7 @@ namespace Shared.CoreTest.PackFiles.Utility
             var loader = CreateLoader();
 
             loader.CreateFromPackFile(
-                PackFileContainerType.Normal,
+                PackFileContainerType.Pack,
                 PathHelper.GetDataFile("EncryptionTests/pfh4_32_bit_keystream.pack"),
                 true);
 

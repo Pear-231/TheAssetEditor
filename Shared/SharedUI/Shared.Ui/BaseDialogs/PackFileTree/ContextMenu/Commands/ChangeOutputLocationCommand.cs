@@ -19,7 +19,7 @@ namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands
         public bool ShouldAdd(TreeNode node)
         {
             var container = TreeNodeHelper.GetPackFileContainer(node);
-            return node.NodeType == NodeType.Root && container is { IsReadOnly: false, ContainerType: PackFileContainerType.SystemFolder };
+            return node.NodeType == NodeType.Root && container is { IsReadOnly: false, ContainerType: PackFileContainerType.Project };
         }
 
         public bool IsEnabled(TreeNode node) => true;

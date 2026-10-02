@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using Shared.Core.Services;
 using Moq;
 using Shared.Core.PackFiles;
 using Shared.Core.PackFiles.Models;
@@ -16,7 +17,7 @@ namespace Shared.UiTest.BaseDialogs.StandardDialog.PackFile
         public void BuildTargetPath_RootSelection_DoesNotIntroduceLeadingSlash()
         {
             var owner = PackFileContainer.CreatePackFile("test.pack", "test.pack");
-            var root = new RootTreeNode("test.pack", owner);
+            var root = new RootTreeNode("test.pack", owner, new LocalizationManager());
 
             var path = InvokeBuildTargetPath(root, null, "new_file.txt", new Mock<IPackFileService>().Object);
 
@@ -27,7 +28,7 @@ namespace Shared.UiTest.BaseDialogs.StandardDialog.PackFile
         public void BuildTargetPath_RootLevelFileSelection_UsesRootRelativePath()
         {
             var owner = PackFileContainer.CreatePackFile("test.pack", "test.pack");
-            var root = new RootTreeNode("test.pack", owner);
+            var root = new RootTreeNode("test.pack", owner, new LocalizationManager());
             var existingFile = new Shared.Core.PackFiles.Models.PackFile("existing.txt", new MemorySource([1]));
             var fileNode = new TreeNode("existing.txt", NodeType.File, root);
 

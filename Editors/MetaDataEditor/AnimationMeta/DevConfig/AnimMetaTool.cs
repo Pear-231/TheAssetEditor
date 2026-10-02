@@ -27,7 +27,7 @@ namespace Editors.AnimationMeta.DevConfig
             currentSettings.LoadCaPacksByDefault = false;
             var packFile = ResourceLoader.GetDevelopmentDataFolder() + "\\Throt.pack";
   
-            var container = _packFileContainerLoader.CreateFromPackFile(PackFileContainerType.Normal, packFile, true);
+            var container = _packFileContainerLoader.CreateFromPackFile(PackFileContainerType.Pack, packFile, true);
             container!.IsCaPackFile = true;
             _packFileService.AddContainer(container);
         }

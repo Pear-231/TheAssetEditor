@@ -485,7 +485,7 @@ namespace Test.Audio
         {
             var container = new Mock<IPackFileContainer>();
             container.SetupGet(x => x.IsCaPackFile).Returns(isCa);
-            container.SetupGet(x => x.ContainerType).Returns(PackFileContainerType.Normal);
+            container.SetupGet(x => x.ContainerType).Returns(PackFileContainerType.Pack);
             container
                 .Setup(
                     x => x.SearchFiles(

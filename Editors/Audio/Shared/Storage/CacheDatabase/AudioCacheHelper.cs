@@ -103,7 +103,7 @@ namespace Editors.Audio.Shared.Storage.CacheDatabase
                 AppendFileFingerprint(hash, packedSource.Parent.FilePath, fingerprintedFiles);
                 Append(hash, $"packed:{packedSource.Offset}|{packedSource.Size}|{packedSource.IsEncrypted}|{packedSource.IsCompressed}|{packedSource.CompressionFormat}|{packedSource.UncompressedSize};");
             }
-            else if (dataSource is FileSystemSource && container.ContainerType == PackFileContainerType.SystemFolder && !string.IsNullOrWhiteSpace(container.SystemFilePath))
+            else if (dataSource is FileSystemSource && container.ContainerType == PackFileContainerType.Project && !string.IsNullOrWhiteSpace(container.SystemFilePath))
                 AppendFileFingerprint(hash, Path.Combine(container.SystemFilePath, relativePath), fingerprintedFiles);
             else
             {

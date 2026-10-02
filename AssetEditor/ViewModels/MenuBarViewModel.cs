@@ -152,7 +152,7 @@ namespace AssetEditor.ViewModels
                 _localizationManager,
                 () =>
                 {
-                    var container = info.ContainerType == PackFileContainerType.SystemFolder
+                    var container = info.ContainerType == PackFileContainerType.Project
                         ? _packFileContainerLoader.CreateFromSystemFolder(info.Path)
                         : _packFileContainerLoader.CreateFromPackFile(info.ContainerType, info.Path, info.IsReadOnly);
 
@@ -162,7 +162,8 @@ namespace AssetEditor.ViewModels
                         return;
                     }
 
-                    _packfileService.AddContainer(container, true);
+                    // Only a project can be the active pack, packs are read-only references
+                    _packfileService.AddContainer(container, info.ContainerType == PackFileContainerType.Project);
                         
                 }
             ));

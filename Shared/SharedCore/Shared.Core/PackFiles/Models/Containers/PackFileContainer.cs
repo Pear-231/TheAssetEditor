@@ -26,7 +26,7 @@ namespace Shared.Core.PackFiles.Models.Containers
             }
         }
         public PackFileSettings PackFileSettings { get; } = new();
-        public PackFileContainerType ContainerType => PackFileContainerType.Normal;
+        public PackFileContainerType ContainerType => PackFileContainerType.Pack;
         public long OriginalLoadByteSize { get; set; } = -1;
         public HashSet<string> SourcePackFilePaths { get; set; } = [];
         

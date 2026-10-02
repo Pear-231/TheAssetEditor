@@ -21,7 +21,7 @@ namespace Test.Ipc
                 .Setup(x => x.IsPackFileLoaded(packPath))
                 .Returns(false);
             containerLoader
-                .Setup(x => x.CreateFromPackFile(PackFileContainerType.Normal, packPath, true))
+                .Setup(x => x.CreateFromPackFile(PackFileContainerType.Pack, packPath, true))
                 .Returns(() =>
                 {
                     Assert.That(dispatcher.IsExecuting, Is.True);
@@ -42,7 +42,7 @@ namespace Test.Ipc
             Assert.That(result.Success, Is.True);
             Assert.That(dispatcher.InvocationCount, Is.EqualTo(1));
             containerLoader.Verify(
-                x => x.CreateFromPackFile(PackFileContainerType.Normal, packPath, true),
+                x => x.CreateFromPackFile(PackFileContainerType.Pack, packPath, true),
                 Times.Once);
             packFileService.Verify(x => x.AddContainer(container, false), Times.Once);
         }

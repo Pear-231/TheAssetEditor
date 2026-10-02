@@ -62,7 +62,7 @@ namespace AssetEditor.UiCommands
             var destinationFolder = window.SelectedFolderPath;
             var outputPackPath = Path.Combine(window.SelectedOutputFolderPath, projectFolderName + ".pack");
 
-            var packContainer = _packFileContainerLoader.CreateFromPackFile(PackFileContainerType.Normal, packFilePath, false);
+            var packContainer = _packFileContainerLoader.CreateFromPackFile(PackFileContainerType.Pack, packFilePath, false);
             var allFiles = packContainer.GetAllFiles();
 
             foreach (var (relativePath, packFile) in allFiles)

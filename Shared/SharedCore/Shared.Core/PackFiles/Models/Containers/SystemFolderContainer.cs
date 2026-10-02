@@ -28,7 +28,7 @@ namespace Shared.Core.PackFiles.Models.Containers
         public bool IsCaPackFile { get; set; } = false;
         public string? SystemFilePath { get; }
         public PackFileSettings PackFileSettings { get; } = new();
-        public PackFileContainerType ContainerType => PackFileContainerType.SystemFolder;
+        public PackFileContainerType ContainerType => PackFileContainerType.Project;
         internal event EventHandler<SystemFolderContainerFilesChangedEventArgs>? FilesAddedExternally;
         internal event EventHandler<SystemFolderContainerFilesChangedEventArgs>? FilesRemovedExternally;
 

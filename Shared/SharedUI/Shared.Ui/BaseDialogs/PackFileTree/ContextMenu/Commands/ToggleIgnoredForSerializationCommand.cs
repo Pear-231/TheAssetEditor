@@ -24,7 +24,7 @@ namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands
         public bool ShouldAdd(TreeNode node)
         {
             var container = TreeNodeHelper.GetPackFileContainer(node);
-            return node.NodeType == NodeType.File && container?.ContainerType == Shared.Core.PackFiles.Models.PackFileContainerType.SystemFolder;
+            return node.NodeType == NodeType.File && container?.ContainerType == Shared.Core.PackFiles.Models.PackFileContainerType.Project;
         }
 
         public bool IsEnabled(TreeNode node) => true;

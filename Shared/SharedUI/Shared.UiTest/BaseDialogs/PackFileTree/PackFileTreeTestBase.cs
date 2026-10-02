@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using Shared.Core.Services;
 using Moq;
 using Shared.Core.Events;
 using Shared.Core.PackFiles;
@@ -57,7 +58,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree
         protected PackFileBrowserViewModel PackFileBrowser()
         {
             var settings = new ApplicationSettingsService(GameTypeEnum.Warhammer3);
-            return new PackFileBrowserViewModel(settings, null, ContextMenuType.None, _packFileService, _eventHub, null, true, false);
+            return new PackFileBrowserViewModel(settings, null, ContextMenuType.None, _packFileService, _eventHub, null, new LocalizationManager(), true, false);
         }
     }
 }

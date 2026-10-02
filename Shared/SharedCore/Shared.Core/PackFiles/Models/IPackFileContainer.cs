@@ -2,9 +2,10 @@
 {
     public enum PackFileContainerType
     {
-        Database,
-        Normal,
-        SystemFolder
+        // Persisted by numeric value in the application settings, so the order must not change.
+        GamePacks,
+        Pack,
+        Project
     }
 
     public interface IPackFileContainer

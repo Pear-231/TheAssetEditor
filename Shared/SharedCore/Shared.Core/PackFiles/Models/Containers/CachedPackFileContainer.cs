@@ -32,7 +32,7 @@ namespace Shared.Core.PackFiles.Models.Containers
         public bool IsCaPackFile { get; set; } = false;
         public string SystemFilePath { get; set; }
         public PackFileSettings PackFileSettings { get; } = new();
-        public PackFileContainerType ContainerType => PackFileContainerType.Database;
+        public PackFileContainerType ContainerType => PackFileContainerType.GamePacks;
         public HashSet<string> SourcePackFilePaths { get; set; } = [];
 
         public void SaveSettings()

@@ -26,7 +26,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
         [Test]
         public void ShouldAdd_ReturnsTrueForSystemFolderFileNode()
         {
-            var container = CreateContainer(PackFileContainerType.SystemFolder);
+            var container = CreateContainer(PackFileContainerType.Project);
             var root = CreateRoot(container);
             var fileNode = CreateNodePath(root, "folder\\file.txt", NodeType.File);
 
@@ -38,7 +38,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
         [Test]
         public void ShouldAdd_ReturnsFalseForNonSystemFolderFileNode()
         {
-            var container = CreateContainer(PackFileContainerType.Normal);
+            var container = CreateContainer(PackFileContainerType.Pack);
             var root = CreateRoot(container);
             var fileNode = CreateNodePath(root, "folder\\file.txt", NodeType.File);
 

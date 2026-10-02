@@ -105,11 +105,11 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
                 var container = new Mock<IPackFileContainer>();
                 container.SetupGet(x => x.Name).Returns("project");
                 container.SetupGet(x => x.SystemFilePath).Returns(Path.Combine(outputDir, "project"));
-                container.SetupGet(x => x.ContainerType).Returns(PackFileContainerType.SystemFolder);
+                container.SetupGet(x => x.ContainerType).Returns(PackFileContainerType.Project);
                 container.SetupGet(x => x.PackFileSettings).Returns(settings);
                 container.SetupProperty(x => x.IsReadOnly, false);
 
-                var root = new RootTreeNode("project", container.Object);
+                var root = new RootTreeNode("project", container.Object, new LocalizationManager());
                 var dialogs = new Mock<IStandardDialogs>();
                 dialogs.Setup(x => x.ShowWaitCursor()).Returns(new Mock<IWaitCursor>().Object);
                 var packFileService = new Mock<IPackFileService>();

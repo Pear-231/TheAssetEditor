@@ -23,7 +23,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
         [Test]
         public void ShouldAdd_ReturnsFalseForNormalPackRoot()
         {
-            var container = CreateSystemFolderContainer(containerType: PackFileContainerType.Normal);
+            var container = CreateSystemFolderContainer(containerType: PackFileContainerType.Pack);
             var root = CreateRoot(container.Object);
             var command = new ChangeOutputLocationCommand(new Mock<IStandardDialogs>().Object, new LocalizationManager(), MockScopedLogger.Create());
 
@@ -68,7 +68,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
             container.Verify(x => x.SaveSettings(), Times.Never);
         }
 
-        private static Mock<IPackFileContainer> CreateSystemFolderContainer(PackFileContainerType containerType = PackFileContainerType.SystemFolder, PackFileSettings? settings = null)
+        private static Mock<IPackFileContainer> CreateSystemFolderContainer(PackFileContainerType containerType = PackFileContainerType.Project, PackFileSettings? settings = null)
         {
             var container = new Mock<IPackFileContainer>();
             container.SetupGet(x => x.Name).Returns("project");

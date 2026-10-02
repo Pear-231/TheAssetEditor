@@ -19,12 +19,12 @@ namespace AssetEditor.ViewModels
         {
             var typeText = containerType switch
             {
-                PackFileContainerType.Normal => localizationManager.Get("MenuBar.File.OpenRecentPacks.Pack"),
-                PackFileContainerType.SystemFolder => localizationManager.Get("MenuBar.File.OpenRecentPacks.Project"),
-                PackFileContainerType.Database => localizationManager.Get("MenuBar.File.OpenRecentPacks.GamePacks"),
+                PackFileContainerType.Pack => localizationManager.Get("PackFile.Flag.Pack"),
+                PackFileContainerType.Project => localizationManager.Get("PackFile.Flag.Project"),
+                PackFileContainerType.GamePacks => localizationManager.Get("PackFile.Flag.GamePacks"),
                 _ => containerType.ToString()
             };
-            return isReadOnly ? $"[{typeText}, {localizationManager.Get("MenuBar.File.OpenRecentPacks.ReadOnly")}]" : $"[{typeText}]";
+            return isReadOnly ? $"[{typeText}, {localizationManager.Get("PackFile.Flag.ReadOnly")}]" : $"[{typeText}]";
         }
 
         public string Header { get; set; }

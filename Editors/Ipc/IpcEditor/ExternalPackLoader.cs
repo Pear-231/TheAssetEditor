@@ -53,7 +53,7 @@ namespace Editors.Ipc
             if (_packFileService.IsPackFileLoaded(normalizedDiskPath))
                 return PackLoadResult.Ok();
 
-            var container = _packFileContainerLoader.CreateFromPackFile(PackFileContainerType.Normal, normalizedDiskPath, true);
+            var container = _packFileContainerLoader.CreateFromPackFile(PackFileContainerType.Pack, normalizedDiskPath, true);
             if (container == null)
                 return PackLoadResult.Fail("Pack file could not be loaded");
 

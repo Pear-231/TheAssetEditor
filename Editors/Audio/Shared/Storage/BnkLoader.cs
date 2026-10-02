@@ -207,7 +207,7 @@ namespace Editors.Audio.Shared.Storage
             if (bnk.DataSource is FileSystemSource)
             {
                 var container = _packFileService.GetPackFileContainer(bnk);
-                if (container?.ContainerType == PackFileContainerType.SystemFolder && !string.IsNullOrWhiteSpace(container.SystemFilePath))
+                if (container?.ContainerType == PackFileContainerType.Project && !string.IsNullOrWhiteSpace(container.SystemFilePath))
                 {
                     var systemFilePath = Path.Combine(container.SystemFilePath, bnkPath);
                     if (File.Exists(systemFilePath))

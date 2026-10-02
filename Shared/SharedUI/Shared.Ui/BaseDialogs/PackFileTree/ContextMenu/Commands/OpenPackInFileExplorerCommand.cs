@@ -22,7 +22,7 @@ namespace Shared.Ui.BaseDialogs.PackFileTree.ContextMenu.Commands
             if (node.NodeType != NodeType.File)
                 return true;
 
-            return container.ContainerType == PackFileContainerType.SystemFolder;
+            return container.ContainerType == PackFileContainerType.Project;
         }
 
         public bool IsEnabled(TreeNode node) => true;

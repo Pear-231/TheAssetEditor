@@ -23,7 +23,7 @@ namespace Editors.Reports.Files
         public string Create(GameTypeEnum game)
         {
             var gameName = GameInformationDatabase.GetGameById(game).DisplayName;
-            var container = _containerLoader.CreateFromGameEnum(PackFileContainerType.Database, game);
+            var container = _containerLoader.CreateFromGameEnum(PackFileContainerType.GamePacks, game);
             if (container == null)
                 throw new InvalidOperationException($"Unable to load pack files for {gameName} because no game directory is configured.");
 
