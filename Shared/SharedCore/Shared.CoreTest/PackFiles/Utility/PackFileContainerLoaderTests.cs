@@ -114,7 +114,7 @@ namespace Shared.CoreTest.PackFiles.Utility
             var packFiles = Directory.GetFiles(_tempGameDir, "*.pack").ToList();
             var fingerprint = _cacheHelper.ComputeFingerprint(packFiles);
             var game = GameInformationDatabase.GetGameById(GameTypeEnum.Warhammer3);
-            var cacheFilePath = _cacheHelper.GetCacheFilePath($"All Game Packs - {game.DisplayName}", fingerprint);
+            var cacheFilePath = _cacheHelper.GetCacheFilePath(game.DisplayName, fingerprint);
             _cacheHelper.CorruptCache(cacheFilePath);
 
             _dialogs.Invocations.Clear();

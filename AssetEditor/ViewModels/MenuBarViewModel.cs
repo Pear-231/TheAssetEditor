@@ -1,4 +1,6 @@
 ﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Windows.Data;
 using System.Diagnostics;
 using System.IO;
 using AssetEditor.Services;
@@ -32,9 +34,9 @@ namespace AssetEditor.ViewModels
         private readonly IUiCommandFactory _uiCommandFactory;
         private readonly TouchedFilesRecorder _touchedFilesRecorder;
         private readonly IPackFileContainerLoader _packFileContainerLoader;
-        private readonly LocalizationManager _localizationManager;
 
         public ObservableCollection<RecentPackFileItem> RecentPackFiles { get; set; } = [];
+        public ICollectionView RecentPackFilesView { get; }
         public ObservableCollection<EditorShortcutViewModel> Editors { get; set; } = [];
         public ObservableCollection<GameInformation> Games { get; }
 
@@ -45,8 +47,7 @@ namespace AssetEditor.ViewModels
             TouchedFilesRecorder touchedFilesRecorder,
             IFileSaveService packFileSaveService,
             IPackFileContainerLoader packFileContainerLoader,
-            IStandardDialogs standardDialogs,
-            LocalizationManager localizationManager)
+            IStandardDialogs standardDialogs)
         {
             _packfileService = packfileService;
             _settingsService = settingsService;
@@ -54,8 +55,8 @@ namespace AssetEditor.ViewModels
             _uiCommandFactory = uiCommandFactory;
             _touchedFilesRecorder = touchedFilesRecorder;
             _packFileContainerLoader = packFileContainerLoader;
-            _localizationManager = localizationManager;
             var settings = settingsService.CurrentSettings;
+            RecentPackFilesView = CollectionViewSource.GetDefaultView(RecentPackFiles);
             Games = new ObservableCollection<GameInformation>(GameInformationDatabase.Games.Values.OrderBy(game => game.DisplayName));
             settings.RecentPackFiles.CollectionChanged += OnRecentPackFilePathsChanged;
             CreateRecentPackFilesItems();
@@ -145,33 +146,49 @@ namespace AssetEditor.ViewModels
             var settings = _settingsService.CurrentSettings;
 
             RecentPackFiles.Clear();
-            var menuItemViewModels = settings.RecentPackFiles.Select(info => new RecentPackFileItem(
-                info.Path,
-                info.ContainerType,
-                info.IsReadOnly,
-                _localizationManager,
-                () =>
-                {
-                    var container = info.ContainerType == PackFileContainerType.SystemFolder
-                        ? _packFileContainerLoader.CreateFromSystemFolder(info.Path)
-                        : _packFileContainerLoader.CreateFromPackFile(info.ContainerType, info.Path, info.IsReadOnly);
 
-                    if (container == null)
-                    {
-                        System.Windows.MessageBox.Show($"Unable to load packfiles {info.Path}");
-                        return;
-                    }
+            var projects = new List<RecentPackFileItem>();
+            var packs = new List<RecentPackFileItem>();
 
-                    // Only projects should be active, packs are read-only references
-                    var isReadOnly = info.ContainerType == PackFileContainerType.SystemFolder;
-                    _packfileService.AddContainer(container, isReadOnly);
-                        
-                }
-            ));
-            foreach (var menuItem in menuItemViewModels.Reverse())
+            foreach (var info in settings.RecentPackFiles.Reverse())
             {
-                RecentPackFiles.Add(menuItem);
+                var isSystemFolder = info.ContainerType == PackFileContainerType.SystemFolder;
+                var menuItem = new RecentPackFileItem(
+                    info.Path,
+                    isSystemFolder,
+                    () =>
+                    {
+                        var container = info.ContainerType == PackFileContainerType.SystemFolder
+                            ? _packFileContainerLoader.CreateFromSystemFolder(info.Path)
+                            : _packFileContainerLoader.CreateFromPackFile(info.ContainerType, info.Path, info.IsReadOnly);
+
+                        if (container == null)
+                        {
+                            System.Windows.MessageBox.Show($"Unable to load packfiles {info.Path}");
+                            return;
+                        }
+
+                        // Only projects should be active, packs are read-only references
+                        _packfileService.AddContainer(container, isSystemFolder);
+                    }
+                );
+
+                if (isSystemFolder)
+                    projects.Add(menuItem);
+                else
+                    packs.Add(menuItem);
             }
+
+            foreach (var project in projects)
+                RecentPackFiles.Add(project);
+
+            foreach (var pack in packs)
+                RecentPackFiles.Add(pack);
+
+            // Only group, and so show the divider, when there is both a project and a pack
+            RecentPackFilesView.GroupDescriptions.Clear();
+            if (projects.Count > 0 && packs.Count > 0)
+                RecentPackFilesView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(RecentPackFileItem.IsSystemFolder)));
         }
 
         void CreateTools()

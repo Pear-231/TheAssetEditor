@@ -27,6 +27,7 @@ namespace Shared.Ui.BaseDialogs.PackFileTree
         private readonly PackFileContextMenuComposer _contextMenuComposer;
         private readonly ContextMenuType _contextMenuType;
         private readonly DoubleClickCommand _doubleClickCommand;
+        private readonly LocalizationManager _localizationManager;
 
         public event FileSelectedDelegate FileOpen;
         public event NodeSelectedDelegate NodeSelected;
@@ -46,6 +47,7 @@ namespace Shared.Ui.BaseDialogs.PackFileTree
             IPackFileService packFileService,
             IEventHub? eventHub, 
             IWindowsKeyboard windowKeyboard,
+            LocalizationManager localizationManager,
             bool showCaFiles, bool showFoldersOnly,
             IStandardDialogs? standardDialogs = null)
         {
@@ -55,6 +57,7 @@ namespace Shared.Ui.BaseDialogs.PackFileTree
             _contextMenuComposer = contextMenuComposer;
             _contextMenuType = contextMenuType;
             _doubleClickCommand = new DoubleClickCommand(packFileService, windowKeyboard);
+            _localizationManager = localizationManager;
 
             ShowFoldersOnly = showFoldersOnly;
 
@@ -305,7 +308,7 @@ namespace Shared.Ui.BaseDialogs.PackFileTree
 
             var skipWemFiles = container.IsCaPackFile && _applicationSettingsService.CurrentSettings.ShowCAWemFiles == false;
 
-            var root = new RootTreeNode(container.Name, container);
+            var root = new RootTreeNode(container.Name, container, _localizationManager);
             PackFileTreeBuilder.BuildTreeFromFiles(root, container, skipWemFiles);
             root.IsActivePack = _packFileService.GetActivePack() == container;
 

@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.IO;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Threading;
 using AssetEditor.Services;
 using AssetEditor.UiCommands;
@@ -43,6 +44,12 @@ namespace AssetEditor
         {
             ApplicationStateRecorder.Initialize();
             PackFileLog.IsLoggingEnabled = false;
+
+            // Stops the dotted focus lines appearing when focus returns to the app after tabbing out
+            EventManager.RegisterClassHandler(
+                typeof(FrameworkElement),
+                Keyboard.PreviewGotKeyboardFocusEvent,
+                new KeyboardFocusChangedEventHandler((sender, _) => ((FrameworkElement)sender).FocusVisualStyle = null));
 
             ShutdownMode = ShutdownMode.OnExplicitShutdown;
             Current.DispatcherUnhandledException += new DispatcherUnhandledExceptionEventHandler(DispatcherUnhandledExceptionHandler);

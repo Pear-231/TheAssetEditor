@@ -109,7 +109,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree.ContextMenu.Commands
                 container.SetupGet(x => x.PackFileSettings).Returns(settings);
                 container.SetupProperty(x => x.IsReadOnly, false);
 
-                var root = new RootTreeNode("project", container.Object);
+                var root = new RootTreeNode("project", container.Object, new LocalizationManager());
                 var dialogs = new Mock<IStandardDialogs>();
                 dialogs.Setup(x => x.ShowWaitCursor()).Returns(new Mock<IWaitCursor>().Object);
                 var packFileService = new Mock<IPackFileService>();

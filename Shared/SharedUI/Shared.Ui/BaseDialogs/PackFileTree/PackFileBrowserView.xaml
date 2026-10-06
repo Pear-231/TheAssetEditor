@@ -69,7 +69,7 @@
         </Grid>
 
         <!-- TreeView -->
-        <TreeView x:Name="tvParameters" AllowDrop="True" Grid.Row="2" Margin="0, 2.5, 0, 5" behaviors:TreeViewExtension.SelectItemOnRightClick="True" 
+        <TreeView x:Name="tvParameters" AllowDrop="True" Grid.Row="2" Margin="-6, 2.5, -6, 5" behaviors:TreeViewExtension.SelectItemOnRightClick="True" 
                   ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemsSource="{Binding Path=Files, UpdateSourceTrigger=PropertyChanged}" 
                   VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Standard" VirtualizingPanel.IsVirtualizingWhenGrouping="True"
                   ScrollViewer.CanContentScroll="True"
@@ -107,7 +107,7 @@
             </e1:Interaction.Behaviors>
 
             <TreeView.ItemContainerStyle>
-                <Style TargetType="{x:Type TreeViewItem}" BasedOn="{StaticResource {x:Type TreeViewItem}}">
+                <Style TargetType="{x:Type TreeViewItem}" BasedOn="{StaticResource FullRowTreeViewItem}">
                     <EventSetter Event="TreeViewItem.MouseMove" Handler="treeView_MouseMove"/>
                     <EventSetter Event="TreeViewItem.Drop" Handler="treeView_Drop"/>
                     <EventSetter Event="TreeViewItem.PreviewMouseLeftButtonDown" Handler="TreeView_MouseDown"/>
@@ -143,7 +143,7 @@
                             <ColumnDefinition Width="auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <Image Width="12" Grid.Column="0" Source="{Binding IconNode, Converter={StaticResource ImageValueConverter}, Mode=OneWay}"/>
+                        <Image Width="14" Grid.Column="0" Source="{Binding IconNode, Converter={StaticResource ImageValueConverter}, Mode=OneWay}"/>
                         <TextBlock Grid.Column="1" Text="{Binding UnsavedChanged, Converter={StaticResource BoolToChangedPrefixStr}, UpdateSourceTrigger=PropertyChanged}">
                             <TextBlock.Style>
                                 <Style TargetType="{x:Type TextBlock}">
@@ -158,7 +158,7 @@
                                 </Style>
                             </TextBlock.Style>
                         </TextBlock>
-                        <TextBlock Margin="4,0,0,0" Grid.Column="2" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}">
+                        <TextBlock Margin="6,0,0,0" Grid.Column="2" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}">
                             <TextBlock.Style>
                                 <Style TargetType="{x:Type TextBlock}">
                                     <Style.Triggers>
@@ -173,25 +173,12 @@
                                 </Style>
                             </TextBlock.Style>
                         </TextBlock>
-                        <TextBlock Grid.Column="3" Text="{loc:Loc Dialog.PackFileBrowser.ReadOnlyFlag}" Foreground="Gray">
+                        <TextBlock Grid.Column="3" Foreground="Gray" Margin="4,0,0,0" Text="{Binding Flags, Mode=OneWay, StringFormat='[{0}]', FallbackValue=''}">
                             <TextBlock.Style>
                                 <Style TargetType="{x:Type TextBlock}">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Owner.IsReadOnly, FallbackValue=False, TargetNullValue=False}" Value="True">
-                                            <Setter Property="Visibility" Value="Visible"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                        <TextBlock Grid.Column="4" Text="{loc:Loc Dialog.PackFileBrowser.ActiveFlag}" Foreground="Gray">
-                            <TextBlock.Style>
-                                <Style TargetType="{x:Type TextBlock}">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsActivePack, UpdateSourceTrigger=PropertyChanged, FallbackValue=False, TargetNullValue=False}" Value="True">
-                                            <Setter Property="Visibility" Value="Visible"/>
+                                        <DataTrigger Binding="{Binding Flags, Mode=OneWay}" Value="">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>

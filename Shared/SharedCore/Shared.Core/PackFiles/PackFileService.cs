@@ -94,7 +94,7 @@ namespace Shared.Core.PackFiles
             return pf;
         }
 
-        void AddContainerInternal(IPackFileContainerInternal container, bool setToMainPackIfFirst = false)
+        void AddContainerInternal(IPackFileContainerInternal container, bool setToActive = false)
         {
             _packFileContainers.Add(container);
             if (container is SystemFolderContainer systemFolderContainer)
@@ -107,7 +107,7 @@ namespace Shared.Core.PackFiles
             _logger.Here().Information($"Added pack file container '{DescribeContainer(container)}' (CA:{container.IsCaPackFile}). Loaded containers: {_packFileContainers.Count}, editable containers: {notCaPacksLoaded}");
             _globalEventHub?.PublishGlobalEvent(new PackFileContainerAddedEvent(container));
 
-            if (container.IsCaPackFile == false && setToMainPackIfFirst)
+            if (container.IsCaPackFile == false && setToActive)
             {
                 _logger.Here().Information($"Setting '{DescribeContainer(container)}' as active pack after load");
                 SetActivePack(container);

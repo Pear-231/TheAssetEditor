@@ -14,14 +14,14 @@
     </UserControl.Resources>
 
     <DockPanel>
-        <Menu VerticalAlignment="Center"
+        <Menu VerticalAlignment="Stretch"
               DockPanel.Dock="Left"
               Background="Transparent">
             <Menu.Resources>
                 <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Type MenuItem}}"/>
             </Menu.Resources>
 
-            <MenuItem Header="{loc:Loc MenuBar.File}" BorderThickness="1.5" WindowChrome.IsHitTestVisibleInChrome="True">
+            <MenuItem Header="{loc:Loc MenuBar.File}" WindowChrome.IsHitTestVisibleInChrome="True">
 
                 <MenuItem Header="{loc:Loc MenuBar.File.NewPack}" Command="{Binding MenuBar.CreateNewProjectCommand}"/>
                 <MenuItem Header="{loc:Loc MenuBar.File.ImportPackAsProject}" Command="{Binding MenuBar.ImportPackAsProjectCommand}"/>
@@ -41,7 +41,7 @@
                     </MenuItem.ItemContainerStyle>
                 </MenuItem>
                 
-                <MenuItem Header="{loc:Loc MenuBar.File.OpenRecentPacks}" ItemsSource="{Binding MenuBar.RecentPackFiles}">
+                <MenuItem Header="{loc:Loc MenuBar.File.OpenRecent}" ItemsSource="{Binding MenuBar.RecentPackFilesView}">
                     <MenuItem.Style>
                         <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Type MenuItem}}">
                             <Style.Triggers>
@@ -56,15 +56,45 @@
                             <Setter Property="Command" Value="{Binding Command}" />
                         </Style>
                     </MenuItem.ItemContainerStyle>
+                    <MenuItem.GroupStyle>
+                        <GroupStyle>
+                            <GroupStyle.ContainerStyle>
+                                <Style TargetType="{x:Type GroupItem}">
+                                    <Setter Property="Margin" Value="0"/>
+                                    <Setter Property="Padding" Value="0"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="{x:Type GroupItem}">
+                                                <StackPanel>
+                                                    <ContentPresenter/>
+                                                    <ItemsPresenter/>
+                                                </StackPanel>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </GroupStyle.ContainerStyle>
+                            <GroupStyle.HeaderTemplate>
+                                <DataTemplate>
+                                    <Separator x:Name="Divider" Style="{StaticResource {x:Static MenuItem.SeparatorStyleKey}}"/>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding Name}" Value="True">
+                                            <Setter TargetName="Divider" Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </GroupStyle.HeaderTemplate>
+                        </GroupStyle>
+                    </MenuItem.GroupStyle>
                     <MenuItem.ItemTemplate>
-                        <HierarchicalDataTemplate DataType="{x:Type viewModels:RecentPackFileItem}" ItemsSource="{Binding Path=MenuItems}">
+                        <DataTemplate DataType="{x:Type viewModels:RecentPackFileItem}">
                             <TextBlock Text="{Binding Header}"/>
-                        </HierarchicalDataTemplate>
+                        </DataTemplate>
                     </MenuItem.ItemTemplate>
                 </MenuItem>
 
                 <Separator/>
-                <MenuItem Header="{loc:Loc MenuBar.File.SaveActivePack}" Command="{Binding MenuBar.SaveActivePackCommand}"/>
+                <MenuItem Header="{loc:Loc MenuBar.File.SaveProject}" Command="{Binding MenuBar.SaveActivePackCommand}"/>
                 <Separator/>
 
 
@@ -84,11 +114,11 @@
                 <MenuItem Header="{loc:Loc MenuBar.File.Exit}" />
             </MenuItem>
 
-            <MenuItem Header="{loc:Loc MenuBar.View}" BorderThickness="1.5" WindowChrome.IsHitTestVisibleInChrome="True">
+            <MenuItem Header="{loc:Loc MenuBar.View}" WindowChrome.IsHitTestVisibleInChrome="True">
                 <MenuItem Header="{loc:Loc MenuBar.View.TogglePackFileExplorer}" Command="{Binding MenuBar.TogglePackFileExplorerCommand}"/>
             </MenuItem>
 
-            <MenuItem Header="{loc:Loc MenuBar.Tools}" BorderThickness="1.5" WindowChrome.IsHitTestVisibleInChrome="True" ItemsSource="{Binding MenuBar.Editors}">
+            <MenuItem Header="{loc:Loc MenuBar.Tools}" WindowChrome.IsHitTestVisibleInChrome="True" ItemsSource="{Binding MenuBar.Editors}">
 
                 <MenuItem.ItemContainerStyle>
                     <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Type MenuItem}}">
@@ -105,7 +135,7 @@
 
             </MenuItem>
 
-            <MenuItem Header="{loc:Loc MenuBar.Reports}" BorderThickness="1.5" WindowChrome.IsHitTestVisibleInChrome="True">
+            <MenuItem Header="{loc:Loc MenuBar.Reports}" WindowChrome.IsHitTestVisibleInChrome="True">
                 <MenuItem Header="{loc:Loc MenuBar.Reports.Rmv2}" Command="{Binding MenuBar.GenerateRmv2ReportCommand}"/>
                 <MenuItem Header="{loc:Loc MenuBar.Reports.Bmd}" Command="{Binding MenuBar.GenerateBmdReportCommand}"/>
                 <MenuItem Header="{loc:Loc MenuBar.Reports.MetaData}" Command="{Binding MenuBar.GenerateMetaDataReportCommand}"/>
@@ -127,14 +157,14 @@
                 </MenuItem>
             </MenuItem>
 
-            <MenuItem Header="{loc:Loc MenuBar.Debug}" BorderThickness="1.5" WindowChrome.IsHitTestVisibleInChrome="True"
+            <MenuItem Header="{loc:Loc MenuBar.Debug}" WindowChrome.IsHitTestVisibleInChrome="True"
                       Visibility="{Binding MenuBar.IsDebuggerAttached, Converter={StaticResource BoolToVisibility}}">
                 <MenuItem Header="{loc:Loc MenuBar.Debug.ClearConsole}" Command="{Binding MenuBar.ClearConsoleCommand}" />
                 <MenuItem Header="{loc:Loc MenuBar.Debug.PrintScopes}" Command="{Binding MenuBar.PrintScopeCommand}" />
                 <MenuItem Header="{loc:Loc MenuBar.Debug.PrintTrackedGraphicsResources}" Command="{Binding MenuBar.PrintTrackedGraphicsResourcesCommand}" />
             </MenuItem>
 
-            <MenuItem Header="{loc:Loc MenuBar.Help}" BorderThickness="1.5" WindowChrome.IsHitTestVisibleInChrome="True">
+            <MenuItem Header="{loc:Loc MenuBar.Help}" WindowChrome.IsHitTestVisibleInChrome="True">
                 <MenuItem Header="{loc:Loc MenuBar.Help.AssetEditorHelp}" Command="{Binding MenuBar.OpenHelpCommand}"/>
                 <MenuItem Header="{loc:Loc MenuBar.Help.ModdingWiki}" Command="{Binding MenuBar.OpenModdingWikiCommand}"/>
                 <Separator/>

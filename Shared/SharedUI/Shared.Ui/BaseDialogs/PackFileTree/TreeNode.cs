@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Shared.Core.PackFiles.Models;
+using Shared.Core.Services;
 
 namespace Shared.Ui.BaseDialogs.PackFileTree
 {
@@ -13,16 +14,38 @@ namespace Shared.Ui.BaseDialogs.PackFileTree
 
     public partial class RootTreeNode : TreeNode
     {
+        private readonly LocalizationManager _localizationManager;
+
         public IPackFileContainer Owner { get; }
         public UnsavedChangesTracker UnsavedChanges { get; } = new();
 
         [ObservableProperty] public partial bool IsActivePack { get; set; }
 
-        public RootTreeNode(string name, IPackFileContainer owner) : 
+        public string Flags => BuildFlags();
+
+        public RootTreeNode(string name, IPackFileContainer owner, LocalizationManager localizationManager) :
             base(name, NodeType.Root, null)
         {
 
             Owner = owner;
+            _localizationManager = localizationManager;
+        }
+
+        partial void OnIsActivePackChanged(bool value) => OnPropertyChanged(nameof(Flags));
+
+        private string BuildFlags()
+        {
+            var flags = new List<string>();
+            if (Owner.ContainerType == PackFileContainerType.SystemFolder)
+                flags.Add(_localizationManager.Get("PackFile.Flag.Project"));
+
+            if (Owner.IsReadOnly)
+                flags.Add(_localizationManager.Get("PackFile.Flag.ReadOnly"));
+
+            if (IsActivePack)
+                flags.Add(_localizationManager.Get("PackFile.Flag.Active"));
+
+            return string.Join(", ", flags);
         }
     }
 

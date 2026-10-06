@@ -175,7 +175,7 @@ namespace Shared.Core.PackFiles.Utility
                 packfileResolver = new CustomPackDuplicateFileResolver();
             }
 
-            var container = CreateFromCollection(PackFileContainerType.Database, gameDataFolder, fullPackFilePaths, $"All Game Packs - {gameName}", true, packfileResolver, gameEnum);
+            var container = CreateFromCollection(PackFileContainerType.Database, gameDataFolder, fullPackFilePaths, gameName, true, packfileResolver, gameEnum);
             container.IsCaPackFile = true;
             container.PackFileSettings.GameVersion = gameEnum;
             container.SaveSettings();

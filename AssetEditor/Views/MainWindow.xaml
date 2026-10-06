@@ -46,7 +46,7 @@
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
     </Window.Resources>
 
-    <Grid x:Name="rootGrid">
+    <Grid x:Name="rootGrid" Background="{DynamicResource TitleBar.Static.Background}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -63,7 +63,7 @@
             x:Name="titlebar"
             Grid.Row="0"
             Grid.ColumnSpan="3"
-            MinHeight="35"
+            MinHeight="31"
             Background="{DynamicResource TitleBar.Static.Background}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
@@ -76,9 +76,9 @@
             <Image
                 x:Name="icon"
                 Grid.Column="0"
-                Width="24"
-                Height="24"
-                Margin="10, 0, 3, 0"
+                Width="21"
+                Height="21"
+                Margin="8, 2, 3, 0"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 MouseDown="Icon_MouseDown"
@@ -90,16 +90,17 @@
 
             <Button
                 Grid.Column="2"
-                Width="46"
+                Width="44"
                 Click="OnMinimizeButtonClick"
                 Style="{StaticResource TitleBarButtonStyle}"
                 ToolTip="{loc:Loc WindowChrome.Minimise}"
                 VerticalAlignment="Stretch"
                 Height="Auto">
                 <Path
-                    Width="46"
-                    Height="32"
-                    Data="M 18,16 H 28"
+                    Width="44"
+                    Height="31"
+                    UseLayoutRounding="True"
+                    Data="M 16,15.5 H 26"
                     Stroke="{Binding Path=Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
                     StrokeThickness="1" />
             </Button>
@@ -107,7 +108,7 @@
             <Button
                 x:Name="maximizeRestoreButton"
                 Grid.Column="3"
-                Width="46"
+                Width="44"
                 Click="OnMaximizeRestoreButtonClick"
                 Style="{StaticResource TitleBarButtonStyle}"
                 ToolTip="{loc:Loc WindowChrome.Maximise}"
@@ -115,8 +116,9 @@
                 VerticalAlignment="Stretch"
                 Height="Auto">
                 <Path
-                    Width="46"
-                    Height="32"
+                    Width="44"
+                    Height="31"
+                    UseLayoutRounding="True"
                     Data="{Binding ElementName=window, Path=WindowState, Converter={StaticResource windowStateToPathConverter}}"
                     Stroke="{Binding Path=Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
                     StrokeThickness="1" />
@@ -124,22 +126,23 @@
 
             <Button
                 Grid.Column="4"
-                Width="46"
+                Width="44"
                 Click="OnCloseButtonClick"
                 Style="{StaticResource TitleBarCloseButtonStyle}"
                 ToolTip="{loc:Loc WindowChrome.Close}"
                 VerticalAlignment="Stretch"
                 Height="Auto">
                 <Path
-                    Width="46"
-                    Height="32"
-                    Data="M 18.5,11 27.5,20 M 18.5,20 27.5,11"
+                    Width="44"
+                    Height="31"
+                    UseLayoutRounding="True"
+                    Data="M 16.5,11.5 25.5,20.5 M 16.5,20.5 25.5,11.5"
                     Stroke="{Binding Path=Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
                     StrokeThickness="1" />
             </Button>
         </Grid>
 
-        <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3">
+        <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Padding="6,0,6,0" UseLayoutRounding="True">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="{Binding FileTreeColumnWidth}"/>
@@ -147,45 +150,52 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <views:FileTreeView  
-                    Grid.Row="1" 
-                    Grid.Column="0" 
-                    DataContext="{Binding FileTree}" 
-                    Padding="10, 0, 10, 5" 
-                    BorderBrush="{DynamicResource App.Border}" 
-                    BorderThickness="0, 1, 1, 0" 
-                    Visibility="{Binding DataContext.IsPackFileExplorerVisible, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                <Border Grid.Row="1" Grid.Column="0" CornerRadius="6" BorderBrush="{DynamicResource App.Border}" BorderThickness="1"
+                        Background="{DynamicResource TabItem.Static.Background}"
+                        Visibility="{Binding DataContext.IsPackFileExplorerVisible, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <views:FileTreeView
+                        DataContext="{Binding FileTree}"
+                        Padding="10, 5, 10, 5"/>
+                </Border>
 
-                <GridSplitter Grid.Row="1" Grid.RowSpan="1" Grid.Column="1" Width="2.9" HorizontalAlignment="Stretch" Background="{DynamicResource App.Border}" 
+                <GridSplitter Grid.Row="1" Grid.RowSpan="1" Grid.Column="1" Width="6" HorizontalAlignment="Stretch" Background="Transparent" 
                               Visibility="{Binding IsPackFileExplorerVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
 
                 <views:CachedTabControl Grid.Row="1" Grid.Column="2" ItemsSource="{Binding EditorManager.CurrentEditorsList, UpdateSourceTrigger=PropertyChanged}" 
                         SelectedIndex="{Binding EditorManager.SelectedEditorIndex, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
                         ContentTemplateSelector="{StaticResource EditorSelector}" viewFactory:ToolFactoryParameter.ViewFactory="{Binding ToolsFactory}"
-                        x:Name="EditorsTabControl" BorderThickness="1, 1, 0, 0" >
+                        x:Name="EditorsTabControl" BorderThickness="0" >
 
                     <views:CachedTabControl.Template>
                         <!-- [Crucial Fix]: TargetType must be strictly set to views:CachedTabControl to prevent rendering crashes or white screens -->
                         <ControlTemplate TargetType="{x:Type views:CachedTabControl}">
-                            <Grid KeyboardNavigation.TabNavigation="Local">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                </Grid.RowDefinitions>
+                            <Border CornerRadius="6" BorderThickness="1" BorderBrush="{DynamicResource App.Border}" Background="{DynamicResource TabItem.Static.Background}">
+                                <Grid KeyboardNavigation.TabNavigation="Local">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
 
-                                <!-- This line controls the display of the tab headers -->
-                                <TabPanel x:Name="HeaderPanel" Panel.ZIndex="1" Margin="0,2,2,0" IsItemsHost="True" KeyboardNavigation.TabIndex="1" Background="Transparent" />
+                                    <!-- Tab strip: rounded along the top of the panel -->
+                                    <Border x:Name="TabStrip" Background="{DynamicResource ABrush.Tone5.Background.Static}" CornerRadius="5,5,0,0">
+                                        <TabPanel x:Name="HeaderPanel" Panel.ZIndex="1" IsItemsHost="True" KeyboardNavigation.TabIndex="1" Background="Transparent" />
+                                    </Border>
 
-                                <!-- [Crucial Fix]: This binds to the AssetEditor exclusive dark theme color TabItem.Static.Background -->
-                                <Border x:Name="Border" Grid.Row="1" 
-                                        BorderThickness="{TemplateBinding BorderThickness}" 
-                                        BorderBrush="{DynamicResource App.Border}" 
-                                        Background="{DynamicResource TabItem.Static.Background}" 
-                                        KeyboardNavigation.DirectionalNavigation="Contained" 
-                                        KeyboardNavigation.TabIndex="2">
-                                    <Grid x:Name="PART_ItemsHolder" />
-                                </Border>
-                            </Grid>
+                                    <Border x:Name="Border" Grid.Row="1"
+                                            CornerRadius="0,0,5,5"
+                                            Background="{DynamicResource TabItem.Static.Background}"
+                                            KeyboardNavigation.DirectionalNavigation="Contained"
+                                            KeyboardNavigation.TabIndex="2">
+                                        <Grid x:Name="PART_ItemsHolder" />
+                                    </Border>
+                                </Grid>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <!-- No tabs means no strip, so an empty editor area doesn't show a band along its top -->
+                                <Trigger Property="HasItems" Value="False">
+                                    <Setter TargetName="TabStrip" Property="Visibility" Value="Collapsed"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </views:CachedTabControl.Template>
 
@@ -195,7 +205,7 @@
 
                     <views:CachedTabControl.ItemContainerStyle>
                         <!-- Ensure each child tab item inherits the native theme and events -->
-                        <Style TargetType="TabItem" BasedOn="{StaticResource {x:Type TabItem}}">
+                        <Style TargetType="TabItem" BasedOn="{StaticResource EditorTabItem}">
                             <EventSetter Event="Drop" Handler="TabItem_Drop"/>
                             <EventSetter Event="PreviewMouseMove" Handler="TabItem_MouseMove"/>
                             <EventSetter Event="PreviewMouseDown" Handler="TabItem_MouseDown"/>
@@ -241,8 +251,7 @@
                                         </Style>
                                     </TextBlock.Style>
                                 </TextBlock>
-                                <Button Margin="4,0,-4,0" Grid.Column="1" Command="{Binding DataContext.CloseToolCommand, RelativeSource={RelativeSource FindAncestor, AncestorType=TabControl}}" CommandParameter="{Binding}" HorizontalContentAlignment="Right" Content="{materialIcons:MaterialIconExt Kind=CloseThick, Size=13 }">
-                                </Button>
+                                <Button Margin="6,0,-6,4" Grid.Column="1" Style="{StaticResource EditorTabCloseButton}" Command="{Binding DataContext.CloseToolCommand, RelativeSource={RelativeSource FindAncestor, AncestorType=TabControl}}" CommandParameter="{Binding}"/>
                             </Grid>
                         </DataTemplate>
                     </views:CachedTabControl.ItemTemplate>
@@ -250,7 +259,7 @@
             </Grid>
         </Border>
 
-        <StatusBar Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" BorderThickness="0, 1, 0, 0">
+        <StatusBar Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Height="35" BorderThickness="0" Background="{DynamicResource TitleBar.Static.Background}">
             <StatusBar.ItemsPanel>
                 <ItemsPanelTemplate>
                     <Grid>
@@ -263,11 +272,11 @@
             </StatusBar.ItemsPanel>
 
             <StatusBarItem Grid.Column="0">
-                <TextBlock Text="{Binding ApplicationTitle}" Margin="8, 0, 5, 5"/>
+                <TextBlock Text="{Binding ApplicationTitle}" Margin="8, 0, 5, 4" VerticalAlignment="Center"/>
             </StatusBarItem>
 
             <StatusBarItem Grid.Column="1">
-                <TextBlock Text="{Binding CurrentGame}" Margin="5, 0, 5, 5"/>
+                <TextBlock Text="{Binding CurrentGame}" Margin="5, 0, 5, 4" VerticalAlignment="Center"/>
             </StatusBarItem>
         </StatusBar>
     </Grid>

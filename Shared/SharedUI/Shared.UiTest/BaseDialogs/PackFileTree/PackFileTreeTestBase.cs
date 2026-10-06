@@ -4,6 +4,7 @@ using Shared.Core.Events;
 using Shared.Core.PackFiles;
 using Shared.Core.PackFiles.Models;
 using Shared.Core.PackFiles.Models.Containers;
+using Shared.Core.Services;
 using Shared.Core.Settings;
 using Shared.Core.ToolCreation;
 using Shared.Ui.BaseDialogs.PackFileTree;
@@ -57,7 +58,7 @@ namespace Shared.UiTest.BaseDialogs.PackFileTree
         protected PackFileBrowserViewModel PackFileBrowser()
         {
             var settings = new ApplicationSettingsService(GameTypeEnum.Warhammer3);
-            return new PackFileBrowserViewModel(settings, null, ContextMenuType.None, _packFileService, _eventHub, null, true, false);
+            return new PackFileBrowserViewModel(settings, null, ContextMenuType.None, _packFileService, _eventHub, null, new LocalizationManager(), true, false);
         }
     }
 }
