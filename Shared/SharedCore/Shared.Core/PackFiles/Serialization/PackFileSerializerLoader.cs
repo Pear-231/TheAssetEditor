@@ -9,15 +9,17 @@ namespace Shared.Core.PackFiles.Serialization
 {
     public static class PackFileVersionConverter
     {
-        readonly static List<(PackFileVersion EnumValue, string StringValue)> s_values = new List<(PackFileVersion EnumValue, string StringValue)>()
-        {
+        readonly static List<(PackFileVersion EnumValue, string StringValue)> s_values =
+        [
             (PackFileVersion.PFH0,  "PFH0"),
             (PackFileVersion.PFH2,  "PFH2"),
             (PackFileVersion.PFH3,  "PFH3"),
             (PackFileVersion.PFH4,  "PFH4"),
             (PackFileVersion.PFH5,  "PFH5"),
             (PackFileVersion.PFH6,  "PFH6"),
-        };
+            (PackFileVersion.PFH7,  "PFH7"),
+            (PackFileVersion.PFH8,  "PFH8")
+        ];
 
         public static string ToString(PackFileVersion versionEnum) => s_values.First(x => x.EnumValue == versionEnum).StringValue;
         public static PackFileVersion GetEnum(string versionStr) => s_values.First(x => x.StringValue == versionStr.ToUpper()).EnumValue;
@@ -62,17 +64,44 @@ namespace Shared.Core.PackFiles.Serialization
                     if (output.Header.HasIndexWithTimeStamp)
                         reader.ReadUInt32();
 
-                    var isCompressed = false;
-                    if (headerVersion == PackFileVersion.PFH5)
-                        isCompressed = reader.ReadBoolean();
+
+                    // Logic for PFH6, 7 and 8 was found in the pack file index parser in Dragonfruit's executable.
+                    // From PFH7 the data's offset is rounded up to a multiple of this if it is not 0
+                    byte alignment = 0;
+                    if (headerVersion >= PackFileVersion.PFH7)
+                        alignment = reader.ReadByte();
+
+                    // In PFH8 padding is added to the data's offset after it has been aligned
+                    ushort padding = 0;
+                    if (headerVersion >= PackFileVersion.PFH8)
+                        padding = reader.ReadUInt16();
+
+                    // In PFH5 this is a generic flag for compression.
+                    // From PFH6 this is the compression format itself.
+                    byte compressionFormatId = 0;
+                    if (headerVersion >= PackFileVersion.PFH5)
+                        compressionFormatId = reader.ReadByte();
+
+                    var isCompressed = compressionFormatId != 0;
+
+                    // From PFH6 this is only present if the file is compressed and the compressed data does not start with it as it does before PFH6
+                    uint uncompressedSize = 0;
+                    if (isCompressed && headerVersion >= PackFileVersion.PFH6)
+                        uncompressedSize = reader.ReadUInt32();
 
                     var fullPackedFileName = IOFunctions.ReadZeroTerminatedAscii(reader, fileNameBuffer).ToLower();
                     var packFileName = Path.GetFileName(fullPackedFileName);
                     var isEncrypted = output.Header.HasEncryptedData;
 
+                    if (alignment != 0)
+                        offset = (offset + alignment - 1) / alignment * alignment;
+
+                    offset += padding;
+
                     var compressionFormat = CompressionFormat.None;
-                    uint uncompressedSize = 0;
-                    if (isCompressed)
+                    if (isCompressed && headerVersion >= PackFileVersion.PFH6)
+                        compressionFormat = FileCompression.GetCompressionFormatFromId(compressionFormatId);
+                    else if (isCompressed)
                     {
                         var fileHeader = DetectCompressionInfo(reader, offset, size, isEncrypted, game);
                         using var compressionStream = new MemoryStream(fileHeader, false);
@@ -138,32 +167,27 @@ namespace Shared.Core.PackFiles.Serialization
                 header.Buffer = new byte[0];
             else if (header.Version == PackFileVersion.PFH2 || header.Version == PackFileVersion.PFH3)
             {
-                header.Buffer = reader.ReadBytes(8);
-                // Uint64 timestamp
+                var timestamp = reader.ReadBytes(8);
+                header.Buffer = timestamp;
             }
-            else if (header.Version == PackFileVersion.PFH4 || header.Version == PackFileVersion.PFH5)
+            else if (header.Version >= PackFileVersion.PFH4)
             {
-                if (header.HasExtendedHeader)
-                    header.Buffer = reader.ReadBytes(24);
-                else
-                    header.Buffer = reader.ReadBytes(4);
-
-                // Uint32 timestamp
-                // output.HasExtendedHeader 20 bytes missing? Used by Arena, we dont care
-            }
-            else if (header.Version == PackFileVersion.PFH6)
-            {
-                header.Buffer = reader.ReadBytes(284);
-
-                // game_version u32
-                // build_number u32
-                // authoring_tool char 44
-                // extra_subheader_data u32, not used 
+                // When HasExtendedHeader is set in PFH4 packs RPFM reads 20 more bytes. I've checked all packs in
+                // all PFH4 games (Warhammer, Attila, Rome II, Thrones of Britannia), and none have HasExtendedHeader
+                // set so have not been able to verify this so commenting it out.
+                // When HasExtendedHeader is set in PFH5 packs RPFM does not read any extra bytes. I've checked all
+                // packs in all PFH5 games (Warhammer II, Warhammer III, Three Kingdoms, Troy, Pharaoh) and the only
+                // pack where HasExtendedHeader is set is Pharaoh's data_special.pack. In this pack, weirdly there are
+                // no extra bytes in the header so commenting it out.
+                // if (header.HasExtendedHeader)
+                //     header.Buffer = reader.ReadBytes(24);
+                // else
+                //     header.Buffer = reader.ReadBytes(4);
+                var timestamp = reader.ReadBytes(4);
+                header.Buffer = timestamp;
             }
             else
-            {
                 throw new Exception($"Unknown packfile type {header.PackFileType}");
-            }
 
             for (var i = 0; i < header.ReferenceFileCount; i++)
                 header.DependantFiles.Add(IOFunctions.ReadZeroTerminatedAscii(reader, fileNameBuffer));

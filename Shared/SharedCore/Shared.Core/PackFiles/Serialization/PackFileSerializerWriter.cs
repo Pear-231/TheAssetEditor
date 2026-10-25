@@ -15,6 +15,7 @@ namespace Shared.Core.PackFiles.Serialization
         public PackFile PackFile { get; set; } = pf;
         public string FullFileName { get; set; } = fullFileName;
         public long SizePosition { get; set; } = sizePosition;
+        public long UncompressedSizePosition { get; set; }
         public FileCompressionInfo CompressionInfo { get; set; } = compressionInfo;
     }
 
@@ -52,15 +53,15 @@ namespace Shared.Core.PackFiles.Serialization
             if (container.Header.HasEncryptedData || container.Header.HasEncryptedIndex)
                 throw new InvalidOperationException("Saving encrypted packs is not supported.");
 
+            var fileMetaDataTable = BuildMetaDataTable(sortedFiles, container, currentGameInformation);
             var headerSpecificBytes = ComputeFileHeaderSpecificByte(container);
-            var fileNamesOffset = ComputeFileNameOffset(headerSpecificBytes, sortedFiles);
+            var fileNamesOffset = ComputeFileNameOffset(headerSpecificBytes, fileMetaDataTable, container.Header.Version);
 
             // Update and write header
             container.Header.FileCount = (uint)numFiles;
             WriteHeader(container.Header, (uint)fileNamesOffset, writer);
 
             // Write the core of the file
-            var fileMetaDataTable = BuildMetaDataTable(sortedFiles, container, currentGameInformation);
             SerializeFileTable(fileMetaDataTable, container, writer);
             SerializeFileBlob(outputFileName, fileMetaDataTable, container, writer, currentGameInformation.Type);
 
@@ -147,12 +148,15 @@ namespace Shared.Core.PackFiles.Serialization
                     break;
                 case PackFileVersion.PFH4:
                 case PackFileVersion.PFH5:
-                    if (header.HasExtendedHeader)
-                        throw new Exception("Not supported packfile type");
-
+                case PackFileVersion.PFH6:
+                case PackFileVersion.PFH7:
+                case PackFileVersion.PFH8:
+                    // As detailed in PackFileSerializerLoader, no real packs in any game
+                    // add any extra bytes when HasExtendedHeader is set so commenting out.
+                    // if (header.HasExtendedHeader)
+                    //     throw new Exception("Not supported packfile type");
                     writer.Write(PFHeader.DefaultTimeStamp);
                     break;
-
                 default:
                     throw new Exception("Not supported packfile type");
             }
@@ -172,21 +176,29 @@ namespace Shared.Core.PackFiles.Serialization
             long headerSpecificBytes = 0;
             if (container.Header.HasIndexWithTimeStamp)
                 headerSpecificBytes += 4;
-            if (container.Header.Version == PackFileVersion.PFH5)
-                headerSpecificBytes += 1;
+            if (container.Header.Version >= PackFileVersion.PFH5)
+                headerSpecificBytes += 1; // Compression
+            if (container.Header.Version >= PackFileVersion.PFH7)
+                headerSpecificBytes += 1; // Alignment
+            if (container.Header.Version >= PackFileVersion.PFH8)
+                headerSpecificBytes += 2; // Padding
 
             return headerSpecificBytes;
         }
 
-        static long ComputeFileNameOffset(long headerSpecificBytePerFile, IList<KeyValuePair<string, PackFile>> sortedFileList)
+        static long ComputeFileNameOffset(long headerSpecificBytePerFile, IList<PackFileWriteInformation> fileMetaDataTable, PackFileVersion version)
         {
             long fileNamesOffset = 0;
-            foreach (var file in sortedFileList)
+            foreach (var file in fileMetaDataTable)
             {
                 var fileSize = 4;
                 var zeroTerminator = 1;
-                var fileNameBytes = Encoding.UTF8.GetByteCount(file.Key);
+                var fileNameBytes = Encoding.UTF8.GetByteCount(file.FullFileName);
                 fileNamesOffset += fileSize + headerSpecificBytePerFile + fileNameBytes + zeroTerminator;
+
+                // From PFH6 compressed files have their uncompressed size in the index
+                if (version >= PackFileVersion.PFH6 && file.CompressionInfo.IntendedCompressionFormat != CompressionFormat.None)
+                    fileNamesOffset += 4;
             }
 
             return fileNamesOffset;
@@ -195,7 +207,7 @@ namespace Shared.Core.PackFiles.Serialization
         public static FileCompressionInfo DetermineFileCompression(PackFileVersion outputPackFileVersion, GameInformation currentGameInformation, string fullFileName, CompressionFormat currentFileCompressionFormat)
         {
             var doesGameSupportCompression = FileCompression.DoesGameSupportCompression(currentGameInformation);
-            var compressIfPossible = doesGameSupportCompression && outputPackFileVersion == PackFileVersion.PFH5;
+            var compressIfPossible = doesGameSupportCompression && outputPackFileVersion >= PackFileVersion.PFH5;
 
             var targetFileCompressionFormat = FileCompression.GetCompressionFormat(currentGameInformation, fullFileName);
             var isFileCompressed = currentFileCompressionFormat != CompressionFormat.None;
@@ -256,9 +268,13 @@ namespace Shared.Core.PackFiles.Serialization
             // Write file table
             // FileStartPosition
             // TimeStamp
-            // CompressionFlag
+            // Alignment
+            // Padding
+            // Compression
+            // UncompressedSize
             // FileName
             // ZeroTerminator for FileName
+            var version = container.Header.Version;
             foreach (var file in fileMetaData)
             {
                 // File size placeholder (rewritten later)
@@ -270,11 +286,24 @@ namespace Shared.Core.PackFiles.Serialization
                 if (container.Header.HasIndexWithTimeStamp)
                     writer.Write(0);
 
-                // Even if we do not compress - we alsways need to write the flag for PFH5
-                if (container.Header.Version == PackFileVersion.PFH5)
-                {
-                    var shouldCompress = file.CompressionInfo.IntendedCompressionFormat != CompressionFormat.None;
+                // We do not align or pad the file's data
+                if (version >= PackFileVersion.PFH7)
+                    writer.Write((byte)0);
+                if (version >= PackFileVersion.PFH8)
+                    writer.Write((ushort)0);
+
+                // Even if we do not compress we always need to write this
+                var shouldCompress = file.CompressionInfo.IntendedCompressionFormat != CompressionFormat.None;
+                if (version >= PackFileVersion.PFH6)
+                    writer.Write(FileCompression.GetCompressionFormatId(file.CompressionInfo.IntendedCompressionFormat));
+                else if (version == PackFileVersion.PFH5)
                     writer.Write(shouldCompress);
+
+                // Uncompressed size placeholder (rewritten later)
+                if (version >= PackFileVersion.PFH6 && shouldCompress)
+                {
+                    file.UncompressedSizePosition = writer.BaseStream.Position;
+                    writer.Write(0u);
                 }
 
                 // Filename
@@ -290,6 +319,7 @@ namespace Shared.Core.PackFiles.Serialization
         {
             _logger.Here().Information("Starting SerializeFileBlob");
 
+            var hasUncompressedSizePrefix = container.Header.Version < PackFileVersion.PFH6;
             foreach (var fileMetaData in fileMetaDataTabel)
             {
                 var packFile = fileMetaData.PackFile;
@@ -310,11 +340,11 @@ namespace Shared.Core.PackFiles.Serialization
                     uncompressedSize = (uint)uncompressedData.Length;
 
                     // Compress the data into the right format
-                    var compressedData = FileCompression.Compress(uncompressedData, fileMetaData.CompressionInfo.IntendedCompressionFormat);
+                    var compressedData = FileCompression.Compress(uncompressedData, fileMetaData.CompressionInfo.IntendedCompressionFormat, hasUncompressedSizePrefix);
                     data = compressedData;
 
                     // Validate new compression
-                    var decompressedData = FileCompression.Decompress(compressedData, uncompressedData.Length, fileMetaData.CompressionInfo.IntendedCompressionFormat);
+                    var decompressedData = FileCompression.Decompress(compressedData, uncompressedData.Length, fileMetaData.CompressionInfo.IntendedCompressionFormat, hasUncompressedSizePrefix);
                     if (decompressedData.Length != uncompressedData.Length)
                         throw new InvalidDataException($"Decompressed bytes {decompressedData.Length:N0} does not match the expected uncompressed bytes {uncompressedData.Length:N0}.");
                 }
@@ -327,6 +357,13 @@ namespace Shared.Core.PackFiles.Serialization
                 var currentPosition = writer.BaseStream.Position;
                 writer.BaseStream.Position = fileMetaData.SizePosition;
                 writer.Write(data.Length);
+
+                if (shouldCompress && !hasUncompressedSizePrefix)
+                {
+                    writer.BaseStream.Position = fileMetaData.UncompressedSizePosition;
+                    writer.Write(uncompressedSize);
+                }
+
                 writer.BaseStream.Position = currentPosition;
 
                 // Update DataSource

@@ -1,9 +1,8 @@
-﻿using System.ComponentModel;
+﻿using K4os.Compression.LZ4;
 using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Streams;
 using SevenZip;
 using SevenZip.Compression.LZMA;
-using Shared.Core.PackFiles.Models;
 using Shared.Core.Settings;
 using ZstdSharp;
 using ZstdSharp.Unsafe;
@@ -61,6 +60,15 @@ namespace Shared.Core.PackFiles.Utility
         private const uint Lz4MagicNumber = 0x184D_2204;
         private const uint ZstdMagicNumber = 0xfd2f_b528;
 
+        // The file types CA compress in each compression format, and how they handle tables and files without extensions.
+        private sealed class CompressionRules
+        {
+            public List<string> None { get; init; } = [];
+            public List<string> Lz4 { get; init; } = [];
+            public CompressionFormat Tables { get; init; } = CompressionFormat.None;
+            public CompressionFormat FilesWithoutExtension { get; init; } = CompressionFormat.None;
+        }
+
         // CA generally compress file types in specific formats, presumably because they compress better in that format.
         // Sometimes CA compress file types in various formats (though predominantly in one format), presumably by
         // mistake as they use BOB which compresses by folder not file type. We try to replicate that by assigning
@@ -68,53 +76,93 @@ namespace Shared.Core.PackFiles.Utility
         // in a given  format or predominantly compressed in a given format by CA.
         // Lmza1 is not specified as it's legacy so we only use that for games that support only that format.
         // Zstd is not specified as by default everything not None or Lz4 is Zstd.
-        public static List<string> NoneFileTypes { get; } =
-        [
-            // In CA packs these files are exclusively in this format
-            ".bnk",
-            ".ca_vp8",
-            ".fxc",
-            ".hlsl_compiled",
-            ".log",
-            ".manifest",
-            ".wem",
-            
-            // In CA packs these files are mostly in this format
-            ".rigid_model_v2",
-            // Action Events don't play if the .dat file their names are stored in is compressed
-            ".dat",
+        // Tables are not compressed as compressed tables are bugged in older games.
+        // These are the rules for the games without their own rules.
+        private static readonly CompressionRules s_defaultRules = new()
+        {
+            None =
+            [
+                // In CA packs these files are exclusively in this format
+                ".bnk",
+                ".ca_vp8",
+                ".fxc",
+                ".hlsl_compiled",
+                ".log",
+                ".manifest",
+                ".wem",
 
-            // How RPFM formats these files
-            ".rpfm_reserved",
+                // In CA packs these files are mostly in this format
+                ".rigid_model_v2",
+                // Action Events don't play if the .dat file their names are stored in is compressed
+                ".dat",
 
-             // .wav files aren't? in CA packs but probably better not to compress them
-            ".wav",
-        ];
+                // How RPFM formats these files
+                ".rpfm_reserved",
 
-        public static List<string> Lz4FileTypes { get; } =
-        [
-            // In CA packs these files are exclusively in this format
-            ".animpack",
-            ".collision",
-            ".cs2",
-            ".exr",
-            ".mvscene",
-            ".variantmeshdefinition",
-            ".wsmodel",
-            ".xt",
+                // .wav files aren't? in CA packs but probably better not to compress them
+                ".wav",
+            ],
+            Lz4 =
+            [
+                // In CA packs these files are exclusively in this format
+                ".animpack",
+                ".collision",
+                ".cs2",
+                ".exr",
+                ".mvscene",
+                ".variantmeshdefinition",
+                ".wsmodel",
+                ".xt",
 
-            // In CA packs these files are mostly in this format
-            ".parsed",
-        ];
+                // In CA packs these files are mostly in this format
+                ".parsed",
+            ],
+        };
 
-        public static byte[] Decompress(byte[] data, int outputSize, CompressionFormat compressionFormat)
+        private static readonly Dictionary<GameTypeEnum, CompressionRules> s_rulesByGame = new()
+        {
+            // Warhammer 3 compresses tables
+            [GameTypeEnum.Warhammer3] = new()
+            {
+                None = s_defaultRules.None,
+                Lz4 = s_defaultRules.Lz4,
+                Tables = CompressionFormat.Zstd,
+            },
+
+            // Dragonfruit compresses tables and files without extensions, and every file type in packs of the first build
+            // apart from the file types in None, which are presumably already compressed formats. The first build has 28
+            // exceptions: two dds files in each of the 14 language local.pack files which CA leave uncompressed.
+            // No rule explains them as CA compress other dds files of all sizes so we compress them like any other dds.
+            [GameTypeEnum.Dragonfruit] = new()
+            {
+                None = [".ca_vp8", ".compressed_map", ".cufglyphs", ".png", ".wem"],
+                Lz4 =
+                [
+                    ".anim", ".animgraph", ".atlas", ".battle_preferences", ".benchmark", ".bin", ".binconfig", ".bmd",
+                    ".bmp", ".bnk", ".bone_inv_trans_mats", ".cco", ".cm", ".collision", ".csc", ".csv", ".cuf", ".curve_set",
+                    ".dat", ".dds", ".environment", ".fxc", ".hlsl", ".hlsli", ".index", ".inl", ".json", ".lighting", ".lisp",
+                    ".lua", ".material", ".matgroup", ".meta", ".onnx", ".parsed", ".physics", ".prefab", ".py", ".replay",
+                    ".rigid_model_v2", ".shader", ".sharedgraph", ".skel", ".spine", ".spkg", ".sql", ".technique", ".tga",
+                    ".tile_database_fragment", ".tiles", ".ttf", ".txt", ".variantmeshdefinition", ".veg", ".wsmodel",
+                    ".xlsm", ".xml",
+                ],
+                Tables = CompressionFormat.Lz4,
+                FilesWithoutExtension = CompressionFormat.Lz4,
+            },
+        };
+
+        // From PFH6 the uncompressed size is in the pack's index so the compressed data does not start with it
+        public static byte[] Decompress(byte[] data, int outputSize, CompressionFormat compressionFormat, bool hasUncompressedSizePrefix = true)
         {
             using var stream = new MemoryStream(data, false);
             using var reader = new BinaryReader(stream);
 
-            var uncompressedSize = reader.ReadUInt32();
-            if (outputSize > uncompressedSize)
-                throw new InvalidDataException($"Output size {outputSize:N0} cannot be greater than the uncompressed size {uncompressedSize:N0}.");
+            if (hasUncompressedSizePrefix)
+            {
+                var uncompressedSize = reader.ReadUInt32();
+                if (outputSize > uncompressedSize)
+                    throw new InvalidDataException($"Output size {outputSize:N0} cannot be greater than the uncompressed size {uncompressedSize:N0}.");
+            }
 
             if (compressionFormat == CompressionFormat.Zstd)
                 return DecompressZstd(reader.BaseStream, outputSize);
@@ -177,16 +225,20 @@ namespace Shared.Core.PackFiles.Utility
             }
         }
 
-        public static byte[] Compress(byte[] data, CompressionFormat compressionFormat)
+        // From PFH6 the uncompressed size is in the pack's index so the compressed data does not start with it
+        public static byte[] Compress(byte[] data, CompressionFormat compressionFormat, bool hasUncompressedSizePrefix = true)
         {
+            byte[] compressedData;
             if(compressionFormat == CompressionFormat.Zstd)
-                return CompressZstd(data);
+                compressedData = CompressZstd(data);
             else if(compressionFormat == CompressionFormat.Lz4)
-                return CompressLz4(data);
+                compressedData = CompressLz4(data, hasUncompressedSizePrefix);
             else if (compressionFormat == CompressionFormat.Lzma1)
-                return CompressLzma1(data);
+                compressedData = CompressLzma1(data);
             else
                 throw new InvalidDataException("Uh oh, the data either cannot be compressed or has some unknown compression format.");
+
+            return hasUncompressedSizePrefix ? compressedData : compressedData[sizeof(uint)..];
         }
 
         private static byte[] CompressZstd(byte[] data)
@@ -206,12 +258,19 @@ namespace Shared.Core.PackFiles.Utility
         }
 
 
-        private static byte[] CompressLz4(byte[] data)
+        private static byte[] CompressLz4(byte[] data, bool hasUncompressedSizePrefix)
         {
             using var stream = new MemoryStream();
             stream.Write(BitConverter.GetBytes((uint)data.Length));
 
-            using (var encoder = LZ4Stream.Encode(stream, leaveOpen: true))
+            // From PFH6 the frames have a content checksum and match Lz4's high compression level 3
+            LZ4EncoderSettings? settings;
+            if (hasUncompressedSizePrefix)
+                settings = new LZ4EncoderSettings();
+            else
+                settings = new LZ4EncoderSettings { ContentChecksum = true, CompressionLevel = LZ4Level.L03_HC };
+
+            using (var encoder = LZ4Stream.Encode(stream, settings, leaveOpen: true))
                 encoder.Write(data, 0, data.Length);
 
             return stream.ToArray();
@@ -247,6 +306,31 @@ namespace Shared.Core.PackFiles.Utility
             return stream.ToArray();
         }
 
+        // From PFH6 the index stores each file's compression format as an ID (0 being not compressed). The IDs come from
+        // the Dragonfruit executable, which only defines 1 (Lz4) and 2 (Zstd). Any other value falls through to a decoder
+        // that looks like Lzma1 but has no ID of its own. Only Lz4 has been seen in packs.
+        public static CompressionFormat GetCompressionFormatFromId(byte compressionFormatId)
+        {
+            return compressionFormatId switch
+            {
+                0 => CompressionFormat.None,
+                1 => CompressionFormat.Lz4,
+                2 => CompressionFormat.Zstd,
+                _ => throw new NotSupportedException($"Compression format ID {compressionFormatId} is not a known pack index compression format ID."),
+            };
+        }
+
+        public static byte GetCompressionFormatId(CompressionFormat compressionFormat)
+        {
+            return compressionFormat switch
+            {
+                CompressionFormat.None => 0,
+                CompressionFormat.Lz4 => 1,
+                CompressionFormat.Zstd => 2,
+                _ => throw new NotSupportedException($"{compressionFormat} cannot be written to a pack index as the ID used for it has not been verified."),
+            };
+        }
+
         public static CompressionFormat GetCompressionFormat(byte[] compressionFormatBytes)
         {
             // Lzma1 is identified by the properties
@@ -275,6 +359,7 @@ namespace Shared.Core.PackFiles.Utility
             var firstFilePathPart = fileName.Split(['\\', '/'], StringSplitOptions.RemoveEmptyEntries).First();
 
             var compressionFormats = gameInformation.CompressionFormats;
+            var rules = s_rulesByGame.GetValueOrDefault(gameInformation.Type, s_defaultRules);
 
             // Check if the game supports any compression at all
             if (compressionFormats.All(compressionFormat => compressionFormat == CompressionFormat.None))
@@ -284,23 +369,19 @@ namespace Shared.Core.PackFiles.Utility
             var isTable = firstFilePathPart == "db" || extension == ".loc";
             var hasExtension = !string.IsNullOrEmpty(extension);
 
-            // Don't compress files that aren't tables and don't have extensions
-            if (!isTable && !hasExtension)
-                return CompressionFormat.None;
+            if (isTable)
+                return rules.Tables;
 
-            // Only compress tables in WH3 (and newer games?) as compressed tables are bugged in older games
-            if (isTable && compressionFormats.Contains(CompressionFormat.Zstd) && gameInformation.Type == GameTypeEnum.Warhammer3)
-                return CompressionFormat.Zstd;
-            else if (isTable)
-                return CompressionFormat.None;
+            if (!hasExtension)
+                return rules.FilesWithoutExtension;
 
             // Anything that isn't preferrably None, Lzma1, or Lz4 is set to Zstd unless the game doesn't support that in which case use None
             // Lzma1 is a legacy format so only use it if it's all the game can use even though games with other formats can use it
-            if (NoneFileTypes.Contains(extension))
+            if (rules.None.Contains(extension))
                 return CompressionFormat.None;
             else if (compressionFormats.Count == 1 && compressionFormats.Contains(CompressionFormat.Lzma1))
                 return CompressionFormat.Lzma1;
-            else if (Lz4FileTypes.Contains(extension) && compressionFormats.Contains(CompressionFormat.Lz4))
+            else if (rules.Lz4.Contains(extension) && compressionFormats.Contains(CompressionFormat.Lz4))
                 return CompressionFormat.Lz4;
             else if (compressionFormats.Contains(CompressionFormat.Zstd))
                 return CompressionFormat.Zstd;

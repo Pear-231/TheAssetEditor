@@ -20,6 +20,10 @@ namespace Shared.Core.PackFiles.Models.FileSources
         public uint UncompressedSize { get; set; }
         public PackedFileSourceParent Parent { get; set; }
 
+        // From PFH6 compressed data does not start with its uncompressed size
+        private bool HasUncompressedSizePrefix => !GameInformationDatabase.Games.TryGetValue(Parent.GameType, out var game)
+            || game.PackFileVersion < PackFileVersion.PFH6;
+
         public PackedFileSource(
             PackedFileSourceParent parent,
             long offset,
@@ -55,7 +59,7 @@ namespace Shared.Core.PackFiles.Models.FileSources
 
             if (IsCompressed)
             {
-                data = FileCompression.Decompress(data, (int)UncompressedSize, CompressionFormat);
+                data = FileCompression.Decompress(data, (int)UncompressedSize, CompressionFormat, HasUncompressedSizePrefix);
                 if (data.Length != UncompressedSize)
                     throw new InvalidDataException($"Decompressed bytes {data.Length:N0} does not match the expected uncompressed bytes {UncompressedSize:N0}.");
             }
@@ -86,7 +90,7 @@ namespace Shared.Core.PackFiles.Models.FileSources
 
                     if (IsCompressed)
                     {
-                        data = FileCompression.Decompress(data, size, CompressionFormat);
+                        data = FileCompression.Decompress(data, size, CompressionFormat, HasUncompressedSizePrefix);
                         if (data.Length != size)
                             throw new InvalidDataException($"Decompressed bytes {data.Length:N0} does not match the expected uncompressed bytes {size:N0}.");
                     }

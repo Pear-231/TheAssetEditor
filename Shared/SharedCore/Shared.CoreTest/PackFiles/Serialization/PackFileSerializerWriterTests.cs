@@ -90,7 +90,14 @@ namespace Shared.CoreTest.PackFiles.Serialization
         [TestCase(GameTypeEnum.Warhammer3, PackFileVersion.PFH4, "folder//filex", CompressionFormat.Lz4, CompressionFormat.None, true)]
         [TestCase(GameTypeEnum.Rome2, PackFileVersion.PFH4, "folder//filex.txt", CompressionFormat.Lz4, CompressionFormat.None, true)]
         [TestCase(GameTypeEnum.Rome2, PackFileVersion.PFH4, "folder//filex.txt", CompressionFormat.None, CompressionFormat.None, false)]
-        // Rome 2 cases
+        [TestCase(GameTypeEnum.Dragonfruit, PackFileVersion.PFH8, "folder//filex.txt", CompressionFormat.None, CompressionFormat.Lz4, true)]
+        [TestCase(GameTypeEnum.Dragonfruit, PackFileVersion.PFH8, "folder//filex", CompressionFormat.None, CompressionFormat.Lz4, true)]
+        [TestCase(GameTypeEnum.Dragonfruit, PackFileVersion.PFH8, "db//table//filex", CompressionFormat.None, CompressionFormat.Lz4, true)]
+        [TestCase(GameTypeEnum.Dragonfruit, PackFileVersion.PFH8, "folder//filex.wem", CompressionFormat.None, CompressionFormat.None, true)]
+        [TestCase(GameTypeEnum.Dragonfruit, PackFileVersion.PFH8, "folder//filex.png", CompressionFormat.None, CompressionFormat.None, true)]
+        [TestCase(GameTypeEnum.Dragonfruit, PackFileVersion.PFH8, "folder//filex.txt", CompressionFormat.Lz4, CompressionFormat.Lz4, false)]
+        [TestCase(GameTypeEnum.Dragonfruit, PackFileVersion.PFH6, "folder//filex.txt", CompressionFormat.None, CompressionFormat.Lz4, true)]
+        [TestCase(GameTypeEnum.Dragonfruit, PackFileVersion.PFH7, "folder//filex.txt", CompressionFormat.None, CompressionFormat.Lz4, true)]
         public void DetermineFileCompression(
             GameTypeEnum game,
             PackFileVersion outputPackFileVersion, 
@@ -104,6 +111,52 @@ namespace Shared.CoreTest.PackFiles.Serialization
             var res = PackFileSerializerWriter.DetermineFileCompression(outputPackFileVersion, gameInfo, fileName, currentFileCompression);
             Assert.That(res.DecompressBeforeSaving, Is.EqualTo(expected_deserializeBeforeWrite));
             Assert.That(res.IntendedCompressionFormat, Is.EqualTo(expected_Compression));
+        }
+
+        [TestCase(PackFileVersion.PFH6)]
+        [TestCase(PackFileVersion.PFH7)]
+        [TestCase(PackFileVersion.PFH8)]
+        public void SaveToByteArray_Dragonfruit_CompressesAccordingToFileTypeAndReadsBack(PackFileVersion outputPackFileVersion)
+        {
+            var gameInfo = GameInformationDatabase.GetGameById(GameTypeEnum.Dragonfruit);
+            var files = new List<(string FilePath, string Content, bool IsCompressed)>
+            {
+                ("directory\\fileA.txt", new string('A', 2048), true),
+                ("directory\\fileB", new string('B', 1024), true),
+                ("db\\table\\TableTest", new string('C', 512), true),
+                ("directory\\fileD.wem", new string('D', 256), false),
+                ("directory\\fileE.png", new string('E', 256), false),
+            };
+
+            var outputContainerName = @"c:\fullpath\to\packfile.pack";
+            var container = PackFileContainer.CreatePackFile("test", "test.pack", outputPackFileVersion);
+            foreach (var (filePath, content, _) in files)
+                container.AddOrUpdateFile(filePath, PackFile.CreateFromASCII(Path.GetFileName(filePath), content));
+
+            using var writeMs = new MemoryStream();
+            using var writer = new BinaryWriter(writeMs);
+            PackFileSerializerWriter.SaveToByteArray(outputContainerName, container, writer, gameInfo);
+            var data = writeMs.ToArray();
+
+            using var readBackMs = new MemoryStream(data);
+            var reader = new BinaryReader(readBackMs);
+            var loadedPackFile = PackFileSerializerLoader.Load(outputContainerName, data.LongLength, reader, new CaPackDuplicateFileResolver(), GameTypeEnum.Dragonfruit);
+
+            Assert.That(loadedPackFile.Header.Version, Is.EqualTo(outputPackFileVersion));
+            foreach (var (filePath, content, isCompressed) in files)
+            {
+                var packedSource = (PackedFileSource)loadedPackFile.FindFile(filePath.ToLower())!.DataSource;
+                Assert.That(packedSource.IsCompressed, Is.EqualTo(isCompressed), filePath);
+                Assert.That(packedSource.CompressionFormat, Is.EqualTo(isCompressed ? CompressionFormat.Lz4 : CompressionFormat.None), filePath);
+                Assert.That(packedSource.ReadData(readBackMs), Is.EqualTo(System.Text.Encoding.ASCII.GetBytes(content)), filePath);
+
+                // Compressed data is a plain Lz4 frame with no uncompressed size in front of it
+                if (isCompressed)
+                {
+                    var frameStart = data.AsSpan((int)packedSource.Offset, 6).ToArray();
+                    Assert.That(frameStart, Is.EqualTo(new byte[] { 0x04, 0x22, 0x4D, 0x18, 0x44, 0x40 }), filePath);
+                }
+            }
         }
 
         [Test]

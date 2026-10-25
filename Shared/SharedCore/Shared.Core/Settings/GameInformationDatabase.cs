@@ -18,22 +18,26 @@ namespace Shared.Core.Settings
         Warhammer2,
         Warhammer3,
         Troy,
-        Pharaoh
+        Pharaoh,
+        Dragonfruit
     }
 
     public enum GameBnkVersion : uint
     {
         Unsupported = 0,
         Warhammer3 = 2147483784,
-        Attila = 112
+        Attila = 112,
+        Dragonfruit = 2147483798
     }
 
     public enum WwiseProjectId : uint
     {
         Unsupported = 0,
         Warhammer3 = 2361,
+        Dragonfruit = 11883
     }
 
+    // No game is known to use use PFH6 or PFH7
     public enum PackFileVersion
     {
         PFH0,
@@ -41,7 +45,9 @@ namespace Shared.Core.Settings
         PFH3,
         PFH4,
         PFH5,
-        PFH6
+        PFH6,
+        PFH7,
+        PFH8
     }
 
     public enum WsModelVersion
@@ -86,56 +92,6 @@ namespace Shared.Core.Settings
 
         static GameInformationDatabase()
         {
-            var warhammer = new GameInformation(
-                GameTypeEnum.Warhammer,
-                "Warhammer",
-                PackFileVersion.PFH4,
-                GameBnkVersion.Unsupported,
-                WwiseProjectId.Unsupported,
-                WsModelVersion.Unknown,
-                [CompressionFormat.None],
-                EncryptionKeystream.SixtyFourBitComplement);
-
-            var warhammer2 = new GameInformation(
-                GameTypeEnum.Warhammer2,
-                "Warhammer II",
-                PackFileVersion.PFH5,
-                GameBnkVersion.Unsupported,
-                WwiseProjectId.Unsupported,
-                WsModelVersion.Version1,
-                [CompressionFormat.Lzma1],
-                EncryptionKeystream.SixtyFourBitComplement);
-
-            var warhammer3 = new GameInformation(
-                GameTypeEnum.Warhammer3,
-                "Warhammer III",
-                PackFileVersion.PFH5,
-                GameBnkVersion.Warhammer3,
-                WwiseProjectId.Warhammer3,
-                WsModelVersion.Version3,
-                [CompressionFormat.Lzma1, CompressionFormat.Lz4, CompressionFormat.Zstd],
-                EncryptionKeystream.SixtyFourBitComplement);
-
-            var troy = new GameInformation(
-                GameTypeEnum.Troy,
-                "Troy",
-                PackFileVersion.PFH5,
-                GameBnkVersion.Unsupported,
-                WwiseProjectId.Unsupported,
-                WsModelVersion.Unknown,
-                [CompressionFormat.Lzma1],
-                EncryptionKeystream.SixtyFourBitComplement);
-
-            var threeKingdoms = new GameInformation(
-                GameTypeEnum.ThreeKingdoms,
-                "Three Kingdoms",
-                PackFileVersion.PFH5,
-                GameBnkVersion.Unsupported,
-                WwiseProjectId.Unsupported,
-                WsModelVersion.Version1,
-                [CompressionFormat.Lzma1],
-                EncryptionKeystream.None);
-
             var rome2 = new GameInformation(
                 GameTypeEnum.Rome2,
                 "Rome II",
@@ -156,6 +112,56 @@ namespace Shared.Core.Settings
                 [CompressionFormat.None],
                 EncryptionKeystream.ThirtyTwoBitComplement);
 
+            var warhammer = new GameInformation(
+                GameTypeEnum.Warhammer,
+                "Warhammer",
+                PackFileVersion.PFH4,
+                GameBnkVersion.Unsupported,
+                WwiseProjectId.Unsupported,
+                WsModelVersion.Unknown,
+                [CompressionFormat.None],
+                EncryptionKeystream.SixtyFourBitComplement);
+
+            var warhammer2 = new GameInformation(
+                GameTypeEnum.Warhammer2,
+                "Warhammer II",
+                PackFileVersion.PFH5,
+                GameBnkVersion.Unsupported,
+                WwiseProjectId.Unsupported,
+                WsModelVersion.Version1,
+                [CompressionFormat.Lzma1],
+                EncryptionKeystream.SixtyFourBitComplement);
+
+            var threeKingdoms = new GameInformation(
+                GameTypeEnum.ThreeKingdoms,
+                "Three Kingdoms",
+                PackFileVersion.PFH5,
+                GameBnkVersion.Unsupported,
+                WwiseProjectId.Unsupported,
+                WsModelVersion.Version1,
+                [CompressionFormat.Lzma1],
+                EncryptionKeystream.None);
+
+            var troy = new GameInformation(
+                GameTypeEnum.Troy,
+                "Troy",
+                PackFileVersion.PFH5,
+                GameBnkVersion.Unsupported,
+                WwiseProjectId.Unsupported,
+                WsModelVersion.Unknown,
+                [CompressionFormat.Lzma1],
+                EncryptionKeystream.SixtyFourBitComplement);
+
+            var warhammer3 = new GameInformation(
+                GameTypeEnum.Warhammer3,
+                "Warhammer III",
+                PackFileVersion.PFH5,
+                GameBnkVersion.Warhammer3,
+                WwiseProjectId.Warhammer3,
+                WsModelVersion.Version3,
+                [CompressionFormat.Lzma1, CompressionFormat.Lz4, CompressionFormat.Zstd],
+                EncryptionKeystream.SixtyFourBitComplement);
+
             var pharaoh = new GameInformation(
                 GameTypeEnum.Pharaoh,
                 "Pharaoh",
@@ -166,16 +172,27 @@ namespace Shared.Core.Settings
                 [CompressionFormat.Lzma1],
                 EncryptionKeystream.SixtyFourBitComplement);
 
+            var dragonfruit = new GameInformation(
+                GameTypeEnum.Dragonfruit,
+                "Dragonfruit",
+                PackFileVersion.PFH8,
+                GameBnkVersion.Dragonfruit,
+                WwiseProjectId.Dragonfruit,
+                WsModelVersion.Version2,
+                [CompressionFormat.Lz4],
+                EncryptionKeystream.None);
+
             Games = new Dictionary<GameTypeEnum, GameInformation>
             {
-                { GameTypeEnum.Warhammer, warhammer },
-                { GameTypeEnum.Warhammer2, warhammer2 },
-                { GameTypeEnum.Warhammer3, warhammer3 },
-                { GameTypeEnum.Troy, troy },
-                { GameTypeEnum.ThreeKingdoms, threeKingdoms },
                 { GameTypeEnum.Rome2, rome2 },
                 { GameTypeEnum.Attila, attila },
-                { GameTypeEnum.Pharaoh, pharaoh }
+                { GameTypeEnum.Warhammer, warhammer },
+                { GameTypeEnum.Warhammer2, warhammer2 },
+                { GameTypeEnum.ThreeKingdoms, threeKingdoms },
+                { GameTypeEnum.Troy, troy },
+                { GameTypeEnum.Warhammer3, warhammer3 },
+                { GameTypeEnum.Pharaoh, pharaoh },
+                { GameTypeEnum.Dragonfruit, dragonfruit }
             };
         }
 
@@ -204,6 +221,7 @@ namespace Shared.Core.Settings
                 GameTypeEnum.Warhammer3 => "Warhammer III",
                 GameTypeEnum.Troy => "Troy",
                 GameTypeEnum.Pharaoh => "Pharaoh",
+                GameTypeEnum.Dragonfruit => "Dragonfruit",
                 _ => throw new Exception($"Unknown game - {game}"),
             };
         }
